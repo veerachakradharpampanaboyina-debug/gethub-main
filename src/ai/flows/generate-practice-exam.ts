@@ -15,7 +15,7 @@ import {z} from 'genkit';
 
 const GeneratePracticeExamInputSchema = z.object({
   examTopic: z.string().describe('The topic of the exam (e.g., "UPSC Civil Services").'),
-  numQuestions: z.number().min(1).max(20).describe('The number of questions to generate.'),
+  numQuestions: z.number().min(1).max(50).describe('The number of questions to generate.'),
 });
 export type GeneratePracticeExamInput = z.infer<typeof GeneratePracticeExamInputSchema>;
 

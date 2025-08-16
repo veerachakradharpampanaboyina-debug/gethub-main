@@ -46,7 +46,7 @@ function PracticeExamGenerator() {
 
   useEffect(() => {
     if (user && !exam) {
-      generatePracticeExam({ examTopic: topic, numQuestions: 5 })
+      generatePracticeExam({ examTopic: topic, numQuestions: 50 })
         .then(response => {
           const examQuestions: Question[] = response.questions.map(q => ({
             ...q,
