@@ -16,7 +16,7 @@ import {
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { BrainCircuit, LogOut, Settings, Home as HomeIcon } from 'lucide-react';
+import { BrainCircuit, LogOut, Settings, Home as HomeIcon, History } from 'lucide-react';
 import type { Exam, Question } from '@/lib/types';
 import { ExamView } from '@/components/exam-view';
 import GethubLogo from '@/components/gethub-logo';
@@ -138,6 +138,14 @@ function PracticeExamGenerator() {
                   <SidebarMenuButton tooltip="Homepage">
                     <HomeIcon />
                     <span>Homepage</span>
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <Link href="/history" legacyBehavior passHref>
+                  <SidebarMenuButton tooltip="Exam History">
+                    <History />
+                    <span>History</span>
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
