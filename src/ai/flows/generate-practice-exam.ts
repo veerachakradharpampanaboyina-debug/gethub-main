@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview Generates a practice exam with a specified number of unique questions.
@@ -8,18 +9,9 @@
  */
 
 import {ai} from '@/ai/genkit';
+import { GeneratedQuestionSchema } from '@/lib/types';
 import {z} from 'genkit';
 
-export const GeneratedQuestionSchema = z.object({
-  questionId: z.string().describe('A unique identifier for the question (e.g., "q1").'),
-  questionType: z
-    .enum(['multipleChoice', 'trueFalse'])
-    .describe('The type of objective question.'),
-  questionText: z.string().describe('The full text of the question.'),
-  options: z.array(z.string()).optional().describe('An array of possible answers for multiple-choice questions.'),
-  correctAnswer: z.string().describe('The correct answer to the question.'),
-  pointsPossible: z.number().describe('The number of points the question is worth.'),
-});
 
 const GeneratePracticeExamInputSchema = z.object({
   examTopic: z.string().describe('The topic of the exam (e.g., "UPSC Civil Services").'),
@@ -44,11 +36,11 @@ const prompt = ai.definePrompt({
 
   Your task is to generate a set of {{numQuestions}} unique, non-repeating questions for a practice exam on the topic of "{{examTopic}}".
 
-  The questions should be a mix of "multipleChoice" and "trueFalse" types.
+  The questions should be a mix of "multipleChoice", "trueFalse", and "freeText" types.
   - For "multipleChoice" questions, provide exactly 4 options.
   - For "trueFalse" questions, do not provide options.
   - Ensure the "correctAnswer" is one of the provided options for multiple choice questions.
-  - Assign pointsPossible for each question, for example 10 points.
+  - Assign pointsPossible for each question, for example 10 points for objective and 20 for free text.
   - Ensure every question has a unique questionId, like "q1", "q2", etc.
 
   Generate the questions now.

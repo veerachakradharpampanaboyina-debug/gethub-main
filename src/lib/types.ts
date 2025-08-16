@@ -1,11 +1,22 @@
+
 import type {
   AutoGradeObjectiveQuestionsOutput,
 } from '@/ai/flows/auto-grade-objective-questions';
 import type {
   FlagPotentiallyIncorrectAnswersOutput,
 } from '@/ai/flows/flag-potentially-incorrect-answers';
-import type { z } from 'genkit';
-import type { GeneratedQuestionSchema } from '@/ai/flows/generate-practice-exam';
+import { z } from 'genkit';
+
+export const GeneratedQuestionSchema = z.object({
+  questionId: z.string().describe('A unique identifier for the question (e.g., "q1").'),
+  questionType: z
+    .enum(['multipleChoice', 'trueFalse', 'freeText'])
+    .describe('The type of objective question.'),
+  questionText: z.string().describe('The full text of the question.'),
+  options: z.array(z.string()).optional().describe('An array of possible answers for multiple-choice questions.'),
+  correctAnswer: z.string().describe('The correct answer to the question.'),
+  pointsPossible: z.number().describe('The number of points the question is worth.'),
+});
 
 
 export interface Student {
