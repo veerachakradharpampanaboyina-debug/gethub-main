@@ -585,7 +585,6 @@ const baseExamQuestions = [
   },
 ];
 
-
 const examCategories = [
   {
     category: 'Civil Services & Government Jobs',
@@ -710,13 +709,7 @@ allExams.forEach(exam => {
 });
 
 
-// This function is needed for static export
-export function generateStaticParams() {
-  return allExams.map((exam) => ({
-    examId: exam.examId,
-  }));
-}
-
+// This is the Client Component that contains all the interactive logic.
 function ExamPageClient({ params }: { params: { examId: string } }) {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
@@ -758,7 +751,6 @@ function ExamPageClient({ params }: { params: { examId: string } }) {
   if(user.photoURL) {
     exam.student.avatarUrl = user.photoURL;
   }
-
 
   return (
     <SidebarProvider>
@@ -878,16 +870,15 @@ function ExamPageClient({ params }: { params: { examId: string } }) {
   );
 }
 
-
 function SidebarInset({ children }: { children: React.ReactNode}) {
   return (
     <div className="flex-1">{children}</div>
   )
 }
 
-// This wrapper component ensures the page is treated as a client component
-// while allowing the main file to export server-only functions.
-function ExamPage({ params }: { params: { examId: string } }) {
+// This is the main page component (Server Component).
+// It exports generateStaticParams and renders the client component.
+export default function ExamPage({ params }: { params: { examId: string } }) {
   return (
     <AuthProvider>
       <ExamPageClient params={params} />
@@ -895,4 +886,9 @@ function ExamPage({ params }: { params: { examId: string } }) {
   );
 }
 
-export default ExamPage;
+// This function is needed for static export and must be in a Server Component.
+export function generateStaticParams() {
+  return allExams.map((exam) => ({
+    examId: exam.examId,
+  }));
+}
