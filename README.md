@@ -1,4 +1,4 @@
-# GETHUB
+..# GETHUB
 
 This is a NextJS starter for GETHUB, a platform for competitive exam preparation.
 

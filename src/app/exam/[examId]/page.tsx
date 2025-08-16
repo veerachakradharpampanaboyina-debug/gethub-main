@@ -625,6 +625,7 @@ export const examCategories = [
 
 const allExams = examCategories.flatMap(category => category.exams);
 
+// Populate sampleExams with all defined exams
 allExams.forEach(exam => {
   if (!sampleExams[exam.examId]) {
     sampleExams[exam.examId] = {
@@ -651,7 +652,8 @@ export default function ExamPage({ params }: { params: { examId: string } }) {
 
 // This function is needed for static export. It runs on the server at build time.
 export function generateStaticParams() {
-  return allExams.map((exam) => ({
-    examId: exam.examId,
+  const allExamIds = Object.keys(sampleExams);
+  return allExamIds.map((id) => ({
+    examId: id,
   }));
 }
