@@ -50,6 +50,7 @@ import {
 import { generateSyllabusNotes } from '@/ai/flows/generate-syllabus-notes';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { Separator } from '@/components/ui/separator';
 
 function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
   const { user, loading, logout } = useAuth();
@@ -76,10 +77,9 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
     setNotesError(null);
 
     try {
-        const fullTopic = `${exam.examName} - ${topic}`;
         const result = await generateSyllabusNotes({
             examName: exam.examName,
-            topic: fullTopic,
+            topic: topic,
         });
         setGeneratedNotes(result.notes);
     } catch (err) {
@@ -284,18 +284,22 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
                                                 <CardHeader>
                                                   <CardTitle className="flex items-center gap-2 text-base"><BrainCircuit /> Practice Topics</CardTitle>
                                                 </CardHeader>
-                                                <CardContent className="space-y-2">
-                                                  {paper.topics && paper.topics.length > 0 ? paper.topics.map(topic => (
-                                                      <div key={topic} className="flex gap-2">
-                                                        <Button asChild variant="outline" className="w-full justify-start">
-                                                            <Link href={`/practice?topic=${encodeURIComponent(`${exam.examName} - ${paper.paperName} - ${topic}`)}`}>
-                                                                <BrainCircuit className="mr-2" />
-                                                                {topic}
-                                                            </Link>
-                                                        </Button>
-                                                        <Button variant="secondary" size="icon" onClick={() => handleGenerateNotes(topic)} title={`Generate notes for ${topic}`}>
-                                                            <FileText />
-                                                        </Button>
+                                                <CardContent className="space-y-4">
+                                                  {paper.topics && paper.topics.length > 0 ? paper.topics.map((topic, index) => (
+                                                      <div key={index} className="p-3 rounded-lg bg-secondary/30 space-y-3">
+                                                         <p className="font-medium text-sm">{topic}</p>
+                                                          <div className="flex gap-2">
+                                                            <Button asChild variant="outline" size="sm" className="w-full">
+                                                                <Link href={`/practice?topic=${encodeURIComponent(`${exam.examName} - ${paper.paperName} - ${topic}`)}`}>
+                                                                    <BrainCircuit className="mr-2" />
+                                                                    Practice Topic
+                                                                </Link>
+                                                            </Button>
+                                                            <Button variant="secondary" size="sm" className="w-full" onClick={() => handleGenerateNotes(`${exam.examName} - ${paper.paperName} - ${topic}`)}>
+                                                                <FileText className="mr-2" />
+                                                                Generate Notes
+                                                            </Button>
+                                                          </div>
                                                       </div>
                                                   )) : (
                                                     <div className="text-sm text-center text-muted-foreground py-4">
@@ -303,7 +307,8 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
                                                     </div>
                                                   )}
                                                 </CardContent>
-                                                <CardFooter>
+                                                <CardFooter className="flex-col items-stretch gap-2">
+                                                    <Separator />
                                                     <Button asChild className="w-full">
                                                         <Link href={`/practice?topic=${encodeURIComponent(`${exam.examName} - ${paper.paperName}`)}`}>
                                                             <BrainCircuit className="mr-2" /> Generate Full Practice Test for {paper.paperName}
