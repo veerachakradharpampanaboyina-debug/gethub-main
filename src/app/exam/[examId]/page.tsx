@@ -710,12 +710,12 @@ allExams.forEach(exam => {
 });
 
 
-// This function is needed for static export, but causes issues with 'use client'
-// export function generateStaticParams() {
-//   return allExams.map((exam) => ({
-//     examId: exam.examId,
-//   }));
-// }
+// This function is needed for static export
+export function generateStaticParams() {
+  return allExams.map((exam) => ({
+    examId: exam.examId,
+  }));
+}
 
 function ExamPageClient({ params }: { params: { examId: string } }) {
   const { user, loading, logout } = useAuth();
@@ -885,10 +885,14 @@ function SidebarInset({ children }: { children: React.ReactNode}) {
   )
 }
 
-export default function ExamPage({ params }: { params: { examId: string } }) {
+// This wrapper component ensures the page is treated as a client component
+// while allowing the main file to export server-only functions.
+function ExamPage({ params }: { params: { examId: string } }) {
   return (
     <AuthProvider>
       <ExamPageClient params={params} />
     </AuthProvider>
   );
 }
+
+export default ExamPage;
