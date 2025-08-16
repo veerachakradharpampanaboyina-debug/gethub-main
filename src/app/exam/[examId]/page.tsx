@@ -877,10 +877,10 @@ function SidebarInset({ children }: { children: React.ReactNode}) {
 }
 
 // This is the main page component (Server Component).
-// It exports generateStaticParams and renders the client component.
+// It wraps the client component in the AuthProvider.
+// NOTE: THIS MUST BE A SERVER COMPONENT AND EXPORT generateStaticParams
+// It must not have "use client" at the top of the file.
 export default function ExamPage({ params }: { params: { examId: string } }) {
-  // This wrapper is necessary because the main export of a page file cannot be a client component
-  // when using generateStaticParams.
   return (
     <AuthProvider>
       <ExamPageClient params={params} />
@@ -888,11 +888,12 @@ export default function ExamPage({ params }: { params: { examId: string } }) {
   );
 }
 
-// This function is needed for static export and must be in a Server Component.
-// We are now keeping this outside of the client component.
+// This function is needed for static export. It runs on the server at build time.
 export function generateStaticParams() {
   const allExams = examCategories.flatMap(category => category.exams);
   return allExams.map((exam) => ({
     examId: exam.examId,
   }));
 }
+
+    
