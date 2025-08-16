@@ -1,7 +1,7 @@
 
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, initializeFirestore, memoryLocalCache } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 
@@ -17,7 +17,10 @@ const firebaseConfig = {
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
-const db = getFirestore(app);
+// Disable persistence to avoid "client is offline" errors in certain environments
+const db = initializeFirestore(app, {
+  localCache: memoryLocalCache()
+});
 const storage = getStorage(app);
 
 export { app, auth, db, storage };
