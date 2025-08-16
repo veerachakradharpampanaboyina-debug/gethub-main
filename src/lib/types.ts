@@ -85,10 +85,3 @@ export interface ExamAttempt {
     aiGradingState: AIGradingState;
     createdAt: Timestamp;
 }
-
-export interface UserEnrollment {
-    id?: string;
-    userId: string;
-    examId: string;
-    enrolledAt: Timestamp;
-}

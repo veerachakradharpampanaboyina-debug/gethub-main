@@ -145,14 +145,6 @@ function SettingsPage() {
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
-                <SidebarMenuItem>
-                <Link href="/enrolled-exams">
-                  <SidebarMenuButton tooltip="My Exams">
-                    <Library />
-                    <span>My Exams</span>
-                  </SidebarMenuButton>
-                </Link>
-              </SidebarMenuItem>
               <SidebarMenuItem>
                 <Link href="/history">
                   <SidebarMenuButton tooltip="Exam History">

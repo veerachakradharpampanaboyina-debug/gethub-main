@@ -18,62 +18,13 @@ import { LoaderCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { enrollInExam, getEnrolledExams } from '@/services/exam-service';
 import { useEffect, useState } from 'react';
 
 
 function HomePageContent() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
-  const { toast } = useToast();
-  const [enrolledExamIds, setEnrolledExamIds] = useState<string[]>([]);
   const allExams = examCategories.flatMap(c => c.exams);
-  
-  useEffect(() => {
-    if (user) {
-      getEnrolledExams(user.uid).then(exams => {
-        setEnrolledExamIds(exams.map(e => e.examId));
-      });
-    }
-  }, [user]);
-
-  const handleEnroll = async (examId: string, examName: string) => {
-    if (!user) {
-      toast({
-        title: 'Not Logged In',
-        description: 'You need to be logged in to enroll in an exam.',
-        variant: 'destructive',
-      });
-      router.push('/login');
-      return;
-    }
-    try {
-      await enrollInExam(user.uid, examId);
-      toast({
-        title: 'Enrollment Successful',
-        description: `You have successfully enrolled in ${examName}.`,
-      });
-       setEnrolledExamIds(prev => [...prev, examId]);
-       router.push(`/enrolled-exams/${examId}`);
-    } catch (error) {
-      console.error('Enrollment failed:', error);
-       if ((error as Error).message.includes('already enrolled')) {
-         toast({
-            title: 'Already Enrolled',
-            description: `You are already enrolled in ${examName}.`,
-            variant: 'default',
-         });
-         router.push(`/enrolled-exams/${examId}`);
-      } else {
-        toast({
-          title: 'Enrollment Failed',
-          description: 'Something went wrong. Please try again.',
-          variant: 'destructive',
-        });
-      }
-    }
-  };
-
 
   if (loading) {
     return (
@@ -92,12 +43,6 @@ function HomePageContent() {
         <div className="flex items-center gap-2">
             {user ? (
                  <div className="flex items-center gap-4">
-                    <Button variant="ghost" asChild>
-                        <Link href="/enrolled-exams">
-                            <Library className="mr-2"/>
-                            My Exams
-                        </Link>
-                    </Button>
                      <Button variant="ghost" asChild>
                         <Link href="/history">
                             <History className="mr-2"/>
@@ -141,7 +86,7 @@ function HomePageContent() {
             <section className="text-center py-20 px-4 border-b border-white/10">
                  <h1 className="text-4xl md:text-5xl font-bold tracking-tight">Welcome to GETHUB</h1>
                  <p className="text-muted-foreground mt-4 max-w-2xl mx-auto text-lg">
-                    Your hub for competitive exam preparation. Choose an exam below to enroll and start your journey.
+                    Your hub for competitive exam preparation. Choose an exam below to start your journey.
                  </p>
                  <div className="mt-8 flex justify-center gap-4">
                      <Button asChild size="lg" variant="secondary">
@@ -154,8 +99,8 @@ function HomePageContent() {
             
             <section id="exams" className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
               <div className="text-center mb-12">
-                  <h2 className="text-3xl font-bold tracking-tight">Choose Your Exam to Enroll</h2>
-                  <p className="text-muted-foreground mt-2">Select an exam to add it to your personal dashboard and start your preparation journey.</p>
+                  <h2 className="text-3xl font-bold tracking-tight">Choose Your Exam</h2>
+                  <p className="text-muted-foreground mt-2">Select an exam to view its syllabus and start preparing.</p>
               </div>
 
                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -166,16 +111,10 @@ function HomePageContent() {
                       <CardDescription className="mt-2">{exam.description}</CardDescription>
                       </CardHeader>
                       <CardContent className="flex-grow flex flex-col justify-end gap-4">
-                        <Button onClick={() => handleEnroll(exam.examId, exam.examName)} className="w-full mt-auto">
-                            {enrolledExamIds.includes(exam.examId) ? (
-                              <>
-                              <BookOpenCheck className="mr-2" /> Go to Dashboard
-                              </>
-                            ) : (
-                                <>
-                              <Briefcase className="mr-2" /> Enroll Now
-                              </>
-                            )}
+                        <Button asChild className="w-full mt-auto">
+                            <Link href={`/exam/${exam.examId}`}>
+                                <BookOpenCheck className="mr-2" /> View Syllabus
+                            </Link>
                         </Button>
                       </CardContent>
                   </Card>
