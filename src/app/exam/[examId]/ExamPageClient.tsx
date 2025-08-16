@@ -364,15 +364,7 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
             ) : notesError ? (
               <div className="text-destructive p-4">{notesError}</div>
             ) : (
-              <div ref={notesContentRef} className="prose prose-invert prose-sm md:prose-base max-w-none p-6 bg-background text-foreground font-handwritten">
-                 <style jsx global>{`
-                    .prose {
-                      font-family: 'Caveat', cursive;
-                    }
-                    .prose h1, .prose h2, .prose h3 {
-                       font-family: 'Inter', sans-serif;
-                    }
-                 `}</style>
+              <div ref={notesContentRef} className="prose prose-invert prose-sm md:prose-base max-w-none p-6 bg-background text-foreground font-serif">
                 <h1>Notes for: {currentTopic}</h1>
                 <div dangerouslySetInnerHTML={{ __html: generatedNotes.replace(/\n/g, '<br />') }} />
               </div>
