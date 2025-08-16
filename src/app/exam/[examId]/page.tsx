@@ -18,7 +18,7 @@ import { FileText, LogOut, Settings, Home as HomeIcon } from 'lucide-react';
 import type { Exam } from '@/lib/types';
 import { ExamView } from '@/components/exam-view';
 import GethubLogo from '@/components/gethub-logo';
-import { useAuth } from '@/hooks/use-auth';
+import { AuthProvider, useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import Link from 'next/link';
@@ -238,7 +238,6 @@ function SidebarInset({ children }: { children: React.ReactNode}) {
 }
 
 export default function ExamPageWrapper({ params }: { params: { examId: string } }) {
-  const { AuthProvider } = useAuth();
   return (
     <AuthProvider>
       <ExamPage params={params} />

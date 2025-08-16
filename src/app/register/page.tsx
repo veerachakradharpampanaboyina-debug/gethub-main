@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/hooks/use-auth';
+import { AuthProvider, useAuth } from '@/hooks/use-auth';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
@@ -102,7 +102,6 @@ function RegisterPage() {
 
 
 export default function RegisterPageWrapper() {
-  const { AuthProvider } = useAuth();
   return (
     <AuthProvider>
       <RegisterPage />

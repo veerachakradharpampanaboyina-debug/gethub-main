@@ -28,7 +28,6 @@ interface AuthContextType {
   loginWithGoogle: () => Promise<any>;
   loginWithFacebook: () => Promise<any>;
   logout: () => Promise<any>;
-  AuthProvider: ({ children }: { children: ReactNode }) => JSX.Element;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -57,7 +56,7 @@ function useAuthProvider() {
     const provider = new GoogleAuthProvider();
     return signInWithPopup(auth, provider);
   };
-  
+
   const loginWithFacebook = () => {
     const provider = new FacebookAuthProvider();
     return signInWithPopup(auth, provider);
@@ -79,12 +78,10 @@ function useAuthProvider() {
 }
 
 
-const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const auth = useAuthProvider();
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const authData = useAuthProvider();
   return (
-    <AuthContext.Provider
-      value={{ ...auth, AuthProvider: ({children}) => <>{children}</> }}
-    >
+    <AuthContext.Provider value={authData}>
       {children}
     </AuthContext.Provider>
   );
@@ -96,18 +93,5 @@ export function useAuth() {
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
-
-  // This is a dummy AuthProvider that will be used when `useAuth` is called
-  // outside of a real AuthProvider. This is useful for storybook or other
-  // scenarios where you don't want to wrap your component in an AuthProvider.
-  const AuthProviderWrapper = ({ children }: { children: ReactNode }) => {
-    return (
-      <AuthProvider>
-        {children}
-      </AuthProvider>
-    );
-  };
-
-
-  return { ...context, AuthProvider: AuthProviderWrapper };
+  return context;
 }
