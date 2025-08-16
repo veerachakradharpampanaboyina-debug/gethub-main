@@ -134,7 +134,7 @@ function PracticeExamGenerator() {
             <SidebarGroupLabel>Navigation</SidebarGroupLabel>
             <SidebarMenu>
                <SidebarMenuItem>
-                <Link href="/" legacyBehavior passHref>
+                <Link href="/">
                   <SidebarMenuButton tooltip="Homepage">
                     <HomeIcon />
                     <span>Homepage</span>
@@ -142,7 +142,7 @@ function PracticeExamGenerator() {
                 </Link>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <Link href="/history" legacyBehavior passHref>
+                <Link href="/history">
                   <SidebarMenuButton tooltip="Exam History">
                     <History />
                     <span>History</span>

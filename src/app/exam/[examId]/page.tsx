@@ -765,7 +765,7 @@ function ExamPage({ params }: { params: { examId: string } }) {
             <SidebarGroupLabel>Navigation</SidebarGroupLabel>
             <SidebarMenu>
                <SidebarMenuItem>
-                <Link href="/" legacyBehavior passHref>
+                <Link href="/">
                   <SidebarMenuButton tooltip="Homepage">
                     <HomeIcon />
                     <span>Homepage</span>
@@ -773,7 +773,7 @@ function ExamPage({ params }: { params: { examId: string } }) {
                 </Link>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <Link href="/history" legacyBehavior passHref>
+                <Link href="/history">
                   <SidebarMenuButton tooltip="Exam History">
                     <History />
                     <span>History</span>

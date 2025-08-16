@@ -143,7 +143,7 @@ function HistoryPage() {
             <SidebarGroupLabel>Navigation</SidebarGroupLabel>
             <SidebarMenu>
                <SidebarMenuItem>
-                <Link href="/" legacyBehavior passHref>
+                <Link href="/">
                   <SidebarMenuButton tooltip="Homepage">
                     <HomeIcon />
                     <span>Homepage</span>
@@ -151,7 +151,7 @@ function HistoryPage() {
                 </Link>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <Link href="/history" legacyBehavior passHref>
+                <Link href="/history">
                   <SidebarMenuButton tooltip="Exam History" isActive>
                     <History />
                     <span>History</span>
@@ -164,7 +164,7 @@ function HistoryPage() {
              <SidebarGroupLabel>Practice</SidebarGroupLabel>
               <SidebarMenu>
                 <SidebarMenuItem>
-                    <Link href="/practice" legacyBehavior passHref>
+                    <Link href="/practice">
                         <SidebarMenuButton tooltip="Practice Exam">
                             <BrainCircuit />
                             <span>Practice Exam</span>
