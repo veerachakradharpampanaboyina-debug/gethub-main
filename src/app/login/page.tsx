@@ -72,19 +72,20 @@ function LoginPage() {
 
   return (
     <div className="flex h-screen items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-sm">
+       <div className="absolute inset-0 bg-grid-zinc-700/[0.2] [mask-image:linear-gradient(to_bottom,white_5%,transparent_100%)]"></div>
+      <Card className="w-full max-w-sm relative z-10 bg-background/80 backdrop-blur-sm">
         <CardHeader className="text-center">
-           <div className="flex justify-center items-center gap-2 mb-4">
+           <Link href="/" className="flex justify-center items-center gap-2 mb-4">
             <GethubLogo className="w-10 h-10 text-primary" width={40} height={40}/>
             <span className="text-2xl font-bold">GETHUB</span>
-          </div>
-          <CardTitle>Login</CardTitle>
+          </Link>
+          <CardTitle>Welcome Back</CardTitle>
           <CardDescription>
-            Access your GETHUB account
+            Login to access your personalized dashboard.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+          {error && <p className="text-red-500 text-sm mb-4 text-center">{error}</p>}
           <form onSubmit={handleLogin}>
             <div className="grid w-full items-center gap-4">
               <div className="flex flex-col space-y-1.5">

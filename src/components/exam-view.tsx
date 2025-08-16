@@ -75,7 +75,7 @@ const QuestionInput = ({
   if (isSubmitted) {
      return (
       <div className="grid gap-2">
-        <h4 className="font-semibold text-sm">Student's Answer</h4>
+        <h4 className="font-semibold text-sm">Your Answer</h4>
         <p className="text-sm p-3 bg-secondary rounded-md">
           {question.studentAnswer || "No answer provided."}
         </p>
@@ -157,12 +157,12 @@ const QuestionResultBadge = ({
   );
   if (objectiveResult) {
     return objectiveResult.isCorrect ? (
-      <Badge variant="secondary" className="bg-green-100 text-green-800">
+      <Badge variant="secondary" className="bg-green-500/10 text-green-400 border-green-500/20">
         <CheckCircle2 className="w-4 h-4 mr-1" />
         Correct
       </Badge>
     ) : (
-      <Badge variant="destructive" className="bg-red-100 text-red-800">
+      <Badge variant="destructive" className="bg-red-500/10 text-red-400 border-red-500/20">
         <XCircle className="w-4 h-4 mr-1" />
         Incorrect
       </Badge>
@@ -174,7 +174,7 @@ const QuestionResultBadge = ({
   );
   if (flaggedResult?.isPotentiallyIncorrect) {
     return (
-      <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+      <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-400 border-yellow-500/20">
         <AlertCircle className="w-4 h-4 mr-1" />
         Needs Review
       </Badge>
@@ -182,7 +182,7 @@ const QuestionResultBadge = ({
   }
 
   return (
-    <Badge variant="secondary">
+    <Badge variant="secondary" className="bg-sky-500/10 text-sky-400 border-sky-500/20">
       <CheckCircle2 className="w-4 h-4 mr-1" />
       Graded
     </Badge>
@@ -310,7 +310,7 @@ export function ExamView({ exam: initialExam }: ExamViewProps) {
     }
   };
 
-  const scorePercentage = aiResults
+  const scorePercentage = aiResults && aiResults.totalPointsPossible > 0
     ? (aiResults.totalPointsAwarded / aiResults.totalPointsPossible) * 100
     : 0;
   
@@ -318,7 +318,7 @@ export function ExamView({ exam: initialExam }: ExamViewProps) {
 
   return (
     <div className="space-y-8">
-      <Card>
+      <Card className="bg-secondary/50">
         <CardHeader>
           <CardTitle>{exam.examName}</CardTitle>
           <CardDescription>
@@ -330,7 +330,7 @@ export function ExamView({ exam: initialExam }: ExamViewProps) {
       </Card>
 
       {isLoading && (
-        <Card>
+        <Card className="border-dashed">
           <CardHeader className="items-center text-center">
             <LoaderCircle className="w-12 h-12 animate-spin text-primary mb-4" />
             <CardTitle>Analyzing in Progress...</CardTitle>
@@ -343,7 +343,7 @@ export function ExamView({ exam: initialExam }: ExamViewProps) {
 
       {aiResults && (
         <div className="grid gap-8 md:grid-cols-3">
-          <Card className="md:col-span-1">
+          <Card className="md:col-span-1 bg-secondary/30">
             <CardHeader>
               <CardTitle>Overall Score</CardTitle>
               <CardDescription>
@@ -360,7 +360,7 @@ export function ExamView({ exam: initialExam }: ExamViewProps) {
               <Progress value={scorePercentage} className="mt-4" />
             </CardContent>
           </Card>
-          <Card className="md:col-span-2">
+          <Card className="md:col-span-2 bg-secondary/30">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ClipboardCheck /> AI-Generated Feedback
@@ -386,10 +386,10 @@ export function ExamView({ exam: initialExam }: ExamViewProps) {
           );
 
           return (
-            <Card key={question.questionId}>
+            <Card key={question.questionId} className="bg-secondary/30">
               <CardHeader>
                 <CardTitle className="flex items-start gap-4">
-                  <span className="text-lg font-semibold">{index + 1}.</span>
+                  <span className="text-lg font-semibold text-primary">{index + 1}.</span>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
                         <p className="text-base font-medium">{question.questionText}</p>
@@ -410,24 +410,24 @@ export function ExamView({ exam: initialExam }: ExamViewProps) {
 
                     {objectiveResult && !objectiveResult.isCorrect && (
                       <div className="grid gap-2">
-                        <h4 className="font-semibold text-sm">Correct Answer</h4>
-                        <p className="text-sm p-3 bg-green-100 text-green-900 rounded-md">
+                        <h4 className="font-semibold text-sm text-green-400">Correct Answer</h4>
+                        <p className="text-sm p-3 bg-green-500/10 text-green-300 rounded-md">
                           {question.correctAnswer}
                         </p>
                       </div>
                     )}
                     {flaggedResult?.isPotentiallyIncorrect && (
                        <div className="grid gap-2">
-                         <h4 className="font-semibold text-sm">Model Answer</h4>
-                         <p className="text-sm p-3 bg-blue-100 text-blue-900 rounded-md">
+                         <h4 className="font-semibold text-sm text-sky-400">Model Answer</h4>
+                         <p className="text-sm p-3 bg-sky-500/10 text-sky-300 rounded-md">
                           {question.correctAnswer}
                          </p>
                        </div>
                     )}
                      {(objectiveResult || flaggedResult) && (
-                      <div className="p-3 border-l-4 border-accent bg-accent/10 rounded-r-md">
-                        <h4 className="font-semibold text-sm text-accent-foreground/90 mb-1">AI Feedback</h4>
-                        <p className="text-sm text-accent-foreground/80">
+                      <div className="p-3 border-l-4 border-primary bg-primary/10 rounded-r-md">
+                        <h4 className="font-semibold text-sm text-primary/90 mb-1">AI Feedback</h4>
+                        <p className="text-sm text-primary/80">
                           {objectiveResult?.feedback || flaggedResult?.reason}
                         </p>
                       </div>

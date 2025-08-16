@@ -62,12 +62,12 @@ const QuestionResultBadge = ({
 
   if (objectiveResult) {
     return objectiveResult.isCorrect ? (
-      <Badge variant="secondary" className="bg-green-100 text-green-800">
+      <Badge variant="secondary" className="bg-green-500/10 text-green-400 border-green-500/20">
         <CheckCircle2 className="w-4 h-4 mr-1" />
         Correct
       </Badge>
     ) : (
-      <Badge variant="destructive" className="bg-red-100 text-red-800">
+      <Badge variant="destructive" className="bg-red-500/10 text-red-400 border-red-500/20">
         <XCircle className="w-4 h-4 mr-1" />
         Incorrect
       </Badge>
@@ -79,7 +79,7 @@ const QuestionResultBadge = ({
   );
   if (flaggedResult?.isPotentiallyIncorrect) {
     return (
-      <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+      <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-400 border-yellow-500/20">
         <AlertCircle className="w-4 h-4 mr-1" />
         Needs Review
       </Badge>
@@ -87,7 +87,7 @@ const QuestionResultBadge = ({
   }
 
   return (
-    <Badge variant="secondary">
+    <Badge variant="secondary" className="bg-sky-500/10 text-sky-400 border-sky-500/20">
       <CheckCircle2 className="w-4 h-4 mr-1" />
       Graded
     </Badge>
@@ -133,9 +133,9 @@ function HistoryPage() {
     <SidebarProvider>
       <Sidebar>
         <SidebarHeader>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 group-data-[state=expanded]:ml-2">
             <GethubLogo className="w-8 h-8 text-primary" width={32} height={32} />
-            <span className="text-lg font-semibold">GETHUB</span>
+            <span className="text-lg font-semibold group-data-[state=collapsed]:hidden">GETHUB</span>
           </div>
         </SidebarHeader>
         <SidebarContent>
@@ -209,17 +209,17 @@ function HistoryPage() {
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton tooltip="Profile">
-                <Avatar className="w-7 h-7">
+                <Avatar className="w-8 h-8">
                   <AvatarImage src={user.photoURL ?? 'https://placehold.co/100x100.png'} alt="@teacher" data-ai-hint="teacher portrait"/>
                   <AvatarFallback>{user.email?.[0].toUpperCase()}</AvatarFallback>
                 </Avatar>
-                <span className="text-sm">{user.displayName || user.email}</span>
+                <span className="text-sm group-data-[state=collapsed]:hidden">{user.displayName || user.email}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
              <SidebarMenuItem>
               <SidebarMenuButton tooltip="Logout" onClick={logout}>
                 <LogOut />
-                <span>Logout</span>
+                <span className="group-data-[state=collapsed]:hidden">Logout</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
@@ -237,7 +237,7 @@ function HistoryPage() {
         </header>
         <main className="p-4 md:p-6 lg:p-8">
             {attempts.length === 0 ? (
-                 <Card>
+                 <Card className="border-dashed">
                     <CardHeader className="items-center text-center">
                         <CardTitle>No History Found</CardTitle>
                         <CardDescription>You haven't completed any exams yet. Start a practice exam to see your history!</CardDescription>
@@ -249,14 +249,14 @@ function HistoryPage() {
             ) : (
                 <Accordion type="single" collapsible className="w-full space-y-4">
                     {attempts.map((attempt) => {
-                        const scorePercentage = (attempt.aiGradingState.totalPointsAwarded / attempt.aiGradingState.totalPointsPossible) * 100;
+                        const scorePercentage = attempt.aiGradingState.totalPointsPossible > 0 ? (attempt.aiGradingState.totalPointsAwarded / attempt.aiGradingState.totalPointsPossible) * 100 : 0;
                         return (
-                            <AccordionItem value={attempt.id!} key={attempt.id!} className="border rounded-lg">
+                            <AccordionItem value={attempt.id!} key={attempt.id!} className="border rounded-lg bg-secondary/50">
                                 <AccordionTrigger className="p-4 hover:no-underline">
                                     <div className="flex-1 flex justify-between items-center pr-4">
-                                        <div>
-                                            <h3 className="font-semibold text-left">{attempt.examName}</h3>
-                                            <p className="text-sm text-muted-foreground text-left">{format(attempt.createdAt.toDate(), "PPP p")}</p>
+                                        <div className="text-left">
+                                            <h3 className="font-semibold">{attempt.examName}</h3>
+                                            <p className="text-sm text-muted-foreground">{format(attempt.createdAt.toDate(), "PPP p")}</p>
                                         </div>
                                         <div className="text-right">
                                             <p className="font-semibold">{attempt.aiGradingState.totalPointsAwarded} / {attempt.aiGradingState.totalPointsPossible}</p>
@@ -283,10 +283,10 @@ function HistoryPage() {
                                               );
 
                                             return (
-                                            <Card key={question.questionId}>
+                                            <Card key={question.questionId} className="bg-background/50">
                                             <CardHeader>
                                                 <CardTitle className="flex items-start gap-4">
-                                                <span className="text-lg font-semibold">{index + 1}.</span>
+                                                <span className="text-lg font-semibold text-primary">{index + 1}.</span>
                                                 <div className="flex-1">
                                                     <div className="flex items-center justify-between">
                                                         <p className="text-base font-medium">{question.questionText}</p>
@@ -308,24 +308,24 @@ function HistoryPage() {
 
                                                     {objectiveResult && !objectiveResult.isCorrect && (
                                                     <div className="grid gap-2">
-                                                        <h4 className="font-semibold text-sm">Correct Answer</h4>
-                                                        <p className="text-sm p-3 bg-green-100 text-green-900 rounded-md">
+                                                        <h4 className="font-semibold text-sm text-green-400">Correct Answer</h4>
+                                                        <p className="text-sm p-3 bg-green-500/10 text-green-300 rounded-md">
                                                         {question.correctAnswer}
                                                         </p>
                                                     </div>
                                                     )}
                                                     {flaggedResult?.isPotentiallyIncorrect && (
                                                     <div className="grid gap-2">
-                                                        <h4 className="font-semibold text-sm">Model Answer</h4>
-                                                        <p className="text-sm p-3 bg-blue-100 text-blue-900 rounded-md">
+                                                        <h4 className="font-semibold text-sm text-sky-400">Model Answer</h4>
+                                                        <p className="text-sm p-3 bg-sky-500/10 text-sky-300 rounded-md">
                                                         {question.correctAnswer}
                                                         </p>
                                                     </div>
                                                     )}
                                                     {(objectiveResult || flaggedResult) && (
-                                                    <div className="p-3 border-l-4 border-accent bg-accent/10 rounded-r-md">
-                                                        <h4 className="font-semibold text-sm text-accent-foreground/90 mb-1">AI Feedback</h4>
-                                                        <p className="text-sm text-accent-foreground/80">
+                                                    <div className="p-3 border-l-4 border-primary bg-primary/10 rounded-r-md">
+                                                        <h4 className="font-semibold text-sm text-primary/90 mb-1">AI Feedback</h4>
+                                                        <p className="text-sm text-primary/80">
                                                         {objectiveResult?.feedback || flaggedResult?.reason}
                                                         </p>
                                                     </div>
