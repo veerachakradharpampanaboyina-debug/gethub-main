@@ -708,6 +708,13 @@ allExams.forEach(exam => {
 });
 
 
+export function generateStaticParams() {
+  return allExams.map((exam) => ({
+    examId: exam.examId,
+  }));
+}
+
+
 function ExamPage({ params }: { params: { examId: string } }) {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
