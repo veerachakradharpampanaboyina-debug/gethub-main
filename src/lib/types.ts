@@ -6,6 +6,8 @@ import type {
   FlagPotentiallyIncorrectAnswersOutput,
 } from '@/ai/flows/flag-potentially-incorrect-answers';
 import { z } from 'genkit';
+import { Timestamp } from 'firebase/firestore';
+
 
 export const GeneratedQuestionSchema = z.object({
   questionId: z.string().describe('A unique identifier for the question (e.g., "q1").'),
@@ -56,4 +58,14 @@ export interface AIGradingState {
   summary: string;
   totalPointsAwarded: number;
   totalPointsPossible: number;
+}
+
+export interface ExamAttempt {
+    id?: string;
+    userId: string;
+    examId: string;
+    examName: string;
+    questions: Question[];
+    aiGradingState: AIGradingState;
+    createdAt: Timestamp;
 }

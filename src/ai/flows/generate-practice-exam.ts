@@ -16,6 +16,7 @@ import {z} from 'genkit';
 const GeneratePracticeExamInputSchema = z.object({
   examTopic: z.string().describe('The topic of the exam (e.g., "UPSC Civil Services").'),
   numQuestions: z.number().min(1).max(50).describe('The number of questions to generate.'),
+  seenQuestions: z.array(z.string()).optional().describe('A list of question texts that the user has already seen and should not be repeated.'),
 });
 export type GeneratePracticeExamInput = z.infer<typeof GeneratePracticeExamInputSchema>;
 
@@ -42,6 +43,13 @@ const prompt = ai.definePrompt({
   - Ensure the "correctAnswer" is one of the provided options for multiple choice questions.
   - Assign pointsPossible for each question, for example 10 points for objective and 20 for free text.
   - Ensure every question has a unique questionId, like "q1", "q2", etc.
+  
+  {{#if seenQuestions}}
+  Most importantly, DO NOT repeat any of the following questions that the user has already seen:
+  {{#each seenQuestions}}
+  - "{{this}}"
+  {{/each}}
+  {{/if}}
 
   Generate the questions now.
   `,

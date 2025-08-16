@@ -12,6 +12,7 @@ import type {
 import { autoGradeObjectiveQuestions } from '@/ai/flows/auto-grade-objective-questions';
 import { flagPotentiallyIncorrectAnswers } from '@/ai/flows/flag-potentially-incorrect-answers';
 import { generateExamSummary } from '@/ai/flows/generate-exam-summary';
+import { saveExamAttempt } from '@/services/exam-service';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -36,6 +37,9 @@ import {
 import { Label } from './ui/label';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Textarea } from './ui/textarea';
+import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
+
 
 interface ExamViewProps {
   exam: Exam;
@@ -189,6 +193,8 @@ export function ExamView({ exam: initialExam }: ExamViewProps) {
   const [exam, setExam] = useState(initialExam);
   const [isLoading, setIsLoading] = useState(false);
   const [aiResults, setAiResults] = useState<AIGradingState | null>(null);
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   const handleAnswerChange = (questionId: string, answer: string) => {
     setExam(prevExam => ({
@@ -201,6 +207,14 @@ export function ExamView({ exam: initialExam }: ExamViewProps) {
 
 
   const handleGradeExam = async () => {
+    if (!user) {
+        toast({
+            title: "Authentication Error",
+            description: "You must be logged in to submit an exam.",
+            variant: "destructive",
+        });
+        return;
+    }
     setIsLoading(true);
     setAiResults(null);
 
@@ -259,17 +273,38 @@ export function ExamView({ exam: initialExam }: ExamViewProps) {
           };
         }),
       });
-
-      setAiResults({
+      
+      const results: AIGradingState = {
         objectiveResults,
         flaggedAnswers,
         summary: summaryResponse.summary,
         totalPointsAwarded,
         totalPointsPossible,
+      };
+
+      setAiResults(results);
+
+      // 4. Save attempt to Firestore
+      await saveExamAttempt({
+        userId: user.uid,
+        examId: exam.examId,
+        examName: exam.examName,
+        questions: exam.questions,
+        aiGradingState: results,
       });
+
+       toast({
+        title: "Analysis Complete",
+        description: "Your exam results have been saved to your history.",
+      });
+
     } catch (error) {
       console.error('Error grading exam:', error);
-      // You could add a toast notification here to inform the user of the error
+       toast({
+        title: "Error",
+        description: "An error occurred while analyzing your exam. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }

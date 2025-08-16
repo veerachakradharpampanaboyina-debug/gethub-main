@@ -26,6 +26,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { generatePracticeExam } from '@/ai/flows/generate-practice-exam';
+import { getSeenQuestions } from '@/services/exam-service';
 import { LoaderCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -46,7 +47,15 @@ function PracticeExamGenerator() {
 
   useEffect(() => {
     if (user && !exam) {
-      generatePracticeExam({ examTopic: topic, numQuestions: 50 })
+      // Get questions the user has already seen to avoid repeats
+      getSeenQuestions(user.uid)
+        .then(seenQuestions => {
+           return generatePracticeExam({ 
+             examTopic: topic, 
+             numQuestions: 50,
+             seenQuestions,
+            });
+        })
         .then(response => {
           const examQuestions: Question[] = response.questions.map(q => ({
             ...q,
