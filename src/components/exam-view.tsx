@@ -1,0 +1,324 @@
+"use client";
+
+import { useState } from 'react';
+import type {
+  Exam,
+  Question,
+  AIGradingState,
+  GradingResult,
+  FlaggedAnswer,
+} from '@/lib/types';
+import { autoGradeObjectiveQuestions } from '@/ai/flows/auto-grade-objective-questions';
+import { flagPotentiallyIncorrectAnswers } from '@/ai/flows/flag-potentially-incorrect-answers';
+import { generateExamSummary } from '@/ai/flows/generate-exam-summary';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from '@/components/ui/card';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import {
+  AlertCircle,
+  CheckCircle2,
+  ChevronDown,
+  ClipboardCheck,
+  HelpCircle,
+  LoaderCircle,
+  Sparkles,
+  XCircle,
+} from 'lucide-react';
+
+interface ExamViewProps {
+  exam: Exam;
+}
+
+const getQuestionIcon = (questionType: Question['questionType']) => {
+  switch (questionType) {
+    case 'multipleChoice':
+      return <HelpCircle className="w-4 h-4 text-muted-foreground" />;
+    case 'trueFalse':
+      return <HelpCircle className="w-4 h-4 text-muted-foreground" />;
+    default:
+      return <HelpCircle className="w-4 h-4 text-muted-foreground" />;
+  }
+};
+
+const QuestionResultBadge = ({
+  question,
+  aiResults,
+}: {
+  question: Question;
+  aiResults: AIGradingState | null;
+}) => {
+  if (!aiResults) {
+    return null;
+  }
+
+  const objectiveResult = aiResults.objectiveResults.find(
+    (r) => r.questionId === question.questionId
+  );
+  if (objectiveResult) {
+    return objectiveResult.isCorrect ? (
+      <Badge variant="secondary" className="bg-green-100 text-green-800">
+        <CheckCircle2 className="w-4 h-4 mr-1" />
+        Correct
+      </Badge>
+    ) : (
+      <Badge variant="destructive" className="bg-red-100 text-red-800">
+        <XCircle className="w-4 h-4 mr-1" />
+        Incorrect
+      </Badge>
+    );
+  }
+
+  const flaggedResult = aiResults.flaggedAnswers.find(
+    (f) => f.questionId === question.questionId
+  );
+  if (flaggedResult?.isPotentiallyIncorrect) {
+    return (
+      <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+        <AlertCircle className="w-4 h-4 mr-1" />
+        Needs Review
+      </Badge>
+    );
+  }
+
+  return (
+    <Badge variant="secondary">
+      <CheckCircle2 className="w-4 h-4 mr-1" />
+      Graded
+    </Badge>
+  );
+};
+
+export function ExamView({ exam }: ExamViewProps) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [aiResults, setAiResults] = useState<AIGradingState | null>(null);
+
+  const handleGradeExam = async () => {
+    setIsLoading(true);
+    setAiResults(null);
+
+    try {
+      // 1. Grade objective questions
+      const objectiveQuestions = exam.questions.filter(
+        (q) => q.questionType === 'multipleChoice' || q.questionType === 'trueFalse'
+      );
+
+      const gradingResponse = await autoGradeObjectiveQuestions({
+        questions: objectiveQuestions.map((q) => ({
+          questionId: q.questionId,
+          questionType: q.questionType as 'multipleChoice' | 'trueFalse',
+          questionText: q.questionText,
+          correctAnswer: q.correctAnswer,
+          studentAnswer: q.studentAnswer,
+          pointsPossible: q.pointsPossible,
+        })),
+      });
+      const objectiveResults: GradingResult[] = gradingResponse.results;
+      let totalPointsAwarded = gradingResponse.totalPointsAwarded;
+      let totalPointsPossible = gradingResponse.totalPointsPossible;
+
+      // 2. Flag free-text questions
+      const freeTextQuestions = exam.questions.filter(
+        (q) => q.questionType === 'freeText'
+      );
+
+      const flaggingPromises = freeTextQuestions.map((q) =>
+        flagPotentiallyIncorrectAnswers({
+          question: q.questionText,
+          studentAnswer: q.studentAnswer,
+          correctAnswer: q.correctAnswer,
+        }).then((res) => ({ ...res, questionId: q.questionId }))
+      );
+      const flaggedAnswers: FlaggedAnswer[] = await Promise.all(flaggingPromises);
+      
+      totalPointsPossible += freeTextQuestions.reduce((sum, q) => sum + q.pointsPossible, 0);
+
+      // 3. Generate summary
+      const summaryResponse = await generateExamSummary({
+        studentName: exam.student.name,
+        examName: exam.examName,
+        questions: exam.questions.map((q) => {
+          const objectiveRes = objectiveResults.find(
+            (r) => r.questionId === q.questionId
+          );
+          const flaggedRes = flaggedAnswers.find(
+            (f) => f.questionId === q.questionId
+          );
+          return {
+            questionText: q.questionText,
+            studentAnswer: q.studentAnswer,
+            isCorrect: objectiveRes ? objectiveRes.isCorrect : !flaggedRes?.isPotentiallyIncorrect,
+            feedback: objectiveRes?.feedback || flaggedRes?.reason,
+          };
+        }),
+      });
+
+      setAiResults({
+        objectiveResults,
+        flaggedAnswers,
+        summary: summaryResponse.summary,
+        totalPointsAwarded,
+        totalPointsPossible,
+      });
+    } catch (error) {
+      console.error('Error grading exam:', error);
+      // You could add a toast notification here to inform the user of the error
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const scorePercentage = aiResults
+    ? (aiResults.totalPointsAwarded / aiResults.totalPointsPossible) * 100
+    : 0;
+
+  return (
+    <div className="space-y-8">
+      <Card>
+        <CardHeader>
+          <CardTitle>{exam.examName}</CardTitle>
+          <CardDescription>
+            Review of the student's answers and AI-powered grading.
+          </CardDescription>
+        </CardHeader>
+        <CardFooter>
+          <Button onClick={handleGradeExam} disabled={isLoading}>
+            {isLoading ? (
+              <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Sparkles className="mr-2 h-4 w-4" />
+            )}
+            {aiResults ? 'Regrade with AI' : 'Grade with AI'}
+          </Button>
+        </CardFooter>
+      </Card>
+
+      {isLoading && (
+        <Card>
+          <CardHeader className="items-center text-center">
+            <LoaderCircle className="w-12 h-12 animate-spin text-primary mb-4" />
+            <CardTitle>Grading in Progress...</CardTitle>
+            <CardDescription>
+              Our AI is carefully reviewing the exam. This may take a moment.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      )}
+
+      {aiResults && (
+        <div className="grid gap-8 md:grid-cols-3">
+          <Card className="md:col-span-1">
+            <CardHeader>
+              <CardTitle>Overall Score</CardTitle>
+              <CardDescription>
+                Score for auto-graded questions.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center">
+              <p className="text-5xl font-bold">
+                {aiResults.totalPointsAwarded}
+                <span className="text-2xl text-muted-foreground">
+                  /{aiResults.totalPointsPossible}
+                </span>
+              </p>
+              <Progress value={scorePercentage} className="mt-4" />
+            </CardContent>
+          </Card>
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ClipboardCheck /> AI-Generated Summary
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">{aiResults.summary}</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Exam Questions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Accordion type="single" collapsible className="w-full">
+            {exam.questions.map((question) => {
+              const objectiveResult = aiResults?.objectiveResults.find(
+                (r) => r.questionId === question.questionId
+              );
+              const flaggedResult = aiResults?.flaggedAnswers.find(
+                (f) => f.questionId === question.questionId
+              );
+
+              return (
+                <AccordionItem
+                  value={question.questionId}
+                  key={question.questionId}
+                >
+                  <AccordionTrigger className="hover:no-underline">
+                    <div className="flex items-center gap-3 flex-1 text-left">
+                      {getQuestionIcon(question.questionType)}
+                      <span className="font-medium flex-1">
+                        {question.questionText}
+                      </span>
+                      <QuestionResultBadge
+                        question={question}
+                        aiResults={aiResults}
+                      />
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-4 pt-4">
+                    <div className="grid gap-2">
+                      <h4 className="font-semibold text-sm">Student's Answer</h4>
+                      <p className="text-sm p-3 bg-secondary rounded-md">
+                        {question.studentAnswer}
+                      </p>
+                    </div>
+                    {objectiveResult && !objectiveResult.isCorrect && (
+                      <div className="grid gap-2">
+                        <h4 className="font-semibold text-sm">Correct Answer</h4>
+                        <p className="text-sm p-3 bg-green-100 text-green-900 rounded-md">
+                          {question.correctAnswer}
+                        </p>
+                      </div>
+                    )}
+                    {flaggedResult?.isPotentiallyIncorrect && (
+                       <div className="grid gap-2">
+                         <h4 className="font-semibold text-sm">Model Answer</h4>
+                         <p className="text-sm p-3 bg-blue-100 text-blue-900 rounded-md">
+                          {question.correctAnswer}
+                         </p>
+                       </div>
+                    )}
+                     {(objectiveResult || flaggedResult) && (
+                      <div className="p-3 border-l-4 border-accent bg-accent/10 rounded-r-md">
+                        <h4 className="font-semibold text-sm text-accent-foreground/90 mb-1">AI Feedback</h4>
+                        <p className="text-sm text-accent-foreground/80">
+                          {objectiveResult?.feedback || flaggedResult?.reason}
+                        </p>
+                      </div>
+                     )}
+                  </AccordionContent>
+                </AccordionItem>
+              );
+            })}
+          </Accordion>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
