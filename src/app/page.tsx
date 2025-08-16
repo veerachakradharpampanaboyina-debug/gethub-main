@@ -13,7 +13,6 @@ import Link from 'next/link';
 import { ArrowRight, BrainCircuit, BookOpenCheck, LogOut, Settings, Library, Briefcase } from 'lucide-react';
 import GethubLogo from '@/components/gethub-logo';
 import { examCategories } from '@/lib/exam-categories';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
 import { LoaderCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -28,6 +27,7 @@ function HomePageContent() {
   const router = useRouter();
   const { toast } = useToast();
   const [enrolledExamIds, setEnrolledExamIds] = useState<string[]>([]);
+  const allExams = examCategories.flatMap(c => c.exams);
   
   useEffect(() => {
     if (user) {
@@ -120,48 +120,32 @@ function HomePageContent() {
           <section id="exams" className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
               <div className="text-center mb-12">
                   <h2 className="text-3xl font-bold tracking-tight">Choose Your Exam</h2>
-                  <p className="text-muted-foreground mt-2">Select a category to find your exam and start your preparation journey.</p>
+                  <p className="text-muted-foreground mt-2">Select an exam to enroll and start your preparation journey.</p>
               </div>
 
-              <Tabs defaultValue={examCategories[0].category} className="w-full">
-                  <div className="flex justify-center mb-8">
-                      <TabsList className="grid w-full max-w-5xl grid-cols-2 md:grid-cols-3 lg:grid-cols-5 h-auto">
-                          {examCategories.map((category) => (
-                              <TabsTrigger key={category.category} value={category.category} className="text-center whitespace-normal h-full py-2">
-                                  {category.category}
-                              </TabsTrigger>
-                          ))}
-                      </TabsList>
-                  </div>
-
-                  {examCategories.map((category) => (
-                  <TabsContent key={category.category} value={category.category}>
-                      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                          {category.exams.map((exam) => (
-                          <Card key={exam.examId} className="flex flex-col">
-                              <CardHeader>
-                              <CardTitle>{exam.examName}</CardTitle>
-                              <CardDescription>{exam.description}</CardDescription>
-                              </CardHeader>
-                              <CardContent className="flex-grow flex flex-col justify-end gap-4">
-                                <Button onClick={() => handleEnroll(exam.examId, exam.examName)} className="w-full">
-                                    {enrolledExamIds.includes(exam.examId) ? (
-                                      <>
-                                      <BookOpenCheck className="mr-2" /> View Dashboard
-                                      </>
-                                    ) : (
-                                       <>
-                                      <Briefcase className="mr-2" /> Enroll Now
-                                      </>
-                                    )}
-                                </Button>
-                              </CardContent>
-                          </Card>
-                          ))}
-                      </div>
-                  </TabsContent>
+               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {allExams.map((exam) => (
+                  <Card key={exam.examId} className="flex flex-col">
+                      <CardHeader>
+                      <CardTitle>{exam.examName}</CardTitle>
+                      <CardDescription>{exam.description}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="flex-grow flex flex-col justify-end gap-4">
+                        <Button onClick={() => handleEnroll(exam.examId, exam.examName)} className="w-full">
+                            {enrolledExamIds.includes(exam.examId) ? (
+                              <>
+                              <BookOpenCheck className="mr-2" /> View Dashboard
+                              </>
+                            ) : (
+                                <>
+                              <Briefcase className="mr-2" /> Enroll Now
+                              </>
+                            )}
+                        </Button>
+                      </CardContent>
+                  </Card>
                   ))}
-              </Tabs>
+              </div>
           </section>
         </main>
         <footer className="p-4 border-t text-center text-sm text-muted-foreground">
@@ -206,55 +190,39 @@ function HomePageContent() {
         <section className="py-12 px-4 border-b">
             <h1 className="text-4xl font-bold tracking-tight">Welcome back, {user.displayName || 'Student'}!</h1>
             <p className="text-muted-foreground mt-2 text-lg">
-                Ready to ace your next exam? Select a topic below to start your preparation journey.
+                Ready to ace your next exam? Select an topic below to start your preparation journey.
             </p>
         </section>
 
         <section id="exams" className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
              <div className="text-left mb-8">
                 <h2 className="text-3xl font-bold tracking-tight">Enroll in an Exam</h2>
-                <p className="text-muted-foreground mt-2">Select a category to find your exam and add it to your dashboard.</p>
+                <p className="text-muted-foreground mt-2">Select an exam to add it to your dashboard.</p>
             </div>
 
-            <Tabs defaultValue={examCategories[0].category} className="w-full">
-                <div className="flex justify-center mb-8">
-                    <TabsList className="grid w-full max-w-5xl grid-cols-2 md:grid-cols-3 lg:grid-cols-5 h-auto">
-                        {examCategories.map((category) => (
-                            <TabsTrigger key={category.category} value={category.category} className="text-center whitespace-normal h-full py-2">
-                                {category.category}
-                            </TabsTrigger>
-                        ))}
-                    </TabsList>
-                </div>
-
-                {examCategories.map((category) => (
-                <TabsContent key={category.category} value={category.category}>
-                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                        {category.exams.map((exam) => (
-                        <Card key={exam.examId} className="flex flex-col">
-                            <CardHeader>
-                            <CardTitle>{exam.examName}</CardTitle>
-                            <CardDescription>{exam.description}</CardDescription>
-                            </CardHeader>
-                            <CardContent className="flex-grow flex flex-col justify-end gap-4">
-                               <Button onClick={() => handleEnroll(exam.examId, exam.examName)} className="w-full">
-                                    {enrolledExamIds.includes(exam.examId) ? (
-                                      <>
-                                      <BookOpenCheck className="mr-2" /> View Dashboard
-                                      </>
-                                    ) : (
-                                       <>
-                                      <Briefcase className="mr-2" /> Enroll Now
-                                      </>
-                                    )}
-                                </Button>
-                            </CardContent>
-                        </Card>
-                        ))}
-                    </div>
-                </TabsContent>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {allExams.map((exam) => (
+                <Card key={exam.examId} className="flex flex-col">
+                    <CardHeader>
+                    <CardTitle>{exam.examName}</CardTitle>
+                    <CardDescription>{exam.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex-grow flex flex-col justify-end gap-4">
+                        <Button onClick={() => handleEnroll(exam.examId, exam.examName)} className="w-full">
+                            {enrolledExamIds.includes(exam.examId) ? (
+                              <>
+                              <BookOpenCheck className="mr-2" /> View Dashboard
+                              </>
+                            ) : (
+                                <>
+                              <Briefcase className="mr-2" /> Enroll Now
+                              </>
+                            )}
+                        </Button>
+                    </CardContent>
+                </Card>
                 ))}
-            </Tabs>
+            </div>
         </section>
       </main>
       <footer className="p-4 border-t text-center text-sm text-muted-foreground">
