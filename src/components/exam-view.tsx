@@ -292,16 +292,6 @@ export function ExamView({ exam: initialExam }: ExamViewProps) {
               : "Answer the questions below and submit for AI-powered analysis."}
           </CardDescription>
         </CardHeader>
-        <CardFooter>
-          <Button onClick={handleGradeExam} disabled={isLoading}>
-            {isLoading ? (
-              <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Sparkles className="mr-2 h-4 w-4" />
-            )}
-            {aiResults ? 'Re-analyze with AI' : 'Analyze with AI'}
-          </Button>
-        </CardFooter>
       </Card>
 
       {isLoading && (
@@ -412,6 +402,19 @@ export function ExamView({ exam: initialExam }: ExamViewProps) {
           );
         })}
       </div>
+
+       {!isSubmitted && (
+        <div className="flex justify-center mt-8">
+            <Button onClick={handleGradeExam} disabled={isLoading} size="lg">
+            {isLoading ? (
+                <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+                <Sparkles className="mr-2 h-4 w-4" />
+            )}
+            {aiResults ? 'Re-analyze with AI' : 'Analyze with AI'}
+            </Button>
+        </div>
+      )}
     </div>
   );
 }
