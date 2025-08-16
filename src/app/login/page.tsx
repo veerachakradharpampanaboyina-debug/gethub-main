@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/use-auth';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import GethubLogo from '@/components/gethub-logo';
 
@@ -30,19 +30,22 @@ function LoginPage() {
     loading,
   } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectPath = searchParams.get('redirect') || '/';
+
 
   useEffect(() => {
     if (!loading && user) {
-      router.push('/');
+      router.push(redirectPath);
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, redirectPath]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     try {
       await loginWithEmail(email, password);
-      router.push('/');
+      router.push(redirectPath);
     } catch (err: any) {
       setError(err.message);
     }
@@ -51,7 +54,7 @@ function LoginPage() {
   const handleGoogleLogin = async () => {
     try {
       await loginWithGoogle();
-      router.push('/');
+      router.push(redirectPath);
     } catch (err: any) {
       setError(err.message);
     }
@@ -60,7 +63,7 @@ function LoginPage() {
   const handleFacebookLogin = async () => {
     try {
       await loginWithFacebook();
-      router.push('/');
+      router.push(redirectPath);
     } catch (err: any) {
       setError(err.message);
     }
