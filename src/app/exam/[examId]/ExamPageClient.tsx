@@ -51,6 +51,7 @@ import { generateSyllabusNotes } from '@/ai/flows/generate-syllabus-notes';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Separator } from '@/components/ui/separator';
+import { markdownToHtml } from '@/lib/utils';
 
 function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
   const { user, loading, logout } = useAuth();
@@ -91,13 +92,22 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
   };
   
   const handleDownloadPdf = () => {
-    if (!notesContentRef.current) return;
+    const notesElement = notesContentRef.current;
+    if (!notesElement) return;
+    
+    // Temporarily set the container to a fixed width for consistent PDF output
+    notesElement.style.width = '210mm'; // A4 width
 
-    html2canvas(notesContentRef.current, {
-        scale: 2, // Higher scale for better quality
+    html2canvas(notesElement, {
+        scale: 2,
         useCORS: true,
-        backgroundColor: '#020817' // Match your dark theme background
+        backgroundColor: '#020817',
+        windowWidth: notesElement.scrollWidth,
+        windowHeight: notesElement.scrollHeight,
     }).then(canvas => {
+        // Reset the width after capture
+        notesElement.style.width = '';
+
         const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF({
             orientation: 'p',
@@ -108,20 +118,21 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
         const pdfHeight = pdf.internal.pageSize.getHeight();
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
-        const ratio = canvasWidth / canvasHeight;
-        const width = pdfWidth;
-        const height = width / ratio;
+        const imgRatio = canvasWidth / canvasHeight;
+        const pdfRatio = pdfWidth / pdfHeight;
+
+        let imgHeight = pdfWidth / imgRatio;
+        let heightLeft = imgHeight;
 
         let position = 0;
-        let heightLeft = (canvasHeight * pdfWidth) / canvasWidth; // convert canvas height to pdf scale
 
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, heightLeft);
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, imgHeight);
         heightLeft -= pdfHeight;
 
         while (heightLeft > 0) {
-            position = heightLeft - ((canvasHeight * pdfWidth) / canvasWidth);
+            position = heightLeft - imgHeight;
             pdf.addPage();
-            pdf.addImage(imgData, 'PNG', 0, -position, pdfWidth, (canvasHeight * pdfWidth) / canvasWidth);
+            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
             heightLeft -= pdfHeight;
         }
 
@@ -288,7 +299,7 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
                                                   {paper.topics && paper.topics.length > 0 ? paper.topics.map((topic, index) => (
                                                       <div key={index} className="p-3 rounded-lg bg-secondary/30 space-y-3">
                                                          <p className="font-medium text-sm">{topic}</p>
-                                                          <div className="flex gap-2">
+                                                          <div className="flex flex-col sm:flex-row gap-2">
                                                             <Button asChild variant="outline" size="sm" className="w-full">
                                                                 <Link href={`/practice?topic=${encodeURIComponent(`${exam.examName} - ${paper.paperName} - ${topic}`)}`}>
                                                                     <BrainCircuit className="mr-2" />
@@ -348,9 +359,9 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
        <Dialog open={isNotesDialogOpen} onOpenChange={setIsNotesDialogOpen}>
         <DialogContent className="max-w-3xl h-[90vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>AI Generated Notes: {currentTopic}</DialogTitle>
+            <DialogTitle>AI Generated Notes</DialogTitle>
             <DialogDescription>
-              Here are the AI-generated notes. You can review them here or download them as a PDF.
+              Topic: {currentTopic}. Review the notes or download as a PDF.
             </DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto pr-4 -mr-6">
@@ -365,7 +376,9 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
               <div className="text-destructive p-4">{notesError}</div>
             ) : (
               <div className="prose prose-invert prose-sm md:prose-base max-w-none p-6 bg-background text-foreground font-serif">
-                <div ref={notesContentRef} dangerouslySetInnerHTML={{ __html: generatedNotes.replace(/\n/g, '<br />') }} />
+                 <div ref={notesContentRef}>
+                    <div dangerouslySetInnerHTML={{ __html: markdownToHtml(generatedNotes) }} />
+                 </div>
               </div>
             )}
           </div>
