@@ -138,26 +138,18 @@ function HomePageContent() {
     <div className="flex flex-col min-h-screen bg-background">
         <PageHeader/>
         <main className="flex-1">
-            <section className="relative text-center py-20 px-4 border-b border-white/10 overflow-hidden">
-                 <div className="absolute inset-0 bg-grid-white/[0.05] [mask-image:linear-gradient(to_bottom,white_10%,transparent_100%)]"></div>
-                 <div className="relative z-10">
-                    <h1 className="text-4xl md:text-6xl font-bold tracking-tight bg-gradient-to-br from-white to-zinc-400 bg-clip-text text-transparent">Your Personal AI Exam Preparation Hub</h1>
-                    <p className="text-muted-foreground mt-4 max-w-2xl mx-auto text-lg">
-                        Practice for India's toughest competitive exams with AI-generated questions based on official syllabi and past papers. Get instant feedback and track your progress.
-                    </p>
-                    <div className="mt-8 flex justify-center gap-4">
-                        <Button asChild size="lg">
-                            <Link href="#exams">
-                                Browse Exams <ArrowRight className="ml-2" />
-                            </Link>
-                        </Button>
-                         <Button asChild size="lg" variant="secondary">
-                            <Link href="/practice">
-                                <BrainCircuit className="mr-2"/> AI Practice
-                            </Link>
-                        </Button>
-                    </div>
-                 </div>
+            <section className="text-center py-20 px-4 border-b border-white/10">
+                 <h1 className="text-4xl md:text-5xl font-bold tracking-tight">Welcome to GETHUB</h1>
+                 <p className="text-muted-foreground mt-4 max-w-2xl mx-auto text-lg">
+                    Your hub for competitive exam preparation. Choose an exam below to enroll and start your journey.
+                 </p>
+                 <div className="mt-8 flex justify-center gap-4">
+                     <Button asChild size="lg" variant="secondary">
+                        <Link href="/practice">
+                            <BrainCircuit className="mr-2"/> AI Practice
+                        </Link>
+                    </Button>
+                </div>
             </section>
             
             <section id="exams" className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
