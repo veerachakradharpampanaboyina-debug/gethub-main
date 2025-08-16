@@ -16,7 +16,7 @@ import {
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, Settings, Home as HomeIcon, History, BrainCircuit, Shield } from 'lucide-react';
+import { LogOut, Settings, Home as HomeIcon, History, BrainCircuit, Shield, Camera } from 'lucide-react';
 import GethubLogo from '@/components/gethub-logo';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
@@ -44,36 +44,56 @@ const settingsSchema = z.object({
 type SettingsFormValues = z.infer<typeof settingsSchema>;
 
 function SettingsPage() {
-  const { user, loading, logout, updateUserProfile, updateUserPassword } = useAuth();
+  const { user, loading, logout, updateUserProfile, updateUserPassword, uploadProfileImage } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  const { register, handleSubmit, formState: { errors } } = useForm<SettingsFormValues>({
+  const { register, handleSubmit, formState: { errors }, setValue } = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsSchema),
-    defaultValues: {
-      fullName: user?.displayName || '',
-      phoneNumber: user?.phoneNumber || '',
-    },
   });
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login?redirect=/settings');
     }
-  }, [user, loading, router]);
+     if (user) {
+      setValue('fullName', user.displayName || '');
+      setValue('phoneNumber', user.phoneNumber || '');
+    }
+  }, [user, loading, router, setValue]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+        setProfileImageFile(file);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setImagePreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+    }
+  };
 
 
   const onSubmit: SubmitHandler<SettingsFormValues> = async (data) => {
     if (!user) return;
     setIsSubmitting(true);
     try {
-      // Update display name
-      if (data.fullName !== user.displayName) {
-        await updateUserProfile({ displayName: data.fullName });
+      // 1. Upload profile image if selected
+      let photoURL = user.photoURL;
+      if (profileImageFile) {
+        photoURL = await uploadProfileImage(profileImageFile, user.uid);
+      }
+
+      // 2. Update display name and photoURL
+      if (data.fullName !== user.displayName || (photoURL && photoURL !== user.photoURL)) {
+        await updateUserProfile({ displayName: data.fullName, photoURL: photoURL ?? undefined });
       }
       
-      // Update password if provided
+      // 3. Update password if provided
       if (data.newPassword) {
         await updateUserPassword(data.newPassword);
       }
@@ -91,6 +111,7 @@ function SettingsPage() {
       });
     } finally {
       setIsSubmitting(false);
+      setProfileImageFile(null);
     }
   };
 
@@ -206,16 +227,31 @@ function SettingsPage() {
               <CardHeader>
                 <CardTitle>Profile Settings</CardTitle>
                 <CardDescription>
-                  Update your personal information.
+                  Update your personal information and profile picture.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="fullName">Full Name</Label>
-                    <Input id="fullName" {...register("fullName")} />
-                     {errors.fullName && <p className="text-sm text-destructive">{errors.fullName.message}</p>}
+                  
+                  <div className="space-y-2 flex items-center gap-6">
+                    <div className="relative">
+                        <Avatar className="w-24 h-24">
+                            <AvatarImage src={imagePreview || user.photoURL || 'https://placehold.co/200x200.png'} alt="Profile" />
+                            <AvatarFallback>{user.email?.[0].toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                         <Label htmlFor="profileImage" className="absolute bottom-0 right-0 cursor-pointer bg-primary text-primary-foreground p-1 rounded-full hover:bg-primary/90">
+                           <Camera className="w-4 h-4"/>
+                            <Input id="profileImage" type="file" className="sr-only" accept="image/*" onChange={handleImageChange}/>
+                        </Label>
+                    </div>
+
+                     <div className="flex-1 space-y-2">
+                      <Label htmlFor="fullName">Full Name</Label>
+                      <Input id="fullName" {...register("fullName")} />
+                      {errors.fullName && <p className="text-sm text-destructive">{errors.fullName.message}</p>}
+                    </div>
                   </div>
+
                    <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
                     <Input id="email" type="email" value={user.email || ''} disabled />

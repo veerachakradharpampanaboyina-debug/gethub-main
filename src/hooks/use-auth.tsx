@@ -20,7 +20,9 @@ import {
   updateProfile,
   updatePassword,
 } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, storage } from '@/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+
 
 interface AuthContextType {
   user: User | null;
@@ -32,6 +34,7 @@ interface AuthContextType {
   logout: () => Promise<any>;
   updateUserProfile: (profile: { displayName?: string; photoURL?: string }) => Promise<void>;
   updateUserPassword: (newPassword: string) => Promise<void>;
+  uploadProfileImage: (file: File, userId: string) => Promise<string>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -84,6 +87,16 @@ function useAuthProvider() {
     return updatePassword(auth.currentUser, newPassword);
   };
 
+  const uploadProfileImage = async (file: File, userId: string): Promise<string> => {
+    if (!file) {
+      return Promise.reject(new Error('No file provided.'));
+    }
+    const storageRef = ref(storage, `profile_images/${userId}/${file.name}`);
+    await uploadBytes(storageRef, file);
+    const downloadURL = await getDownloadURL(storageRef);
+    return downloadURL;
+  };
+
 
   return {
     user,
@@ -95,6 +108,7 @@ function useAuthProvider() {
     logout,
     updateUserProfile,
     updateUserPassword,
+    uploadProfileImage,
   };
 }
 
