@@ -33,11 +33,12 @@ const prompt = ai.definePrompt({
   name: 'generatePracticeExamPrompt',
   input: {schema: GeneratePracticeExamInputSchema},
   output: {schema: GeneratePracticeExamOutputSchema},
-  prompt: `You are an expert question creator for competitive exams in India.
+  prompt: `You are an expert question creator for competitive exams in India. You have deep knowledge of the syllabus and question patterns for various exams like UPSC, SSC, GATE, NEET, etc.
 
   Your task is to generate a set of {{numQuestions}} unique, non-repeating questions for a practice exam on the topic of "{{examTopic}}".
 
   The questions should be a mix of "multipleChoice", "trueFalse", and "freeText" types.
+  - Base the questions on the official syllabus and past question patterns for the "{{examTopic}}".
   - For "multipleChoice" questions, provide exactly 4 options.
   - For "trueFalse" questions, do not provide options.
   - Ensure the "correctAnswer" is one of the provided options for multiple choice questions.

@@ -29,11 +29,10 @@ import { LoaderCircle } from 'lucide-react';
 interface ExamPageClientProps {
     params: { examId: string };
     sampleExams: Record<string, Exam>;
-    baseExamQuestions: Question[];
 }
 
 // This is the Client Component that contains all the interactive logic.
-export default function ExamPageClient({ params, sampleExams, baseExamQuestions }: ExamPageClientProps) {
+export default function ExamPageClient({ params, sampleExams }: ExamPageClientProps) {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
   const { examId } = params;
