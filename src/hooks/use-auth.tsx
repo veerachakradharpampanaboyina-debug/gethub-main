@@ -17,6 +17,8 @@ import {
   GoogleAuthProvider,
   FacebookAuthProvider,
   signOut,
+  updateProfile,
+  updatePassword,
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
@@ -28,6 +30,8 @@ interface AuthContextType {
   loginWithGoogle: () => Promise<any>;
   loginWithFacebook: () => Promise<any>;
   logout: () => Promise<any>;
+  updateUserProfile: (profile: { displayName?: string; photoURL?: string }) => Promise<void>;
+  updateUserPassword: (newPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -66,6 +70,21 @@ function useAuthProvider() {
     return signOut(auth);
   };
 
+  const updateUserProfile = (profile: { displayName?: string; photoURL?: string }) => {
+    if (!auth.currentUser) {
+      return Promise.reject(new Error('No user is signed in.'));
+    }
+    return updateProfile(auth.currentUser, profile);
+  };
+
+  const updateUserPassword = (newPassword: string) => {
+    if (!auth.currentUser) {
+      return Promise.reject(new Error('No user is signed in.'));
+    }
+    return updatePassword(auth.currentUser, newPassword);
+  };
+
+
   return {
     user,
     loading,
@@ -74,6 +93,8 @@ function useAuthProvider() {
     loginWithGoogle,
     loginWithFacebook,
     logout,
+    updateUserProfile,
+    updateUserPassword,
   };
 }
 
