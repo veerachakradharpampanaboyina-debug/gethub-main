@@ -46,10 +46,14 @@ function PracticeExamGenerator() {
   }, [user, loading, router, topic]);
 
   useEffect(() => {
-    if (user && !exam) {
-      // Get questions the user has already seen to avoid repeats
+    // This effect handles the generation of the exam.
+    // It will only run when the user is available.
+    if (user && !exam && !generationError) {
+      // Get questions the user has already seen to avoid repeats.
+      // This is an async call that needs to complete before we generate the exam.
       getSeenQuestions(user.uid)
         .then(seenQuestions => {
+           // Now that we have the seen questions, we can generate a new exam.
            return generatePracticeExam({ 
              examTopic: topic, 
              numQuestions: 50,
@@ -57,6 +61,7 @@ function PracticeExamGenerator() {
             });
         })
         .then(response => {
+          // Once the exam is generated, we format it into the structure our components expect.
           const examQuestions: Question[] = response.questions.map(q => ({
             ...q,
             studentAnswer: '', // Initialize with empty answers
@@ -75,11 +80,12 @@ function PracticeExamGenerator() {
           setExam(newExam);
         })
         .catch(err => {
+          // If any part of the process fails, we record and display an error.
           console.error("Failed to generate exam:", err);
           setGenerationError("Sorry, we couldn't generate a practice exam at this time. Please try again later.");
         });
     }
-  }, [user, exam, topic]);
+  }, [user, exam, topic, generationError]); // Dependencies for the effect
 
   if (loading || !user) {
     return (
