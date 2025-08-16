@@ -1,5 +1,6 @@
 
 'use client';
+
 import {
   SidebarProvider,
   Sidebar,
@@ -14,7 +15,7 @@ import {
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { FileText, LogOut, Settings, Home as HomeIcon, History, Shield } from 'lucide-react';
+import { FileText, LogOut, Settings, Home as HomeIcon, History, Shield, BrainCircuit } from 'lucide-react';
 import type { Exam } from '@/lib/types';
 import { ExamView } from '@/components/exam-view';
 import GethubLogo from '@/components/gethub-logo';
@@ -23,6 +24,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { LoaderCircle } from 'lucide-react';
 
 // In a real app, you would fetch this data based on the examId
 const sampleExams: Record<string, Exam> = {
@@ -708,14 +710,14 @@ allExams.forEach(exam => {
 });
 
 
-export function generateStaticParams() {
-  return allExams.map((exam) => ({
-    examId: exam.examId,
-  }));
-}
+// This function is needed for static export, but causes issues with 'use client'
+// export function generateStaticParams() {
+//   return allExams.map((exam) => ({
+//     examId: exam.examId,
+//   }));
+// }
 
-
-function ExamPage({ params }: { params: { examId: string } }) {
+function ExamPageClient({ params }: { params: { examId: string } }) {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
   const { examId } = params;
@@ -731,7 +733,7 @@ function ExamPage({ params }: { params: { examId: string } }) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
-          <p>Loading...</p>
+          <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
         </div>
       </div>
     );
@@ -787,6 +789,19 @@ function ExamPage({ params }: { params: { examId: string } }) {
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
+          <SidebarGroup>
+             <SidebarGroupLabel>Practice</SidebarGroupLabel>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                    <Link href="/practice">
+                        <SidebarMenuButton tooltip="Practice Exam">
+                            <BrainCircuit />
+                            <span>Practice Exam</span>
+                        </SidebarMenuButton>
+                    </Link>
+                </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroup>
           <SidebarGroup>
@@ -870,10 +885,10 @@ function SidebarInset({ children }: { children: React.ReactNode}) {
   )
 }
 
-export default function ExamPageWrapper({ params }: { params: { examId: string } }) {
+export default function ExamPage({ params }: { params: { examId: string } }) {
   return (
     <AuthProvider>
-      <ExamPage params={params} />
+      <ExamPageClient params={params} />
     </AuthProvider>
   );
 }
