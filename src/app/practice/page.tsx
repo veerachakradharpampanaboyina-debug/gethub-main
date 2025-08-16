@@ -29,6 +29,8 @@ import { generatePracticeExam } from '@/ai/flows/generate-practice-exam';
 import { getSeenQuestions } from '@/services/exam-service';
 import { LoaderCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 function PracticeExamGenerator() {
@@ -38,79 +40,54 @@ function PracticeExamGenerator() {
   const topic = searchParams.get('topic') || 'a general knowledge';
   const [exam, setExam] = useState<Exam | null>(null);
   const [generationError, setGenerationError] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [numQuestions, setNumQuestions] = useState('5');
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push(`/login?redirect=/practice?topic=${encodeURIComponent(topic)}`);
+      router.push(`/practice?topic=${encodeURIComponent(topic)}`);
     }
   }, [user, loading, router, topic]);
 
-  useEffect(() => {
-    if (user && !exam && !generationError) {
-      getSeenQuestions(user.uid)
-        .then(seenQuestions => {
-           return generatePracticeExam({ 
-             examTopic: topic, 
-             numQuestions: 5,
-             seenQuestions,
-            });
-        })
-        .then(response => {
-          const examQuestions: Question[] = response.questions.map(q => ({
-            ...q,
-            studentAnswer: '', 
-          }));
+  const handleGenerateExam = async () => {
+    if (!user) return;
+    setIsGenerating(true);
+    setGenerationError(null);
+    setExam(null);
 
-          const newExam: Exam = {
-            student: {
-              name: user.displayName || user.email || 'Student',
-              id: user.uid,
-              avatarUrl: user.photoURL || `https://placehold.co/100x100.png`,
-            },
-            examName: `Practice Exam: ${topic}`,
-            examId: `practice-${Date.now()}`,
-            questions: examQuestions,
-          };
-          setExam(newExam);
-        })
-        .catch(err => {
-          console.error("Failed to generate exam:", err);
-          setGenerationError("Sorry, we couldn't generate a practice exam at this time. Please try again later.");
-        });
+    try {
+      const seenQuestions = await getSeenQuestions(user.uid);
+      const response = await generatePracticeExam({
+        examTopic: topic,
+        numQuestions: parseInt(numQuestions, 10),
+        seenQuestions,
+      });
+
+      const examQuestions: Question[] = response.questions.map(q => ({
+        ...q,
+        studentAnswer: '',
+      }));
+
+      const newExam: Exam = {
+        student: {
+          name: user.displayName || user.email || 'Student',
+          id: user.uid,
+          avatarUrl: user.photoURL || `https://placehold.co/100x100.png`,
+        },
+        examName: `Practice Exam: ${topic}`,
+        examId: `practice-${Date.now()}`,
+        questions: examQuestions,
+      };
+      setExam(newExam);
+    } catch (err) {
+      console.error("Failed to generate exam:", err);
+      setGenerationError("Sorry, we couldn't generate a practice exam at this time. Please try again later.");
+    } finally {
+      setIsGenerating(false);
     }
-  }, [user, exam, topic, generationError]);
-
-  if (loading || (!exam && !generationError)) {
-    return (
-        <div className="flex h-screen items-center justify-center">
-            <div className="text-center flex flex-col items-center gap-4">
-                <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
-                <h1 className="text-2xl font-bold">Generating Your Practice Exam...</h1>
-                <p className="text-muted-foreground">The AI is preparing your questions for the {topic} exam.</p>
-            </div>
-        </div>
-    );
-  }
-
-  if (generationError) {
-    return (
-      <div className="flex h-screen items-center justify-center p-4">
-        <Card className="text-center">
-            <CardHeader>
-                <CardTitle>Error Generating Exam</CardTitle>
-                <CardDescription>{generationError}</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Button asChild>
-                    <Link href="/">Return to Homepage</Link>
-                </Button>
-            </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (!user || !exam) {
+  };
+  
+  if (loading) {
      return (
       <div className="flex h-screen items-center justify-center">
         <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
@@ -118,6 +95,13 @@ function PracticeExamGenerator() {
     );
   }
 
+  if (!user) {
+     return (
+      <div className="flex h-screen items-center justify-center">
+         <p>Redirecting to login...</p>
+      </div>
+    );
+  }
 
   return (
     <SidebarProvider>
@@ -151,14 +135,24 @@ function PracticeExamGenerator() {
             </SidebarMenu>
           </SidebarGroup>
           <SidebarGroup>
-            <SidebarGroupLabel>Exams</SidebarGroupLabel>
+            <SidebarGroupLabel>Practice</SidebarGroupLabel>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton tooltip={exam.examName} isActive>
-                  <BrainCircuit />
-                  <span>{exam.examName}</span>
-                </SidebarMenuButton>
+                <Link href="/practice">
+                    <SidebarMenuButton tooltip="Practice Exam" isActive>
+                        <BrainCircuit />
+                        <span>Practice Exam</span>
+                    </SidebarMenuButton>
+                </Link>
               </SidebarMenuItem>
+              {exam && (
+                 <SidebarMenuItem>
+                    <SidebarMenuButton tooltip={exam.examName}>
+                      <Library />
+                      <span>{exam.examName}</span>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroup>
            {user && user.email === 'admin@gethub.com' && (
@@ -209,23 +203,60 @@ function PracticeExamGenerator() {
         <header className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center gap-2">
             <SidebarTrigger className="md:hidden" />
-            <h1 className="text-xl font-semibold flex items-center gap-3">
-              <Avatar className="w-8 h-8">
-                <AvatarImage src={exam.student.avatarUrl} alt={exam.student.name} data-ai-hint="student portrait" />
-                <AvatarFallback>{exam.student.name[0]}</AvatarFallback>
-              </Avatar>
-              {exam.student.name}
+             <h1 className="text-xl font-semibold flex items-center gap-3">
+                <BrainCircuit className="w-6 h-6"/>
+                AI Practice Exam
             </h1>
           </div>
         </header>
         <main className="p-4 md:p-6 lg:p-8">
-          <ExamView exam={exam} />
+          {isGenerating ? (
+              <div className="flex flex-col items-center justify-center text-center gap-4">
+                  <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
+                  <h1 className="text-2xl font-bold">Generating Your Practice Exam...</h1>
+                  <p className="text-muted-foreground">The AI is preparing {numQuestions} questions for the {topic} exam.</p>
+              </div>
+          ) : exam ? (
+            <ExamView exam={exam} />
+          ) : (
+            <Card className="max-w-xl mx-auto">
+                <CardHeader>
+                    <CardTitle>Generate a Practice Exam</CardTitle>
+                    <CardDescription>
+                       Select the number of questions you want to generate for the topic: <span className="font-semibold text-primary">{topic}</span>.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {generationError && (
+                         <div className="text-destructive text-center">{generationError}</div>
+                    )}
+                    <div className="space-y-2">
+                        <Label htmlFor="num-questions">Number of Questions</Label>
+                        <Select value={numQuestions} onValueChange={setNumQuestions}>
+                            <SelectTrigger id="num-questions">
+                                <SelectValue placeholder="Select number of questions" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="5">5 Questions</SelectItem>
+                                <SelectItem value="10">10 Questions</SelectItem>
+                                <SelectItem value="15">15 Questions</SelectItem>
+                                <SelectItem value="25">25 Questions</SelectItem>
+                                <SelectItem value="50">50 Questions</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                     <Button onClick={handleGenerateExam} disabled={isGenerating} className="w-full">
+                        <BrainCircuit className="mr-2" />
+                        Generate Exam
+                    </Button>
+                </CardContent>
+            </Card>
+          )}
         </main>
       </SidebarInset>
     </SidebarProvider>
   );
 }
-
 
 function SidebarInset({ children }: { children: React.ReactNode}) {
   return (
