@@ -38,6 +38,22 @@ export interface Question extends z.infer<typeof GeneratedQuestionSchema> {
   options?: string[]; // Ensure options is part of the final Question type
 }
 
+export interface SyllabusTopic {
+  topicId: string;
+  topicName: string;
+  description: string;
+  materials: {
+    notes: { name: string; url: string }[];
+    videos: { name: string; url: string }[];
+  };
+}
+
+export interface ExamDetails {
+  examId: string;
+  examName: string;
+  description: string;
+  syllabus: SyllabusTopic[];
+}
 
 export interface Exam {
   student: Student;
@@ -68,4 +84,11 @@ export interface ExamAttempt {
     questions: Question[];
     aiGradingState: AIGradingState;
     createdAt: Timestamp;
+}
+
+export interface UserEnrollment {
+    id?: string;
+    userId: string;
+    examId: string;
+    enrolledAt: Timestamp;
 }

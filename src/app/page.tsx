@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowRight, BrainCircuit, BookOpenCheck, LogOut, Settings } from 'lucide-react';
+import { ArrowRight, BrainCircuit, BookOpenCheck, LogOut, Settings, Library, Briefcase } from 'lucide-react';
 import GethubLogo from '@/components/gethub-logo';
 import { examCategories } from '@/lib/exam-categories';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -18,11 +18,61 @@ import { AuthProvider, useAuth } from '@/hooks/use-auth';
 import { LoaderCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useToast } from '@/hooks/use-toast';
+import { enrollInExam, getEnrolledExams } from '@/services/exam-service';
+import { useEffect, useState } from 'react';
 
 
 function HomePageContent() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
+  const [enrolledExamIds, setEnrolledExamIds] = useState<string[]>([]);
+  
+  useEffect(() => {
+    if (user) {
+      getEnrolledExams(user.uid).then(exams => {
+        setEnrolledExamIds(exams.map(e => e.examId));
+      });
+    }
+  }, [user]);
+
+  const handleEnroll = async (examId: string, examName: string) => {
+    if (!user) {
+      toast({
+        title: 'Not Logged In',
+        description: 'You need to be logged in to enroll in an exam.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    try {
+      await enrollInExam(user.uid, examId);
+      toast({
+        title: 'Enrollment Successful',
+        description: `You have successfully enrolled in ${examName}.`,
+      });
+       setEnrolledExamIds(prev => [...prev, examId]);
+       router.push(`/enrolled-exams/${examId}`);
+    } catch (error) {
+      console.error('Enrollment failed:', error);
+       if ((error as Error).message.includes('already enrolled')) {
+         toast({
+            title: 'Already Enrolled',
+            description: `You are already enrolled in ${examName}.`,
+            variant: 'default',
+         });
+         router.push(`/enrolled-exams/${examId}`);
+      } else {
+        toast({
+          title: 'Enrollment Failed',
+          description: 'Something went wrong. Please try again.',
+          variant: 'destructive',
+        });
+      }
+    }
+  };
+
 
   if (loading) {
     return (
@@ -70,7 +120,7 @@ function HomePageContent() {
           <section id="exams" className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
               <div className="text-center mb-12">
                   <h2 className="text-3xl font-bold tracking-tight">Choose Your Exam</h2>
-                  <p className="text-muted-foreground mt-2">Select a category to find your exam and start practicing.</p>
+                  <p className="text-muted-foreground mt-2">Select a category to find your exam and start your preparation journey.</p>
               </div>
 
               <Tabs defaultValue={examCategories[0].category} className="w-full">
@@ -94,15 +144,16 @@ function HomePageContent() {
                               <CardDescription>{exam.description}</CardDescription>
                               </CardHeader>
                               <CardContent className="flex-grow flex flex-col justify-end gap-4">
-                              <Button asChild className="w-full" variant="secondary">
-                                  <Link href={`/practice?topic=${encodeURIComponent(exam.examName)}`}>
-                                      <BrainCircuit className="mr-2" /> Practice with AI
-                                  </Link>
-                              </Button>
-                               <Button asChild className="w-full">
-                                  <Link href={`/exam/${exam.examId}`}>
-                                    <BookOpenCheck className="mr-2" /> Take Static Exam
-                                  </Link>
+                                <Button onClick={() => handleEnroll(exam.examId, exam.examName)} className="w-full">
+                                    {enrolledExamIds.includes(exam.examId) ? (
+                                      <>
+                                      <BookOpenCheck className="mr-2" /> View Dashboard
+                                      </>
+                                    ) : (
+                                       <>
+                                      <Briefcase className="mr-2" /> Enroll Now
+                                      </>
+                                    )}
                                 </Button>
                               </CardContent>
                           </Card>
@@ -129,6 +180,12 @@ function HomePageContent() {
           <span className="text-xl font-bold">GETHUB</span>
         </div>
         <div className="flex items-center gap-4">
+            <Button variant="outline" asChild>
+                <Link href="/enrolled-exams">
+                    <Library />
+                    <span>My Exams</span>
+                </Link>
+            </Button>
             <Button variant="ghost" size="icon" asChild>
                 <Link href="/settings">
                     <Settings />
@@ -149,14 +206,14 @@ function HomePageContent() {
         <section className="py-12 px-4 border-b">
             <h1 className="text-4xl font-bold tracking-tight">Welcome back, {user.displayName || 'Student'}!</h1>
             <p className="text-muted-foreground mt-2 text-lg">
-                Ready to ace your next exam? Select a topic below to start practicing.
+                Ready to ace your next exam? Select a topic below to start your preparation journey.
             </p>
         </section>
 
         <section id="exams" className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
              <div className="text-left mb-8">
-                <h2 className="text-3xl font-bold tracking-tight">Choose Your Exam</h2>
-                <p className="text-muted-foreground mt-2">Select a category to find your exam and start practicing.</p>
+                <h2 className="text-3xl font-bold tracking-tight">Enroll in an Exam</h2>
+                <p className="text-muted-foreground mt-2">Select a category to find your exam and add it to your dashboard.</p>
             </div>
 
             <Tabs defaultValue={examCategories[0].category} className="w-full">
@@ -180,15 +237,16 @@ function HomePageContent() {
                             <CardDescription>{exam.description}</CardDescription>
                             </CardHeader>
                             <CardContent className="flex-grow flex flex-col justify-end gap-4">
-                              <Button asChild className="w-full" variant="secondary">
-                                  <Link href={`/practice?topic=${encodeURIComponent(exam.examName)}`}>
-                                      <BrainCircuit className="mr-2" /> Practice with AI
-                                  </Link>
-                              </Button>
-                               <Button asChild className="w-full">
-                                  <Link href={`/exam/${exam.examId}`}>
-                                    <BookOpenCheck className="mr-2" /> Take Static Exam
-                                  </Link>
+                               <Button onClick={() => handleEnroll(exam.examId, exam.examName)} className="w-full">
+                                    {enrolledExamIds.includes(exam.examId) ? (
+                                      <>
+                                      <BookOpenCheck className="mr-2" /> View Dashboard
+                                      </>
+                                    ) : (
+                                       <>
+                                      <Briefcase className="mr-2" /> Enroll Now
+                                      </>
+                                    )}
                                 </Button>
                             </CardContent>
                         </Card>

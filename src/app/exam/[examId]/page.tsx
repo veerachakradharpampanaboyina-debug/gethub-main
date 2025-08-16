@@ -489,43 +489,22 @@ const baseExamQuestions: Question[] = [
   },
 ];
 
-export const sampleExams: Record<string, Exam> = {
-  'upsc-pre-2023-gs1': {
-    student: {
-      name: 'Priya Sharma',
-      id: 'student-002',
-      avatarUrl: 'https://placehold.co/100x100.png',
-    },
-    examName: 'UPSC Civil Services Prelims 2023 - GS Paper 1',
-    examId: 'upsc-pre-2023-gs1',
-    questions: baseExamQuestions.slice(0,5),
-  },
-  'ssc-cgl-2023-tier1': {
-    student: { name: 'Amit Kumar', id: 'student-003' },
-    examName: 'SSC CGL 2023 - Tier 1',
-    examId: 'ssc-cgl-2023-tier1',
-    questions: baseExamQuestions.slice(5, 10),
-  },
-   'gate-2024-cs': {
-    student: { name: 'Sunita Rao', id: 'student-004' },
-    examName: 'GATE 2024 - Computer Science',
-    examId: 'gate-2024-cs',
-    questions: baseExamQuestions.slice(10, 15),
-  },
-};
+// This object is now a fallback for exams not fully defined in `examCategories`
+export const sampleExams: Record<string, Exam> = {};
 
-const allExams = examCategories.flatMap(category => category.exams);
+
+const allExamsFromCategories = examCategories.flatMap(category => category.exams);
 
 // Populate sampleExams with all defined exams
-allExams.forEach(exam => {
+allExamsFromCategories.forEach(exam => {
   if (!sampleExams[exam.examId]) {
     // For demonstration, we'll cycle through the base questions.
     // In a real app, you'd fetch exam-specific questions.
     const questionCount = baseExamQuestions.length;
-    const examIndex = allExams.findIndex(e => e.examId === exam.examId);
+    const examIndex = allExamsFromCategories.findIndex(e => e.examId === exam.examId);
     const start = (examIndex * 5) % questionCount;
     const end = start + 5;
-    const examQuestions = baseExamQuestions.slice(start, end);
+    const examQuestions = baseExamQuestions.slice(start, end > questionCount ? questionCount : end);
 
 
     sampleExams[exam.examId] = {
@@ -550,7 +529,7 @@ export default function ExamPage({ params }: { params: { examId: string } }) {
 
 // This function is needed for static export. It runs on the server at build time.
 export function generateStaticParams() {
-  const allExamIds = Object.keys(sampleExams);
+   const allExamIds = allExamsFromCategories.map(exam => exam.examId);
   return allExamIds.map((id) => ({
     examId: id,
   }));

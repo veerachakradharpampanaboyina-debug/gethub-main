@@ -15,65 +15,65 @@ import {
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { FileText, LogOut, Settings, Home as HomeIcon, History, Shield, BrainCircuit, Library } from 'lucide-react';
-import type { Exam, Question } from '@/lib/types';
-import { ExamView } from '@/components/exam-view';
+import { LogOut, Settings, Home as HomeIcon, History, BrainCircuit, Shield, Library, BookOpenCheck } from 'lucide-react';
+import type { UserEnrollment, ExamDetails } from '@/lib/types';
 import GethubLogo from '@/components/gethub-logo';
-import { useAuth } from '@/hooks/use-auth';
+import { AuthProvider, useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { getEnrolledExams } from '@/services/exam-service';
 import { LoaderCircle } from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { examCategories } from '@/lib/exam-categories';
 
-interface ExamPageClientProps {
-    params: { examId: string };
-    sampleExams: Record<string, Exam>;
-}
 
-// This is the Client Component that contains all the interactive logic.
-export default function ExamPageClient({ params, sampleExams }: ExamPageClientProps) {
+function EnrolledExamsPage() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
-  const { examId } = params;
-  const exam = sampleExams[examId];
+  const [enrolledExams, setEnrolledExams] = useState<ExamDetails[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push(`/login?redirect=/exam/${examId}`);
+      router.push('/login?redirect=/enrolled-exams');
     }
-  }, [user, loading, router, examId]);
+  }, [user, loading, router]);
 
-  if (loading || !user) {
+  useEffect(() => {
+    if (user) {
+      getEnrolledExams(user.uid)
+        .then(enrollments => {
+          const allExams = examCategories.flatMap(c => c.exams);
+          const userExams = enrollments.map(enrollment => {
+            return allExams.find(exam => exam.examId === enrollment.examId)!;
+          }).filter(Boolean); // Filter out any undefined if exam not found
+          setEnrolledExams(userExams);
+        })
+        .catch(err => {
+          console.error("Failed to fetch enrolled exams:", err);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    }
+  }, [user]);
+
+  if (loading || isLoading || !user) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
-        </div>
+        <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
       </div>
     );
   }
-
-  if (!exam) {
-    return (
-       <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold">Exam not found</h1>
-          <p className="text-muted-foreground">This exam does not exist or has been moved.</p>
-          <Button asChild className="mt-4">
-            <Link href="/">Go to Homepage</Link>
-          </Button>
-        </div>
-      </div>
-    )
-  }
-
-  // Update student name from logged in user
-  exam.student.name = user.displayName || user.email || 'Student';
-  if(user.photoURL) {
-    exam.student.avatarUrl = user.photoURL;
-  }
-
+  
   return (
     <SidebarProvider>
       <Sidebar>
@@ -95,9 +95,9 @@ export default function ExamPageClient({ params, sampleExams }: ExamPageClientPr
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
-                <SidebarMenuItem>
+              <SidebarMenuItem>
                 <Link href="/enrolled-exams">
-                  <SidebarMenuButton tooltip="My Exams">
+                  <SidebarMenuButton tooltip="My Exams" isActive>
                     <Library />
                     <span>My Exams</span>
                   </SidebarMenuButton>
@@ -126,18 +126,7 @@ export default function ExamPageClient({ params, sampleExams }: ExamPageClientPr
                 </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroup>
-          <SidebarGroup>
-            <SidebarGroupLabel>Exams</SidebarGroupLabel>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton tooltip={exam.examName} isActive>
-                  <FileText />
-                  <span>{exam.examName}</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroup>
-          {user && user.email === 'admin@gethub.com' && (
+           {user && user.email === 'admin@gethub.com' && (
              <SidebarGroup>
                <SidebarGroupLabel>Admin</SidebarGroupLabel>
                 <SidebarMenu>
@@ -156,7 +145,7 @@ export default function ExamPageClient({ params, sampleExams }: ExamPageClientPr
         <SidebarFooter>
           <SidebarMenu>
             <SidebarMenuItem>
-               <Link href="/settings">
+              <Link href="/settings">
                   <SidebarMenuButton tooltip="Settings">
                     <Settings />
                     <span>Settings</span>
@@ -186,16 +175,42 @@ export default function ExamPageClient({ params, sampleExams }: ExamPageClientPr
           <div className="flex items-center gap-2">
             <SidebarTrigger className="md:hidden" />
             <h1 className="text-xl font-semibold flex items-center gap-3">
-              <Avatar className="w-8 h-8">
-                <AvatarImage src={exam.student.avatarUrl} alt={exam.student.name} data-ai-hint="student portrait" />
-                <AvatarFallback>{exam.student.name[0]}</AvatarFallback>
-              </Avatar>
-              {exam.student.name}
+              <Library className="w-6 h-6"/>
+              My Enrolled Exams
             </h1>
           </div>
         </header>
         <main className="p-4 md:p-6 lg:p-8">
-          <ExamView exam={exam} />
+            {enrolledExams.length === 0 ? (
+                 <Card>
+                    <CardHeader className="items-center text-center">
+                        <CardTitle>No Enrolled Exams</CardTitle>
+                        <CardDescription>You haven't enrolled in any exams yet. Browse the homepage to find an exam.</CardDescription>
+                         <Button asChild className="mt-4">
+                            <Link href="/">Browse Exams</Link>
+                        </Button>
+                    </CardHeader>
+                </Card>
+            ) : (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {enrolledExams.map((exam) => (
+                         <Card key={exam.examId} className="flex flex-col">
+                            <CardHeader>
+                            <CardTitle>{exam.examName}</CardTitle>
+                            <CardDescription>{exam.description}</CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex-grow flex items-end">
+                                <Button asChild className="w-full">
+                                    <Link href={`/enrolled-exams/${exam.examId}`}>
+                                        <BookOpenCheck className="mr-2" />
+                                        Go to Dashboard
+                                    </Link>
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            )}
         </main>
       </SidebarInset>
     </SidebarProvider>
@@ -206,4 +221,13 @@ function SidebarInset({ children }: { children: React.ReactNode}) {
   return (
     <div className="flex-1">{children}</div>
   )
+}
+
+
+export default function EnrolledExamsPageWrapper() {
+  return (
+    <AuthProvider>
+      <EnrolledExamsPage />
+    </AuthProvider>
+  );
 }
