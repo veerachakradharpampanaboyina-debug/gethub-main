@@ -94,20 +94,14 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
   const handleDownloadPdf = () => {
     const notesElement = notesContentRef.current;
     if (!notesElement) return;
-    
-    // Temporarily set the container to a fixed width for consistent PDF output
-    notesElement.style.width = '210mm'; // A4 width
 
     html2canvas(notesElement, {
-        scale: 2,
+        scale: 2, // Higher scale for better quality
         useCORS: true,
-        backgroundColor: '#020817',
+        backgroundColor: '#ffffff', // Force white background
         windowWidth: notesElement.scrollWidth,
         windowHeight: notesElement.scrollHeight,
     }).then(canvas => {
-        // Reset the width after capture
-        notesElement.style.width = '';
-
         const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF({
             orientation: 'p',
@@ -115,25 +109,18 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
             format: 'a4'
         });
         const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-        const canvasWidth = canvas.width;
-        const canvasHeight = canvas.height;
-        const imgRatio = canvasWidth / canvasHeight;
-        const pdfRatio = pdfWidth / pdfHeight;
-
-        let imgHeight = pdfWidth / imgRatio;
+        const imgHeight = (canvas.height * pdfWidth) / canvas.width;
         let heightLeft = imgHeight;
-
         let position = 0;
 
         pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, imgHeight);
-        heightLeft -= pdfHeight;
+        heightLeft -= pdf.internal.pageSize.getHeight();
 
         while (heightLeft > 0) {
             position = heightLeft - imgHeight;
             pdf.addPage();
             pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-            heightLeft -= pdfHeight;
+            heightLeft -= pdf.internal.pageSize.getHeight();
         }
 
         pdf.save(`${currentTopic.replace(/\s+/g, '_').toLowerCase()}_notes.pdf`);
@@ -375,8 +362,8 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
             ) : notesError ? (
               <div className="text-destructive p-4">{notesError}</div>
             ) : (
-              <div className="prose prose-invert prose-sm md:prose-base max-w-none p-6 bg-background text-foreground font-serif">
-                 <div ref={notesContentRef}>
+              <div className="prose prose-sm md:prose-base max-w-none p-6">
+                 <div ref={notesContentRef} className="bg-white text-black p-8 font-serif">
                     <div dangerouslySetInnerHTML={{ __html: markdownToHtml(generatedNotes) }} />
                  </div>
               </div>
