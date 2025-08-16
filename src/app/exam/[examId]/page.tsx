@@ -15,8 +15,8 @@ import {
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, Settings, Home as HomeIcon, History, BrainCircuit, Shield, Library, FileText, Video, BookCopy } from 'lucide-react';
-import { ExamDetails } from '@/lib/types';
+import { LogOut, Settings, Home as HomeIcon, History, BrainCircuit, Shield, Library, FileText, Video, BookCopy, Info } from 'lucide-react';
+import { ExamDetails, ExamPaper } from '@/lib/types';
 import GethubLogo from '@/components/gethub-logo';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
@@ -33,12 +33,13 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { examCategories } from '@/lib/exam-categories';
+import { Badge } from '@/components/ui/badge';
 
 
 function ExamSyllabusPage({ params }: { params: { examId: string } }) {
@@ -59,7 +60,6 @@ function ExamSyllabusPage({ params }: { params: { examId: string } }) {
     if(currentExam) {
         setExam(currentExam);
     } else {
-        // Handle not found, maybe redirect
         console.error("Exam not found!");
     }
   }, [examId]);
@@ -73,6 +73,18 @@ function ExamSyllabusPage({ params }: { params: { examId: string } }) {
     );
   }
   
+  const renderPaperDetails = (paper: ExamPaper) => (
+    <div className="space-y-2 text-sm text-muted-foreground">
+      <div className="flex justify-between"><span>Type</span> <span className="font-medium text-foreground">{paper.type}</span></div>
+      <div className="flex justify-between"><span>Duration</span> <span className="font-medium text-foreground">{paper.duration}</span></div>
+      <div className="flex justify-between"><span>Marks</span> <span className="font-medium text-foreground">{paper.totalMarks}</span></div>
+      {paper.totalQuestions && <div className="flex justify-between"><span>Questions</span> <span className="font-medium text-foreground">{paper.totalQuestions}</span></div>}
+      {paper.negativeMarking && <div className="flex justify-between"><span>Negative Marking</span> <span className="font-medium text-foreground">{paper.negativeMarking}</span></div>}
+      {paper.qualifying && <div className="flex justify-between"><span>Qualifying</span> <Badge variant="outline">{paper.qualifyingMarks || 'Yes'}</Badge></div>}
+      {paper.notes && <p className="text-xs pt-2 border-t mt-2">{paper.notes}</p>}
+    </div>
+  );
+
   return (
     <SidebarProvider>
       <Sidebar>
@@ -172,82 +184,86 @@ function ExamSyllabusPage({ params }: { params: { examId: string } }) {
           </div>
         </header>
         <main className="p-4 md:p-6 lg:p-8">
-            <Card>
+            <Card className="bg-secondary/30">
                 <CardHeader>
-                    <CardTitle>Preparation Dashboard</CardTitle>
+                    <CardTitle>Syllabus & Preparation</CardTitle>
                     <CardDescription>
-                        Access all your study materials and generate practice tests for the {exam.examName} here.
+                        Explore the detailed syllabus for the {exam.examName}. Generate practice tests for any topic.
                     </CardDescription>
                 </CardHeader>
             </Card>
 
-            {exam.syllabus && exam.syllabus.length > 0 ? (
-                 <Tabs defaultValue={exam.syllabus[0].topicId} className="w-full mt-6">
-                  <TabsList className="grid w-full grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 h-auto">
-                     {exam.syllabus.map((topic) => (
-                        <TabsTrigger key={topic.topicId} value={topic.topicId}>
-                            {topic.topicName}
-                        </TabsTrigger>
-                    ))}
-                  </TabsList>
-                   {exam.syllabus.map((topic) => (
-                    <TabsContent key={topic.topicId} value={topic.topicId}>
-                        <Card className="mt-4">
-                             <CardHeader>
-                                <CardTitle>{topic.topicName}</CardTitle>
-                                <CardDescription>{topic.description}</CardDescription>
-                            </CardHeader>
-                            <CardContent className="grid gap-4 md:grid-cols-3">
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle className="flex items-center gap-2 text-lg"><BrainCircuit /> Practice</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <Button asChild className="w-full">
-                                            <Link href={`/practice?topic=${encodeURIComponent(exam.examName + ' - ' + topic.topicName)}`}>
-                                                Generate Practice Exam
-                                            </Link>
-                                        </Button>
-                                    </CardContent>
+            {exam.stages && exam.stages.length > 0 ? (
+                 <Accordion type="multiple" className="w-full space-y-4 mt-6">
+                   {exam.stages.map((stage) => (
+                    <AccordionItem value={stage.stageId} key={stage.stageId} className="border rounded-lg bg-secondary/50">
+                        <AccordionTrigger className="p-4 text-lg font-semibold hover:no-underline">
+                           {stage.stageName}
+                        </AccordionTrigger>
+                        <AccordionContent className="p-4 pt-0 border-t">
+                             <Accordion type="multiple" className="w-full space-y-4 mt-4">
+                                {stage.papers.map((paper) => (
+                                    <AccordionItem value={paper.paperId} key={paper.paperId} className="border rounded-lg bg-background/50">
+                                         <AccordionTrigger className="p-4 hover:no-underline">
+                                           {paper.paperName}
+                                         </AccordionTrigger>
+                                         <AccordionContent className="p-4 pt-0 border-t grid md:grid-cols-3 gap-6">
+                                              <Card className="md:col-span-1">
+                                                <CardHeader>
+                                                  <CardTitle className="flex items-center gap-2 text-base"><Info /> Details</CardTitle>
+                                                </CardHeader>
+                                                <CardContent>
+                                                  {renderPaperDetails(paper)}
+                                                </CardContent>
+                                              </Card>
+                                             <Card className="md:col-span-2">
+                                                <CardHeader>
+                                                  <CardTitle className="flex items-center gap-2 text-base"><BrainCircuit /> Practice Topics</CardTitle>
+                                                </CardHeader>
+                                                <CardContent className="space-y-2">
+                                                  {paper.topics && paper.topics.length > 0 ? paper.topics.map(topic => (
+                                                      <Button asChild variant="outline" className="w-full justify-start" key={topic}>
+                                                          <Link href={`/practice?topic=${encodeURIComponent(`${exam.examName} - ${paper.paperName} - ${topic}`)}`}>
+                                                              {topic}
+                                                          </Link>
+                                                      </Button>
+                                                  )) : (
+                                                    <div className="text-sm text-center text-muted-foreground py-4">
+                                                      No specific topics listed. You can generate a general practice test for this paper.
+                                                    </div>
+                                                  )}
+                                                </CardContent>
+                                                <CardFooter>
+                                                    <Button asChild className="w-full">
+                                                        <Link href={`/practice?topic=${encodeURIComponent(`${exam.examName} - ${paper.paperName}`)}`}>
+                                                            <BrainCircuit className="mr-2" /> Generate Full Practice Test for {paper.paperName}
+                                                        </Link>
+                                                    </Button>
+                                                </CardFooter>
+                                             </Card>
+                                         </AccordionContent>
+                                    </AccordionItem>
+                                ))}
+                             </Accordion>
+                              {stage.personalityTest && (
+                                <Card className="mt-4 border rounded-lg bg-background/50">
+                                  <CardHeader>
+                                      <CardTitle>{stage.personalityTest.stageName}</CardTitle>
+                                  </CardHeader>
+                                   <CardContent>
+                                      <p>Total Marks: {stage.personalityTest.totalMarks}</p>
+                                  </CardContent>
                                 </Card>
-                                <Card>
-                                     <CardHeader>
-                                        <CardTitle className="flex items-center gap-2 text-lg"><FileText /> Notes</CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="space-y-2">
-                                        {topic.materials.notes.map(note => (
-                                             <Button asChild variant="outline" className="w-full justify-start" key={note.name}>
-                                                <Link href={note.url} target="_blank">
-                                                    {note.name}
-                                                </Link>
-                                            </Button>
-                                        ))}
-                                    </CardContent>
-                                </Card>
-                                 <Card>
-                                     <CardHeader>
-                                        <CardTitle className="flex items-center gap-2 text-lg"><Video /> Videos</CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="space-y-2">
-                                         {topic.materials.videos.map(video => (
-                                             <Button asChild variant="outline" className="w-full justify-start" key={video.name}>
-                                                <Link href={video.url} target="_blank">
-                                                    {video.name}
-                                                </Link>
-                                            </Button>
-                                        ))}
-                                    </CardContent>
-                                </Card>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
+                              )}
+                        </AccordionContent>
+                    </AccordionItem>
                    ))}
-                </Tabs>
+                </Accordion>
             ) : (
                 <Card className="mt-6">
                     <CardHeader className="items-center text-center">
                         <CardTitle>Syllabus Coming Soon</CardTitle>
-                        <CardDescription>The detailed syllabus and materials for this exam are being prepared. Check back soon!</CardDescription>
+                        <CardDescription>The detailed syllabus for this exam is being prepared. Check back soon!</CardDescription>
                     </CardHeader>
                 </Card>
             )}
