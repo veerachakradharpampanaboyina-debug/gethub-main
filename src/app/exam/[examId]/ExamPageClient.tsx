@@ -15,12 +15,12 @@ import {
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, Settings, Home as HomeIcon, History, BrainCircuit, Shield, BookCopy, Info } from 'lucide-react';
+import { LogOut, Settings, Home as HomeIcon, History, BrainCircuit, Shield, BookCopy, Info, FileText, Download } from 'lucide-react';
 import { ExamDetails, ExamPaper } from '@/lib/types';
 import GethubLogo from '@/components/gethub-logo';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { LoaderCircle } from 'lucide-react';
@@ -39,16 +39,95 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Badge } from '@/components/ui/badge';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from '@/components/ui/dialog';
+import { generateSyllabusNotes } from '@/ai/flows/generate-syllabus-notes';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
+  const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
+  const [isGeneratingNotes, setIsGeneratingNotes] = useState(false);
+  const [generatedNotes, setGeneratedNotes] = useState('');
+  const [notesError, setNotesError] = useState<string | null>(null);
+  const [currentTopic, setCurrentTopic] = useState('');
+  const notesContentRef = useRef<HTMLDivElement>(null);
+
 
   useEffect(() => {
     if (!loading && !user) {
       router.push(`/login?redirect=/exam/${exam.examId}`);
     }
   }, [user, loading, router, exam.examId]);
+  
+  const handleGenerateNotes = async (topic: string) => {
+    setCurrentTopic(topic);
+    setIsNotesDialogOpen(true);
+    setIsGeneratingNotes(true);
+    setGeneratedNotes('');
+    setNotesError(null);
+
+    try {
+        const fullTopic = `${exam.examName} - ${topic}`;
+        const result = await generateSyllabusNotes({
+            examName: exam.examName,
+            topic: fullTopic,
+        });
+        setGeneratedNotes(result.notes);
+    } catch (err) {
+        console.error("Failed to generate notes:", err);
+        setNotesError("Sorry, we couldn't generate notes at this time. Please try again later.");
+    } finally {
+        setIsGeneratingNotes(false);
+    }
+  };
+  
+  const handleDownloadPdf = () => {
+    if (!notesContentRef.current) return;
+
+    html2canvas(notesContentRef.current, {
+        scale: 2, // Higher scale for better quality
+        useCORS: true,
+        backgroundColor: '#020817' // Match your dark theme background
+    }).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+            orientation: 'p',
+            unit: 'mm',
+            format: 'a4'
+        });
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        const ratio = canvasWidth / canvasHeight;
+        const width = pdfWidth;
+        const height = width / ratio;
+
+        let position = 0;
+        let heightLeft = (canvasHeight * pdfWidth) / canvasWidth; // convert canvas height to pdf scale
+
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, heightLeft);
+        heightLeft -= pdfHeight;
+
+        while (heightLeft > 0) {
+            position = heightLeft - ((canvasHeight * pdfWidth) / canvasWidth);
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 0, -position, pdfWidth, (canvasHeight * pdfWidth) / canvasWidth);
+            heightLeft -= pdfHeight;
+        }
+
+        pdf.save(`${currentTopic.replace(/\s+/g, '_').toLowerCase()}_notes.pdf`);
+    });
+};
 
   if (loading || !user) {
     return (
@@ -173,7 +252,7 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
                 <CardHeader>
                     <CardTitle>Syllabus & Preparation</CardTitle>
                     <CardDescription>
-                        Explore the detailed syllabus for the {exam.examName}. Generate practice tests for any topic.
+                        Explore the detailed syllabus for the {exam.examName}. Generate practice tests or notes for any topic.
                     </CardDescription>
                 </CardHeader>
             </Card>
@@ -207,11 +286,17 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
                                                 </CardHeader>
                                                 <CardContent className="space-y-2">
                                                   {paper.topics && paper.topics.length > 0 ? paper.topics.map(topic => (
-                                                      <Button asChild variant="outline" className="w-full justify-start" key={topic}>
-                                                          <Link href={`/practice?topic=${encodeURIComponent(`${exam.examName} - ${paper.paperName} - ${topic}`)}`}>
-                                                              {topic}
-                                                          </Link>
-                                                      </Button>
+                                                      <div key={topic} className="flex gap-2">
+                                                        <Button asChild variant="outline" className="w-full justify-start">
+                                                            <Link href={`/practice?topic=${encodeURIComponent(`${exam.examName} - ${paper.paperName} - ${topic}`)}`}>
+                                                                <BrainCircuit className="mr-2" />
+                                                                {topic}
+                                                            </Link>
+                                                        </Button>
+                                                        <Button variant="secondary" size="icon" onClick={() => handleGenerateNotes(topic)} title={`Generate notes for ${topic}`}>
+                                                            <FileText />
+                                                        </Button>
+                                                      </div>
                                                   )) : (
                                                     <div className="text-sm text-center text-muted-foreground py-4">
                                                       No specific topics listed. You can generate a general practice test for this paper.
@@ -255,6 +340,47 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
            
         </main>
       </SidebarInset>
+       <Dialog open={isNotesDialogOpen} onOpenChange={setIsNotesDialogOpen}>
+        <DialogContent className="max-w-3xl h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>AI Generated Notes: {currentTopic}</DialogTitle>
+            <DialogDescription>
+              Here are the AI-generated notes. You can review them here or download them as a PDF.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto pr-4 -mr-6">
+            {isGeneratingNotes ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <LoaderCircle className="w-12 h-12 animate-spin text-primary mx-auto" />
+                  <p className="mt-4 text-muted-foreground">Generating notes...</p>
+                </div>
+              </div>
+            ) : notesError ? (
+              <div className="text-destructive p-4">{notesError}</div>
+            ) : (
+              <div ref={notesContentRef} className="prose prose-invert prose-sm md:prose-base max-w-none p-6 bg-background text-foreground font-handwritten">
+                 <style jsx global>{`
+                    .prose {
+                      font-family: 'Caveat', cursive;
+                    }
+                    .prose h1, .prose h2, .prose h3 {
+                       font-family: 'Inter', sans-serif;
+                    }
+                 `}</style>
+                <h1>Notes for: {currentTopic}</h1>
+                <div dangerouslySetInnerHTML={{ __html: generatedNotes.replace(/\n/g, '<br />') }} />
+              </div>
+            )}
+          </div>
+           <DialogFooter>
+            <Button variant="outline" onClick={() => setIsNotesDialogOpen(false)}>Close</Button>
+            <Button onClick={handleDownloadPdf} disabled={isGeneratingNotes || !!notesError}>
+              <Download className="mr-2" /> Download PDF
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </SidebarProvider>
   );
 }
