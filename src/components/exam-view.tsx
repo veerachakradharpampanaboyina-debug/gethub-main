@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -38,6 +39,9 @@ import {
   Sparkles,
   XCircle,
 } from 'lucide-react';
+import { Label } from './ui/label';
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import { Textarea } from './ui/textarea';
 
 interface ExamViewProps {
   exam: Exam;
@@ -53,6 +57,91 @@ const getQuestionIcon = (questionType: Question['questionType']) => {
       return <HelpCircle className="w-4 h-4 text-muted-foreground" />;
   }
 };
+
+const QuestionInput = ({
+  question,
+  onAnswerChange,
+  isSubmitted,
+}: {
+  question: Question;
+  onAnswerChange: (questionId: string, answer: string) => void;
+  isSubmitted: boolean;
+}) => {
+  const [currentAnswer, setCurrentAnswer] = useState(question.studentAnswer);
+
+  const handleValueChange = (value: string) => {
+    setCurrentAnswer(value);
+    onAnswerChange(question.questionId, value);
+  };
+
+  if (isSubmitted) {
+     return (
+      <div className="grid gap-2">
+        <h4 className="font-semibold text-sm">Student's Answer</h4>
+        <p className="text-sm p-3 bg-secondary rounded-md">
+          {question.studentAnswer || "No answer provided."}
+        </p>
+      </div>
+    );
+  }
+
+  switch (question.questionType) {
+    case 'multipleChoice':
+      return (
+        <div className="space-y-2">
+          <Label>Your Answer:</Label>
+          <RadioGroup
+            value={currentAnswer}
+            onValueChange={handleValueChange}
+            className="space-y-2"
+          >
+            {question.options?.map((option, index) => (
+              <div key={index} className="flex items-center space-x-2">
+                <RadioGroupItem value={option} id={`${question.questionId}-${index}`} />
+                <Label htmlFor={`${question.questionId}-${index}`}>{option}</Label>
+              </div>
+            ))}
+          </RadioGroup>
+        </div>
+      );
+    case 'trueFalse':
+      return (
+        <div className="space-y-2">
+          <Label>Your Answer:</Label>
+          <RadioGroup
+             value={currentAnswer}
+             onValueChange={handleValueChange}
+            className="space-y-2"
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="True" id={`${question.questionId}-true`} />
+              <Label htmlFor={`${question.questionId}-true`}>True</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="False" id={`${question.questionId}-false`} />
+              <Label htmlFor={`${question.questionId}-false`}>False</Label>
+            </div>
+          </RadioGroup>
+        </div>
+      );
+    case 'freeText':
+      return (
+        <div className="space-y-2">
+          <Label htmlFor={`${question.questionId}-textarea`}>Your Answer:</Label>
+          <Textarea
+            id={`${question.questionId}-textarea`}
+            value={currentAnswer}
+            onChange={(e) => handleValueChange(e.target.value)}
+            placeholder="Type your answer here..."
+            rows={5}
+          />
+        </div>
+      );
+    default:
+      return null;
+  }
+};
+
 
 const QuestionResultBadge = ({
   question,
@@ -102,9 +191,20 @@ const QuestionResultBadge = ({
   );
 };
 
-export function ExamView({ exam }: ExamViewProps) {
+export function ExamView({ exam: initialExam }: ExamViewProps) {
+  const [exam, setExam] = useState(initialExam);
   const [isLoading, setIsLoading] = useState(false);
   const [aiResults, setAiResults] = useState<AIGradingState | null>(null);
+
+  const handleAnswerChange = (questionId: string, answer: string) => {
+    setExam(prevExam => ({
+      ...prevExam,
+      questions: prevExam.questions.map(q =>
+        q.questionId === questionId ? { ...q, studentAnswer: answer } : q
+      ),
+    }));
+  };
+
 
   const handleGradeExam = async () => {
     setIsLoading(true);
@@ -122,7 +222,7 @@ export function ExamView({ exam }: ExamViewProps) {
           questionType: q.questionType as 'multipleChoice' | 'trueFalse',
           questionText: q.questionText,
           correctAnswer: q.correctAnswer,
-          studentAnswer: q.studentAnswer,
+          studentAnswer: q.studentAnswer || "", // Ensure studentAnswer is not undefined
           pointsPossible: q.pointsPossible,
         })),
       });
@@ -138,7 +238,7 @@ export function ExamView({ exam }: ExamViewProps) {
       const flaggingPromises = freeTextQuestions.map((q) =>
         flagPotentiallyIncorrectAnswers({
           question: q.questionText,
-          studentAnswer: q.studentAnswer,
+          studentAnswer: q.studentAnswer || "", // Ensure studentAnswer is not undefined
           correctAnswer: q.correctAnswer,
         }).then((res) => ({ ...res, questionId: q.questionId }))
       );
@@ -159,7 +259,7 @@ export function ExamView({ exam }: ExamViewProps) {
           );
           return {
             questionText: q.questionText,
-            studentAnswer: q.studentAnswer,
+            studentAnswer: q.studentAnswer || "",
             isCorrect: objectiveRes ? objectiveRes.isCorrect : !flaggedRes?.isPotentiallyIncorrect,
             feedback: objectiveRes?.feedback || flaggedRes?.reason,
           };
@@ -184,6 +284,8 @@ export function ExamView({ exam }: ExamViewProps) {
   const scorePercentage = aiResults
     ? (aiResults.totalPointsAwarded / aiResults.totalPointsPossible) * 100
     : 0;
+  
+  const isSubmitted = aiResults !== null;
 
   return (
     <div className="space-y-8">
@@ -191,7 +293,9 @@ export function ExamView({ exam }: ExamViewProps) {
         <CardHeader>
           <CardTitle>{exam.examName}</CardTitle>
           <CardDescription>
-            AI-powered analysis of the student's answers for competitive exam preparation.
+            {isSubmitted
+              ? "AI-powered analysis of your answers."
+              : "Answer the questions below and submit for AI-powered analysis."}
           </CardDescription>
         </CardHeader>
         <CardFooter>
@@ -255,7 +359,7 @@ export function ExamView({ exam }: ExamViewProps) {
           <CardTitle>Exam Questions</CardTitle>
         </CardHeader>
         <CardContent>
-          <Accordion type="single" collapsible className="w-full">
+          <Accordion type="single" collapsible className="w-full" defaultValue={exam.questions[0]?.questionId}>
             {exam.questions.map((question) => {
               const objectiveResult = aiResults?.objectiveResults.find(
                 (r) => r.questionId === question.questionId
@@ -282,12 +386,12 @@ export function ExamView({ exam }: ExamViewProps) {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="space-y-4 pt-4">
-                    <div className="grid gap-2">
-                      <h4 className="font-semibold text-sm">Student's Answer</h4>
-                      <p className="text-sm p-3 bg-secondary rounded-md">
-                        {question.studentAnswer}
-                      </p>
-                    </div>
+                    <QuestionInput
+                      question={question}
+                      onAnswerChange={handleAnswerChange}
+                      isSubmitted={isSubmitted}
+                    />
+
                     {objectiveResult && !objectiveResult.isCorrect && (
                       <div className="grid gap-2">
                         <h4 className="font-semibold text-sm">Correct Answer</h4>
@@ -322,3 +426,5 @@ export function ExamView({ exam }: ExamViewProps) {
     </div>
   );
 }
+
+    

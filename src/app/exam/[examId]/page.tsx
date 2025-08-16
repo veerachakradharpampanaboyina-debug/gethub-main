@@ -46,7 +46,7 @@ const sampleExams: Record<string, Exam> = {
           "People's responsibility to the Government",
           'Liberty and civil rights',
         ],
-        studentAnswer: 'Equality before law',
+        studentAnswer: '',
         correctAnswer: 'Equality before law',
         pointsPossible: 10,
       },
@@ -55,7 +55,7 @@ const sampleExams: Record<string, Exam> = {
         questionType: 'trueFalse',
         questionText:
           'The an-Nizamiyya of Baghdad is considered a model of the madrasas of the later Middle Ages.',
-        studentAnswer: 'True',
+        studentAnswer: '',
         correctAnswer: 'True',
         pointsPossible: 10,
       },
@@ -64,7 +64,7 @@ const sampleExams: Record<string, Exam> = {
         questionType: 'multipleChoice',
         questionText: 'Who was the founder of the Mauryan Empire in ancient India?',
         options: ['Chandragupta Maurya', 'Ashoka', 'Bindusara', 'Chanakya'],
-        studentAnswer: 'Ashoka',
+        studentAnswer: '',
         correctAnswer: 'Chandragupta Maurya',
         pointsPossible: 10,
       },
@@ -73,8 +73,7 @@ const sampleExams: Record<string, Exam> = {
         questionType: 'freeText',
         questionText:
           'Discuss the significance of the Non-Cooperation Movement in the Indian freedom struggle.',
-        studentAnswer:
-          'It was a major movement led by Gandhi. It involved boycotting British goods and institutions. It united many Indians against British rule.',
+        studentAnswer: '',
         correctAnswer:
           "The Non-Cooperation Movement (1920-22) led by Mahatma Gandhi was a pivotal moment in India's freedom struggle. It was the first instance of a nationwide, mass movement against British rule, promoting non-violent resistance (Satyagraha). It significantly widened the base of the freedom struggle, bringing in peasants, workers, and students, and instilled a new sense of confidence and fearlessness among Indians. It also promoted Indian-made goods (Swadeshi) and led to the boycott of British educational institutions, courts, and legislatures.",
         pointsPossible: 20,
@@ -84,7 +83,7 @@ const sampleExams: Record<string, Exam> = {
         questionType: 'freeText',
         questionText:
           'What are the main functions of the Goods and Services Tax (GST) Council in India?',
-        studentAnswer: 'The GST council decides tax rates.',
+        studentAnswer: '',
         correctAnswer:
           'The GST Council is a constitutional body responsible for making recommendations to the Union and State Governments on issues related to the Goods and Services Tax. Its main functions include making recommendations on: the taxes, cesses, and surcharges to be subsumed under GST; the goods and services that may be subjected to or exempted from GST; the model GST laws, principles of levy, and apportionment of IGST; the threshold limit of turnover for exemption from GST; the rates including floor rates with bands of GST; any special rates for a specified period to raise additional resources during any natural calamity or disaster.',
         pointsPossible: 20,
@@ -244,3 +243,5 @@ export default function ExamPageWrapper({ params }: { params: { examId: string }
     </AuthProvider>
   );
 }
+
+    
