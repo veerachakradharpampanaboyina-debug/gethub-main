@@ -489,31 +489,28 @@ const baseExamQuestions: Question[] = [
   },
 ];
 
-// This object is now a fallback for exams not fully defined in `examCategories`
 export const sampleExams: Record<string, Exam> = {};
-
 
 const allExamsFromCategories = examCategories.flatMap(category => category.exams);
 
 // Populate sampleExams with all defined exams
-allExamsFromCategories.forEach(exam => {
-  if (!sampleExams[exam.examId]) {
+allExamsFromCategories.forEach((exam, index) => {
     // For demonstration, we'll cycle through the base questions.
     // In a real app, you'd fetch exam-specific questions.
     const questionCount = baseExamQuestions.length;
-    const examIndex = allExamsFromCategories.findIndex(e => e.examId === exam.examId);
-    const start = (examIndex * 5) % questionCount;
-    const end = start + 5;
-    const examQuestions = baseExamQuestions.slice(start, end > questionCount ? questionCount : end);
-
+    const start = (index * 5) % questionCount;
+    let end = start + 5;
+    if (end > questionCount) {
+        end = questionCount;
+    }
+    const examQuestions = baseExamQuestions.slice(start, end);
 
     sampleExams[exam.examId] = {
       student: { name: 'Student', id: 'student-001' },
       examName: exam.examName,
       examId: exam.examId,
-      questions: examQuestions,
+      questions: examQuestions.map(q => ({...q, studentAnswer: ''})), // Ensure studentAnswer is reset
     };
-  }
 });
 
 
