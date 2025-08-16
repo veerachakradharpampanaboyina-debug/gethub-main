@@ -75,7 +75,7 @@ function LoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
            <div className="flex justify-center items-center gap-2 mb-4">
-            <GethubLogo className="w-10 h-10 text-primary" />
+            <GethubLogo className="w-10 h-10 text-primary" width={40} height={40}/>
             <span className="text-2xl font-bold">GETHUB</span>
           </div>
           <CardTitle>Login</CardTitle>

@@ -22,6 +22,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 // In a real app, you would fetch this data based on the examId
 const sampleExams: Record<string, Exam> = {
@@ -152,7 +153,7 @@ function ExamPage({ params }: { params: { examId: string } }) {
       <Sidebar>
         <SidebarHeader>
           <div className="flex items-center gap-2">
-            <GethubLogo className="w-8 h-8 text-primary" />
+            <GethubLogo className="w-8 h-8 text-primary" width={32} height={32} />
             <span className="text-lg font-semibold">GETHUB</span>
           </div>
         </SidebarHeader>
@@ -229,6 +230,12 @@ function ExamPage({ params }: { params: { examId: string } }) {
   );
 }
 
+
+function SidebarInset({ children }: { children: React.ReactNode}) {
+  return (
+    <div className="flex-1">{children}</div>
+  )
+}
 
 export default function ExamPageWrapper({ params }: { params: { examId: string } }) {
   const { AuthProvider } = useAuth();

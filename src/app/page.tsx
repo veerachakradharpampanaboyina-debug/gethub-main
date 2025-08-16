@@ -38,7 +38,7 @@ export default function HomePage() {
     <div className="flex flex-col min-h-screen bg-background">
       <header className="flex items-center justify-between p-4 border-b">
         <div className="flex items-center gap-2">
-          <GethubLogo className="w-8 h-8 text-primary" />
+          <GethubLogo className="w-8 h-8 text-primary" width={32} height={32}/>
           <span className="text-xl font-bold">GETHUB</span>
         </div>
         <div>
