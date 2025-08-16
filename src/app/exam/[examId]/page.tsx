@@ -14,7 +14,7 @@ import {
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { FileText, LogOut, Settings, Home as HomeIcon, History } from 'lucide-react';
+import { FileText, LogOut, Settings, Home as HomeIcon, History, Shield } from 'lucide-react';
 import type { Exam } from '@/lib/types';
 import { ExamView } from '@/components/exam-view';
 import GethubLogo from '@/components/gethub-logo';
@@ -800,6 +800,21 @@ function ExamPage({ params }: { params: { examId: string } }) {
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroup>
+          {user && user.email === 'admin@gethub.com' && (
+             <SidebarGroup>
+               <SidebarGroupLabel>Admin</SidebarGroupLabel>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                      <Link href="/admin">
+                          <SidebarMenuButton tooltip="Admin Dashboard">
+                              <Shield />
+                              <span>Admin</span>
+                          </SidebarMenuButton>
+                      </Link>
+                  </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroup>
+           )}
         </SidebarContent>
         <SidebarFooter>
           <SidebarMenu>

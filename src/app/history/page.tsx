@@ -15,7 +15,7 @@ import {
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, Settings, Home as HomeIcon, History, BrainCircuit } from 'lucide-react';
+import { LogOut, Settings, Home as HomeIcon, History, BrainCircuit, Shield } from 'lucide-react';
 import type { ExamAttempt, Question, GradingResult, FlaggedAnswer } from '@/lib/types';
 import GethubLogo from '@/components/gethub-logo';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
@@ -173,6 +173,21 @@ function HistoryPage() {
                 </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroup>
+           {user && user.email === 'admin@gethub.com' && (
+             <SidebarGroup>
+               <SidebarGroupLabel>Admin</SidebarGroupLabel>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                      <Link href="/admin">
+                          <SidebarMenuButton tooltip="Admin Dashboard">
+                              <Shield />
+                              <span>Admin</span>
+                          </SidebarMenuButton>
+                      </Link>
+                  </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroup>
+           )}
         </SidebarContent>
         <SidebarFooter>
           <SidebarMenu>
