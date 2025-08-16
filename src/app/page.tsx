@@ -24,68 +24,68 @@ import {
 } from 'lucide-react';
 import type { Exam } from '@/lib/types';
 import { ExamView } from '@/components/exam-view';
-import GradeAlLogo from '@/components/grade-ai-logo';
+import GethubLogo from '@/components/gethub-logo';
 
 const sampleExam: Exam = {
   student: {
-    name: 'Alex Johnson',
-    id: 'student-001',
+    name: 'Priya Sharma',
+    id: 'student-002',
     avatarUrl: 'https://placehold.co/100x100.png',
   },
-  examName: 'History Midterm Exam',
-  examId: 'hist-mid-01',
+  examName: 'UPSC Civil Services Prelims 2023 - GS Paper 1',
+  examId: 'upsc-pre-2023-gs1',
   questions: [
     {
       questionId: 'q1',
       questionType: 'multipleChoice',
-      questionText: 'In what year did the Titanic sink?',
-      options: ['1905', '1912', '1918', '1923'],
-      studentAnswer: '1912',
-      correctAnswer: '1912',
+      questionText: 'Which of the following are the features of the "Rule of Law"?',
+      options: ['Limited powers', 'Equality before law', 'People\'s responsibility to the Government', 'Liberty and civil rights'],
+      studentAnswer: 'Equality before law',
+      correctAnswer: 'Equality before law',
       pointsPossible: 10,
     },
     {
       questionId: 'q2',
       questionType: 'trueFalse',
-      questionText: 'The Great Wall of China is visible from the moon.',
-      studentAnswer: 'False',
-      correctAnswer: 'False',
+      questionText: 'The an-Nizamiyya of Baghdad is considered a model of the madrasas of the later Middle Ages.',
+      studentAnswer: 'True',
+      correctAnswer: 'True',
       pointsPossible: 10,
     },
     {
       questionId: 'q3',
       questionType: 'multipleChoice',
-      questionText: 'Who was the first President of the United States?',
+      questionText: 'Who was the founder of the Mauryan Empire in ancient India?',
       options: [
-        'Thomas Jefferson',
-        'Abraham Lincoln',
-        'George Washington',
-        'John Adams',
+        'Chandragupta Maurya',
+        'Ashoka',
+        'Bindusara',
+        'Chanakya',
       ],
-      studentAnswer: 'Thomas Jefferson',
-      correctAnswer: 'George Washington',
+      studentAnswer: 'Ashoka',
+      correctAnswer: 'Chandragupta Maurya',
       pointsPossible: 10,
     },
     {
       questionId: 'q4',
       questionType: 'freeText',
       questionText:
-        'Describe the main causes of the American Revolutionary War.',
+        'Discuss the significance of the Non-Cooperation Movement in the Indian freedom struggle.',
       studentAnswer:
-        'The main causes were taxes and the fact that the colonists had no say in the British government. The Stamp Act and Townshend Acts were major triggers.',
+        'It was a major movement led by Gandhi. It involved boycotting British goods and institutions. It united many Indians against British rule.',
       correctAnswer:
-        'Key causes include "taxation without representation," where colonists were taxed without having elected representatives in British Parliament. Major acts that fueled tensions were the Stamp Act, Townshend Acts, and the Tea Act. The Boston Massacre and Boston Tea Party were pivotal events that escalated the conflict towards war.',
+        'The Non-Cooperation Movement (1920-22) led by Mahatma Gandhi was a pivotal moment in India\'s freedom struggle. It was the first instance of a nationwide, mass movement against British rule, promoting non-violent resistance (Satyagraha). It significantly widened the base of the freedom struggle, bringing in peasants, workers, and students, and instilled a new sense of confidence and fearlessness among Indians. It also promoted Indian-made goods (Swadeshi) and led to the boycott of British educational institutions, courts, and legislatures.',
       pointsPossible: 20,
     },
      {
       questionId: 'q5',
       questionType: 'freeText',
       questionText:
-        'What was the significance of the Renaissance?',
+        'What are the main functions of the Goods and Services Tax (GST) Council in India?',
       studentAnswer:
-        'it was a time of rebirth in art and science',
+        'The GST council decides tax rates.',
       correctAnswer:
-        'The Renaissance was a fervent period of European cultural, artistic, political and economic "rebirth" following the Middle Ages. Generally described as taking place from the 14th century to the 17th century, the Renaissance promoted the rediscovery of classical philosophy, literature and art. Some of the greatest thinkers, authors, statesmen, scientists and artists in human history thrived during this era, while global exploration opened up new lands and cultures to European commerce.',
+        'The GST Council is a constitutional body responsible for making recommendations to the Union and State Governments on issues related to the Goods and Services Tax. Its main functions include making recommendations on: the taxes, cesses, and surcharges to be subsumed under GST; the goods and services that may be subjected to or exempted from GST; the model GST laws, principles of levy, and apportionment of IGST; the threshold limit of turnover for exemption from GST; the rates including floor rates with bands of GST; any special rates for a specified period to raise additional resources during any natural calamity or disaster.',
       pointsPossible: 20,
     },
   ],
@@ -97,8 +97,8 @@ export default function Home() {
       <Sidebar>
         <SidebarHeader>
           <div className="flex items-center gap-2">
-            <GradeAlLogo className="w-8 h-8 text-primary" />
-            <span className="text-lg font-semibold">GradeAI</span>
+            <GethubLogo className="w-8 h-8 text-primary" />
+            <span className="text-lg font-semibold">GETHUB</span>
           </div>
         </SidebarHeader>
         <SidebarContent>
@@ -106,9 +106,9 @@ export default function Home() {
             <SidebarGroupLabel>Exams</SidebarGroupLabel>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton tooltip="History Midterm" isActive>
+                <SidebarMenuButton tooltip="UPSC Prelims" isActive>
                   <FileText />
-                  <span>History Midterm</span>
+                  <span>UPSC Prelims</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

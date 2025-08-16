@@ -1,6 +1,6 @@
 import type { SVGProps } from 'react';
 
-export default function GradeAlLogo(props: SVGProps<SVGSVGElement>) {
+export default function GethubLogo(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -14,8 +14,9 @@ export default function GradeAlLogo(props: SVGProps<SVGSVGElement>) {
       strokeLinejoin="round"
       {...props}
     >
-      <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-      <path d="M6 12v5c3.33 1.67 6.67 1.67 10 0v-5" />
+      <path d="M12 2L2 7l10 5 10-5-10-5z" />
+      <path d="M2 17l10 5 10-5" />
+      <path d="M2 12l10 5 10-5" />
     </svg>
   );
 }

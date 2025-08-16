@@ -191,7 +191,7 @@ export function ExamView({ exam }: ExamViewProps) {
         <CardHeader>
           <CardTitle>{exam.examName}</CardTitle>
           <CardDescription>
-            Review of the student's answers and AI-powered grading.
+            AI-powered analysis of the student's answers for competitive exam preparation.
           </CardDescription>
         </CardHeader>
         <CardFooter>
@@ -201,7 +201,7 @@ export function ExamView({ exam }: ExamViewProps) {
             ) : (
               <Sparkles className="mr-2 h-4 w-4" />
             )}
-            {aiResults ? 'Regrade with AI' : 'Grade with AI'}
+            {aiResults ? 'Re-analyze with AI' : 'Analyze with AI'}
           </Button>
         </CardFooter>
       </Card>
@@ -210,7 +210,7 @@ export function ExamView({ exam }: ExamViewProps) {
         <Card>
           <CardHeader className="items-center text-center">
             <LoaderCircle className="w-12 h-12 animate-spin text-primary mb-4" />
-            <CardTitle>Grading in Progress...</CardTitle>
+            <CardTitle>Analyzing in Progress...</CardTitle>
             <CardDescription>
               Our AI is carefully reviewing the exam. This may take a moment.
             </CardDescription>
@@ -240,7 +240,7 @@ export function ExamView({ exam }: ExamViewProps) {
           <Card className="md:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <ClipboardCheck /> AI-Generated Summary
+                <ClipboardCheck /> AI-Generated Feedback
               </CardTitle>
             </CardHeader>
             <CardContent>

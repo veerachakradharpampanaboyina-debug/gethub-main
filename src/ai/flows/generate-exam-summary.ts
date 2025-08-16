@@ -18,8 +18,8 @@ const GenerateExamSummaryInputSchema = z.object({
   questions: z.array(
     z.object({
       questionText: z.string().describe('The text of the question.'),
-      studentAnswer: z.string().describe('The student\'s answer to the question.'),
-      isCorrect: z.boolean().describe('Whether the student\'s answer was correct.'),
+      studentAnswer: z.string().describe("The student's answer to the question."),
+      isCorrect: z.boolean().describe("Whether the student's answer was correct."),
       feedback: z.string().optional().describe('Optional feedback on the student\'s answer.'),
     })
   ).describe('An array of questions and the student\'s performance on each.'),
@@ -27,7 +27,7 @@ const GenerateExamSummaryInputSchema = z.object({
 export type GenerateExamSummaryInput = z.infer<typeof GenerateExamSummaryInputSchema>;
 
 const GenerateExamSummaryOutputSchema = z.object({
-  summary: z.string().describe('A summary of the student\'s performance on the exam, highlighting strengths and weaknesses.'),
+  summary: z.string().describe('A summary of the student\'s performance on the exam, highlighting strengths and weaknesses, and providing actionable advice for improvement.'),
 });
 export type GenerateExamSummaryOutput = z.infer<typeof GenerateExamSummaryOutputSchema>;
 
@@ -39,9 +39,10 @@ const prompt = ai.definePrompt({
   name: 'generateExamSummaryPrompt',
   input: {schema: GenerateExamSummaryInputSchema},
   output: {schema: GenerateExamSummaryOutputSchema},
-  prompt: `You are an AI assistant who helps teachers by summarizing student exam performance.
+  prompt: `You are an AI assistant who helps teachers by summarizing student exam performance for competitive exams (like UPSC, SSC, GATE, etc.).
 
-  Given the following information about a student\'s performance on an exam, generate a summary of their overall performance, highlighting their strengths and weaknesses. Be encouraging and focus on areas for improvement.
+  Given the following information about a student's performance on an exam, generate a summary of their overall performance. 
+  Highlight their strengths and weaknesses. Be encouraging and provide actionable advice for improvement, focusing on how they can better prepare for future competitive exams.
 
   Student Name: {{{studentName}}}
   Exam Name: {{{examName}}}
