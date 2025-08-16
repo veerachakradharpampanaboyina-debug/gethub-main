@@ -1,8 +1,9 @@
+
+'use client';
 import {
   SidebarProvider,
   Sidebar,
   SidebarHeader,
-  SidebarInset,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
@@ -12,19 +13,14 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from '@/components/ui/avatar';
-import {
-  FileText,
-  Settings,
-  User,
-} from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { FileText, LogOut, Settings } from 'lucide-react';
 import type { Exam } from '@/lib/types';
 import { ExamView } from '@/components/exam-view';
 import GethubLogo from '@/components/gethub-logo';
+import { useAuth } from '@/hooks/use-auth';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 const sampleExam: Exam = {
   student: {
@@ -38,8 +34,14 @@ const sampleExam: Exam = {
     {
       questionId: 'q1',
       questionType: 'multipleChoice',
-      questionText: 'Which of the following are the features of the "Rule of Law"?',
-      options: ['Limited powers', 'Equality before law', 'People\'s responsibility to the Government', 'Liberty and civil rights'],
+      questionText:
+        'Which of the following are the features of the "Rule of Law"?',
+      options: [
+        'Limited powers',
+        'Equality before law',
+        "People's responsibility to the Government",
+        'Liberty and civil rights',
+      ],
       studentAnswer: 'Equality before law',
       correctAnswer: 'Equality before law',
       pointsPossible: 10,
@@ -47,7 +49,8 @@ const sampleExam: Exam = {
     {
       questionId: 'q2',
       questionType: 'trueFalse',
-      questionText: 'The an-Nizamiyya of Baghdad is considered a model of the madrasas of the later Middle Ages.',
+      questionText:
+        'The an-Nizamiyya of Baghdad is considered a model of the madrasas of the later Middle Ages.',
       studentAnswer: 'True',
       correctAnswer: 'True',
       pointsPossible: 10,
@@ -56,12 +59,7 @@ const sampleExam: Exam = {
       questionId: 'q3',
       questionType: 'multipleChoice',
       questionText: 'Who was the founder of the Mauryan Empire in ancient India?',
-      options: [
-        'Chandragupta Maurya',
-        'Ashoka',
-        'Bindusara',
-        'Chanakya',
-      ],
+      options: ['Chandragupta Maurya', 'Ashoka', 'Bindusara', 'Chanakya'],
       studentAnswer: 'Ashoka',
       correctAnswer: 'Chandragupta Maurya',
       pointsPossible: 10,
@@ -74,16 +72,15 @@ const sampleExam: Exam = {
       studentAnswer:
         'It was a major movement led by Gandhi. It involved boycotting British goods and institutions. It united many Indians against British rule.',
       correctAnswer:
-        'The Non-Cooperation Movement (1920-22) led by Mahatma Gandhi was a pivotal moment in India\'s freedom struggle. It was the first instance of a nationwide, mass movement against British rule, promoting non-violent resistance (Satyagraha). It significantly widened the base of the freedom struggle, bringing in peasants, workers, and students, and instilled a new sense of confidence and fearlessness among Indians. It also promoted Indian-made goods (Swadeshi) and led to the boycott of British educational institutions, courts, and legislatures.',
+        "The Non-Cooperation Movement (1920-22) led by Mahatma Gandhi was a pivotal moment in India's freedom struggle. It was the first instance of a nationwide, mass movement against British rule, promoting non-violent resistance (Satyagraha). It significantly widened the base of the freedom struggle, bringing in peasants, workers, and students, and instilled a new sense of confidence and fearlessness among Indians. It also promoted Indian-made goods (Swadeshi) and led to the boycott of British educational institutions, courts, and legislatures.",
       pointsPossible: 20,
     },
-     {
+    {
       questionId: 'q5',
       questionType: 'freeText',
       questionText:
         'What are the main functions of the Goods and Services Tax (GST) Council in India?',
-      studentAnswer:
-        'The GST council decides tax rates.',
+      studentAnswer: 'The GST council decides tax rates.',
       correctAnswer:
         'The GST Council is a constitutional body responsible for making recommendations to the Union and State Governments on issues related to the Goods and Services Tax. Its main functions include making recommendations on: the taxes, cesses, and surcharges to be subsumed under GST; the goods and services that may be subjected to or exempted from GST; the model GST laws, principles of levy, and apportionment of IGST; the threshold limit of turnover for exemption from GST; the rates including floor rates with bands of GST; any special rates for a specified period to raise additional resources during any natural calamity or disaster.',
       pointsPossible: 20,
@@ -91,7 +88,25 @@ const sampleExam: Exam = {
   ],
 };
 
-export default function Home() {
+function Home() {
+  const { user, loading, logout } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
+  if (loading || !user) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
   return (
     <SidebarProvider>
       <Sidebar>
@@ -125,10 +140,16 @@ export default function Home() {
             <SidebarMenuItem>
               <SidebarMenuButton tooltip="Profile">
                 <Avatar className="w-7 h-7">
-                  <AvatarImage src="https://placehold.co/100x100.png" alt="@teacher" data-ai-hint="teacher portrait"/>
-                  <AvatarFallback>T</AvatarFallback>
+                  <AvatarImage src={user.photoURL ?? 'https://placehold.co/100x100.png'} alt="@teacher" data-ai-hint="teacher portrait"/>
+                  <AvatarFallback>{user.email?.[0].toUpperCase()}</AvatarFallback>
                 </Avatar>
-                <span className="text-sm">Teacher Name</span>
+                <span className="text-sm">{user.displayName || user.email}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton tooltip="Logout" onClick={logout}>
+                <LogOut />
+                <span>Logout</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
@@ -139,7 +160,10 @@ export default function Home() {
           <div className="flex items-center gap-2">
             <SidebarTrigger className="md:hidden" />
             <h1 className="text-xl font-semibold flex items-center gap-3">
-              <User className="w-6 h-6" />
+              <Avatar className="w-8 h-8">
+                <AvatarImage src={sampleExam.student.avatarUrl} alt={sampleExam.student.name} data-ai-hint="student portrait" />
+                <AvatarFallback>{sampleExam.student.name[0]}</AvatarFallback>
+              </Avatar>
               {sampleExam.student.name}
             </h1>
           </div>
@@ -149,5 +173,16 @@ export default function Home() {
         </main>
       </SidebarInset>
     </SidebarProvider>
+  );
+}
+
+
+export default function HomePage() {
+  // Use the AuthProvider to wrap the Home component
+  const { AuthProvider } = useAuth();
+  return (
+    <AuthProvider>
+      <Home />
+    </AuthProvider>
   );
 }
