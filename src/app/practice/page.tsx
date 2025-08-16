@@ -46,25 +46,19 @@ function PracticeExamGenerator() {
   }, [user, loading, router, topic]);
 
   useEffect(() => {
-    // This effect handles the generation of the exam.
-    // It will only run when the user is available.
     if (user && !exam && !generationError) {
-      // Get questions the user has already seen to avoid repeats.
-      // This is an async call that needs to complete before we generate the exam.
       getSeenQuestions(user.uid)
         .then(seenQuestions => {
-           // Now that we have the seen questions, we can generate a new exam.
            return generatePracticeExam({ 
              examTopic: topic, 
-             numQuestions: 50,
+             numQuestions: 5,
              seenQuestions,
             });
         })
         .then(response => {
-          // Once the exam is generated, we format it into the structure our components expect.
           const examQuestions: Question[] = response.questions.map(q => ({
             ...q,
-            studentAnswer: '', // Initialize with empty answers
+            studentAnswer: '', 
           }));
 
           const newExam: Exam = {
@@ -80,18 +74,21 @@ function PracticeExamGenerator() {
           setExam(newExam);
         })
         .catch(err => {
-          // If any part of the process fails, we record and display an error.
           console.error("Failed to generate exam:", err);
           setGenerationError("Sorry, we couldn't generate a practice exam at this time. Please try again later.");
         });
     }
-  }, [user, exam, topic, generationError]); // Dependencies for the effect
+  }, [user, exam, topic, generationError]);
 
-  if (loading || !user) {
+  if (loading || (!exam && !generationError)) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
-      </div>
+        <div className="flex h-screen items-center justify-center">
+            <div className="text-center flex flex-col items-center gap-4">
+                <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
+                <h1 className="text-2xl font-bold">Generating Your Practice Exam...</h1>
+                <p className="text-muted-foreground">The AI is preparing your questions for the {topic} exam.</p>
+            </div>
+        </div>
     );
   }
 
@@ -113,15 +110,11 @@ function PracticeExamGenerator() {
     );
   }
 
-  if (!exam) {
-    return (
-        <div className="flex h-screen items-center justify-center">
-            <div className="text-center flex flex-col items-center gap-4">
-                <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
-                <h1 className="text-2xl font-bold">Generating Your Practice Exam...</h1>
-                <p className="text-muted-foreground">The AI is preparing your questions for the {topic} exam.</p>
-            </div>
-        </div>
+  if (!user || !exam) {
+     return (
+      <div className="flex h-screen items-center justify-center">
+        <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
+      </div>
     );
   }
 
@@ -144,14 +137,6 @@ function PracticeExamGenerator() {
                   <SidebarMenuButton tooltip="Homepage">
                     <HomeIcon />
                     <span>Homepage</span>
-                  </SidebarMenuButton>
-                </Link>
-              </SidebarMenuItem>
-               <SidebarMenuItem>
-                <Link href="/enrolled-exams">
-                  <SidebarMenuButton tooltip="My Exams">
-                    <Library />
-                    <span>My Exams</span>
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
@@ -250,7 +235,12 @@ function SidebarInset({ children }: { children: React.ReactNode}) {
 
 function PracticePage() {
     return (
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<div className="flex h-screen items-center justify-center">
+            <div className="text-center flex flex-col items-center gap-4">
+                <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
+                <h1 className="text-2xl font-bold">Loading...</h1>
+            </div>
+        </div>}>
             <PracticeExamGenerator />
         </Suspense>
     );
