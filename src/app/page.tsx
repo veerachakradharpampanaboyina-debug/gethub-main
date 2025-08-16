@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, BrainCircuit } from 'lucide-react';
 import GethubLogo from '@/components/gethub-logo';
 
 const sampleExams = [
@@ -19,16 +19,19 @@ const sampleExams = [
     examId: 'upsc-pre-2023-gs1',
     examName: 'UPSC Civil Services Prelims 2023 - GS Paper 1',
     description: 'General Studies Paper 1 from the 2023 UPSC preliminary examination.',
+    examTopic: 'UPSC Civil Services'
   },
   {
     examId: 'ssc-cgl-2023-tier1',
     examName: 'SSC CGL 2023 - Tier 1',
     description: 'Staff Selection Commission Combined Graduate Level Examination, Tier 1 general awareness paper.',
+    examTopic: 'SSC CGL General Awareness'
   },
   {
     examId: 'gate-2024-cs',
     examName: 'GATE 2024 - Computer Science',
     description: 'Graduate Aptitude Test in Engineering for Computer Science and Information Technology.',
+    examTopic: 'GATE Computer Science'
   }
 ];
 
@@ -63,12 +66,16 @@ export default function HomePage() {
                 <CardDescription>{exam.description}</CardDescription>
               </CardHeader>
               <CardContent>
-                {/* Additional details can go here */}
+                <Button asChild className="w-full" variant="outline">
+                    <Link href={`/practice?topic=${encodeURIComponent(exam.examName)}`}>
+                        <BrainCircuit className="mr-2" /> Practice with AI
+                    </Link>
+                </Button>
               </CardContent>
               <CardFooter>
                 <Button asChild className="w-full">
                   <Link href={`/exam/${exam.examId}`}>
-                    Take Exam <ArrowRight className="ml-2" />
+                    Take Static Exam <ArrowRight className="ml-2" />
                   </Link>
                 </Button>
               </CardFooter>

@@ -4,6 +4,9 @@ import type {
 import type {
   FlagPotentiallyIncorrectAnswersOutput,
 } from '@/ai/flows/flag-potentially-incorrect-answers';
+import type { z } from 'genkit';
+import type { GeneratedQuestionSchema } from '@/ai/flows/generate-practice-exam';
+
 
 export interface Student {
   name: string;
@@ -17,15 +20,11 @@ export type QuestionType =
   | 'matching'
   | 'freeText';
 
-export interface Question {
-  questionId: string;
-  questionType: QuestionType;
-  questionText: string;
-  options?: string[];
+export interface Question extends z.infer<typeof GeneratedQuestionSchema> {
   studentAnswer: string;
-  correctAnswer: string;
-  pointsPossible: number;
+  options?: string[]; // Ensure options is part of the final Question type
 }
+
 
 export interface Exam {
   student: Student;
