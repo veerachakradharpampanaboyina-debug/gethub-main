@@ -21,12 +21,6 @@ import {
   CardTitle,
   CardFooter,
 } from '@/components/ui/card';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -354,39 +348,36 @@ export function ExamView({ exam: initialExam }: ExamViewProps) {
         </div>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Exam Questions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Accordion type="single" collapsible className="w-full" defaultValue={exam.questions[0]?.questionId}>
-            {exam.questions.map((question) => {
-              const objectiveResult = aiResults?.objectiveResults.find(
-                (r) => r.questionId === question.questionId
-              );
-              const flaggedResult = aiResults?.flaggedAnswers.find(
-                (f) => f.questionId === question.questionId
-              );
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Exam Questions</h2>
+        </div>
+        {exam.questions.map((question, index) => {
+          const objectiveResult = aiResults?.objectiveResults.find(
+            (r) => r.questionId === question.questionId
+          );
+          const flaggedResult = aiResults?.flaggedAnswers.find(
+            (f) => f.questionId === question.questionId
+          );
 
-              return (
-                <AccordionItem
-                  value={question.questionId}
-                  key={question.questionId}
-                >
-                  <AccordionTrigger className="hover:no-underline">
-                    <div className="flex items-center gap-3 flex-1 text-left">
-                      {getQuestionIcon(question.questionType)}
-                      <span className="font-medium flex-1">
-                        {question.questionText}
-                      </span>
-                      <QuestionResultBadge
-                        question={question}
-                        aiResults={aiResults}
-                      />
+          return (
+            <Card key={question.questionId}>
+              <CardHeader>
+                <CardTitle className="flex items-start gap-4">
+                  <span className="text-lg font-semibold">{index + 1}.</span>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                        <p className="text-base font-medium">{question.questionText}</p>
+                        <QuestionResultBadge question={question} aiResults={aiResults} />
                     </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="space-y-4 pt-4">
-                    <QuestionInput
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {question.pointsPossible} points
+                    </p>
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                 <QuestionInput
                       question={question}
                       onAnswerChange={handleAnswerChange}
                       isSubmitted={isSubmitted}
@@ -416,15 +407,11 @@ export function ExamView({ exam: initialExam }: ExamViewProps) {
                         </p>
                       </div>
                      )}
-                  </AccordionContent>
-                </AccordionItem>
-              );
-            })}
-          </Accordion>
-        </CardContent>
-      </Card>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
 }
-
-    
