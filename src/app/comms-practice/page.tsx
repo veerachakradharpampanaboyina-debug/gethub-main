@@ -51,6 +51,7 @@ function CommunicationPracticePage() {
   const [userInput, setUserInput] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
@@ -71,72 +72,84 @@ function CommunicationPracticePage() {
         }
     }
   }, [messages]);
-
-  const playAudio = useCallback((audioDataUri: string) => {
-    // Stop any currently playing audio
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.onended = null;
-      audioRef.current.onerror = null;
-      audioRef.current = null;
+  
+  // Setup audio element and its event listeners
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !audioRef.current) {
+      audioRef.current = new Audio();
     }
-  
-    const audio = new Audio(audioDataUri);
-    audioRef.current = audio;
-    setIsSpeaking(true);
-  
-    audio.play().catch(error => {
-      toast({ title: "Audio Playback Failed", description: `Could not play the audio. ${error}`, variant: "destructive" });
-      setIsSpeaking(false);
-    });
-  
-    audio.onended = () => {
-      setIsSpeaking(false);
-      audioRef.current = null;
+
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const handleAudioEnd = () => setIsSpeaking(false);
+    const handleAudioError = () => {
+        toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
+        setIsSpeaking(false);
     };
-  
-    audio.onerror = (e) => {
-      toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
-      setIsSpeaking(false);
-      audioRef.current = null;
+    
+    audio.addEventListener('ended', handleAudioEnd);
+    audio.addEventListener('error', handleAudioError);
+    
+    // Cleanup function
+    return () => {
+        audio.removeEventListener('ended', handleAudioEnd);
+        audio.removeEventListener('error', handleAudioError);
+        audio.pause();
     };
   }, [toast]);
 
 
+  const playAudio = useCallback((audioDataUri: string) => {
+    const audio = audioRef.current;
+    if (!audio || !audioDataUri) return;
+    
+    // Stop any currently playing audio
+    if (isSpeaking) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+    
+    setIsSpeaking(true);
+    audio.src = audioDataUri;
+    audio.play().catch(error => {
+      toast({ title: "Audio Playback Failed", description: `Could not play the audio. ${error}`, variant: "destructive" });
+      setIsSpeaking(false);
+    });
+  }, [toast, isSpeaking]);
+
+
   const handleSendMessage = useCallback(async (text: string) => {
-    if (!text.trim() || isRecording || isSpeaking) return;
+    if (!text.trim() || isGenerating) return;
 
     setUserInput('');
+    setIsGenerating(true);
+    
     const userMessage: Message = { id: `user-${Date.now()}`, role: 'user', content: text };
     
-    const assistantThinkingMessageId = `assistant-thinking-${Date.now()}`;
-    const assistantThinkingMessage: Message = {
-        id: assistantThinkingMessageId,
-        role: 'assistant',
-        content: '',
-        isGenerating: true,
-    };
-    setMessages(prev => [...prev, userMessage, assistantThinkingMessage]);
+    // Add user message and a thinking indicator for the assistant
+    setMessages(prev => [...prev, userMessage, { id: `assistant-thinking-${Date.now()}`, role: 'assistant', content: '', isGenerating: true }]);
 
     try {
-        const feedbackResult = await generateCommunicationFeedback({ text: userMessage.content });
+        const feedbackResult = await generateCommunicationFeedback({ text });
         const aiResponseText = feedbackResult.response;
 
-        setMessages(prev => prev.map(m => m.id === assistantThinkingMessageId ? { ...m, content: aiResponseText, isGenerating: false } : m));
+        // Update assistant message with the real content
+        setMessages(prev => prev.map(m => m.isGenerating ? { ...m, content: aiResponseText, isGenerating: false } : m));
       
         if (aiResponseText.trim()) {
             const ttsResult = await textToSpeech({ text: aiResponseText });
             playAudio(ttsResult.audioDataUri);
-        } else {
-             setMessages(prev => prev.filter(m => m.id !== assistantThinkingMessageId));
         }
 
     } catch (err) {
         console.error("Failed to get feedback:", err);
         const errorMessage = "I'm having a little trouble connecting right now. Let's try that again in a moment.";
-        setMessages(prev => prev.map(m => m.id === assistantThinkingMessageId ? { ...m, content: errorMessage, isGenerating: false } : m));
+        setMessages(prev => prev.map(m => m.isGenerating ? { ...m, content: errorMessage, isGenerating: false } : m));
+    } finally {
+        setIsGenerating(false);
     }
-  }, [isRecording, isSpeaking, playAudio]);
+  }, [isGenerating, playAudio]);
   
    useEffect(() => {
     if (!SpeechRecognition) {
@@ -149,7 +162,6 @@ function CommunicationPracticePage() {
         recognition.lang = 'en-US';
         
         let finalTranscript = '';
-        let speechTimeout: NodeJS.Timeout | null = null;
     
         recognition.onstart = () => {
             setIsRecording(true);
@@ -157,8 +169,6 @@ function CommunicationPracticePage() {
         };
 
         recognition.onresult = (event) => {
-          if (speechTimeout) clearTimeout(speechTimeout);
-          
           let interimTranscript = '';
           for (let i = event.resultIndex; i < event.results.length; ++i) {
             if (event.results[i].isFinal) {
@@ -168,14 +178,9 @@ function CommunicationPracticePage() {
             }
           }
           setUserInput(finalTranscript + interimTranscript);
-          
-          speechTimeout = setTimeout(() => {
-             recognition.stop();
-          }, 3000); // 3-second pause
         };
 
         recognition.onend = () => {
-          if (speechTimeout) clearTimeout(speechTimeout);
           setIsRecording(false);
           const transcriptToSend = finalTranscript.trim();
           if (transcriptToSend) {
@@ -195,7 +200,7 @@ function CommunicationPracticePage() {
 
     return () => {
       if (recognitionRef.current) {
-        recognitionRef.current.stop();
+        recognitionRef.current.abort();
       }
       if (audioRef.current) {
         audioRef.current.pause();
@@ -213,12 +218,12 @@ function CommunicationPracticePage() {
     if (isRecording) {
       recognitionRef.current?.stop();
     } else {
-       if (isSpeaking) {
-         if (audioRef.current) {
-            audioRef.current.pause();
-         }
+       if (isSpeaking && audioRef.current) {
+         audioRef.current.pause();
+         audioRef.current.currentTime = 0;
          setIsSpeaking(false);
        }
+      setUserInput('');
       recognitionRef.current?.start();
     }
   };
@@ -236,7 +241,7 @@ function CommunicationPracticePage() {
     );
   }
 
-  const isUIActive = isRecording || isSpeaking;
+  const isUIActive = isRecording || isSpeaking || isGenerating;
 
   return (
     <SidebarProvider>
@@ -397,7 +402,7 @@ function CommunicationPracticePage() {
                     placeholder={isRecording ? "Listening..." : "Click the mic to speak, or type here..."}
                     className="pr-16 min-h-[52px]" 
                     rows={1}
-                    disabled={isUIActive}
+                    disabled={isSpeaking || isGenerating}
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1">
                     {SpeechRecognition && (
@@ -406,7 +411,7 @@ function CommunicationPracticePage() {
                           size="icon" 
                           variant={isRecording ? "destructive" : "ghost"}
                           onClick={handleToggleRecording}
-                          disabled={isSpeaking}
+                          disabled={isSpeaking || isGenerating}
                       >
                           <Mic className="w-5 h-5" />
                       </Button>
@@ -446,3 +451,5 @@ export default function CommunicationPracticePageWrapperWithAuth() {
     </AuthProvider>
   );
 }
+
+    
