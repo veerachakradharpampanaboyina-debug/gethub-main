@@ -102,12 +102,11 @@ function HomePageContent() {
                     <h2 className="text-3xl font-bold tracking-tight">Our Success Stories</h2>
                     <p className="text-muted-foreground mt-2">See how GETHUB has helped students achieve their dreams.</p>
                 </div>
-                <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-8 items-center">
-                    <div className="grid grid-cols-2 gap-4">
-                        <Image src="https://placehold.co/600x400.png" alt="Student studying" width={600} height={400} className="rounded-lg shadow-lg" data-ai-hint="student studying"/>
-                        <Image src="https://placehold.co/600x400.png" alt="Exam hall" width={600} height={400} className="rounded-lg shadow-lg" data-ai-hint="exam hall"/>
-                        <Image src="https://placehold.co/600x400.png" alt="Graduation ceremony" width={600} height={400} className="rounded-lg shadow-lg" data-ai-hint="graduation ceremony"/>
-                        <Image src="https://placehold.co/600x400.png" alt="Student celebrating" width={600} height={400} className="rounded-lg shadow-lg" data-ai-hint="student celebrating"/>
+                <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-16 items-center">
+                    <div className="relative h-[500px]">
+                      <Image src="https://placehold.co/400x600.png" alt="Student studying" width={400} height={600} className="rounded-lg shadow-2xl absolute top-0 left-0 transform -rotate-6 transition-transform duration-300 hover:rotate-0 hover:scale-105" data-ai-hint="student studying"/>
+                      <Image src="https://placehold.co/400x300.png" alt="Exam hall" width={400} height={300} className="rounded-lg shadow-2xl absolute bottom-0 right-0 transform rotate-3 transition-transform duration-300 hover:rotate-0 hover:scale-105" data-ai-hint="exam hall"/>
+                      <Image src="https://placehold.co/300x450.png" alt="Student celebrating" width={300} height={450} className="rounded-lg shadow-2xl absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rotate-1 transition-transform duration-300 hover:rotate-0 hover:scale-105 z-10" data-ai-hint="student celebrating"/>
                     </div>
                     <div className="prose prose-invert text-lg">
                         <h3>From Aspiration to Achievement</h3>
@@ -123,7 +122,7 @@ function HomePageContent() {
             </section>
 
             <section id="exams" className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
-              <div className="text-center mb-12">
+              <div className="text-center my-12">
                   <h2 className="text-3xl font-bold tracking-tight">Choose Your Exam</h2>
                   <p className="text-muted-foreground mt-2">Select an exam to view its syllabus and start preparing.</p>
               </div>
