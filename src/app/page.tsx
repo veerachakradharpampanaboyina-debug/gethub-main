@@ -103,10 +103,15 @@ function HomePageContent() {
                     <p className="text-muted-foreground mt-2">See how GETHUB has helped students achieve their dreams.</p>
                 </div>
                 <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-16 items-center">
-                    <div className="relative h-[500px]">
-                      <Image src="https://placehold.co/400x600.png" alt="Student studying" width={400} height={600} className="rounded-lg shadow-2xl absolute top-0 left-0 transform -rotate-6 transition-transform duration-300 hover:rotate-0 hover:scale-105" data-ai-hint="student studying"/>
-                      <Image src="https://placehold.co/400x300.png" alt="Exam hall" width={400} height={300} className="rounded-lg shadow-2xl absolute bottom-0 right-0 transform rotate-3 transition-transform duration-300 hover:rotate-0 hover:scale-105" data-ai-hint="exam hall"/>
-                      <Image src="https://placehold.co/300x450.png" alt="Student celebrating" width={300} height={450} className="rounded-lg shadow-2xl absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rotate-1 transition-transform duration-300 hover:rotate-0 hover:scale-105 z-10" data-ai-hint="student celebrating"/>
+                    <div className="aspect-video">
+                       <iframe 
+                        className="w-full h-full rounded-lg shadow-2xl"
+                        src="https://www.youtube.com/embed/dQw4w9WgXcQ" 
+                        title="YouTube video player" 
+                        frameBorder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowFullScreen>
+                       </iframe>
                     </div>
                     <div className="prose prose-invert text-lg">
                         <h3>From Aspiration to Achievement</h3>
@@ -160,6 +165,7 @@ function HomePageContent() {
               <p className="text-sm text-muted-foreground">Kakinada, Andhrapradesh-533001</p>
             </div>
              <div className="flex justify-center gap-4">
+                <Link href="#" className="text-muted-foreground hover:text-primary"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-whatsapp"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg></Link>
                 <Link href="#" className="text-muted-foreground hover:text-primary"><Facebook /></Link>
                 <Link href="#" className="text-muted-foreground hover:text-primary"><Twitter /></Link>
                 <Link href="#" className="text-muted-foreground hover:text-primary"><Instagram /></Link>
