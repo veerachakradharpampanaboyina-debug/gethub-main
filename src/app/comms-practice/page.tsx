@@ -76,23 +76,13 @@ function CommunicationPracticePage() {
   }, [messages]);
 
 
-  const playAudioAndListen = async (audioDataUri: string, responseText: string) => {
+  const playAudio = async (audioDataUri: string) => {
     return new Promise<void>((resolve, reject) => {
         const audio = new Audio(audioDataUri);
         
         audio.onended = () => {
              setIsGenerating(false);
-             // Only enable mic if the AI asked a question
-            if (responseText.trim().endsWith('?')) {
-                 setTimeout(() => {
-                    if (recognitionRef.current && !isRecording) {
-                        recognitionRef.current.start();
-                    }
-                    resolve();
-                }, 3000); // 3-second delay
-            } else {
-                resolve();
-            }
+             resolve();
         };
 
         audio.onerror = (e) => {
@@ -135,7 +125,7 @@ function CommunicationPracticePage() {
         const errorMessage = "I can't provide feedback on an empty message. Please say something, and I'll be happy to help you practice!";
         setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: errorMessage, isGenerating: false } : m));
         const ttsResultOnError = await textToSpeech({ text: errorMessage });
-        await playAudioAndListen(ttsResultOnError.audioDataUri, errorMessage);
+        await playAudio(ttsResultOnError.audioDataUri);
         return;
       }
       
@@ -154,7 +144,7 @@ function CommunicationPracticePage() {
 
       // Generate and play audio
       const ttsResult = await textToSpeech({ text: aiResponseText });
-      await playAudioAndListen(ttsResult.audioDataUri, aiResponseText);
+      await playAudio(ttsResult.audioDataUri);
 
     } catch (err) {
       console.error("Failed to get feedback:", err);
@@ -163,7 +153,7 @@ function CommunicationPracticePage() {
        setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: errorMessage, isGenerating: false } : m));
        try {
         const ttsResult = await textToSpeech({ text: errorMessage });
-        await playAudioAndListen(ttsResult.audioDataUri, errorMessage);
+        await playAudio(ttsResult.audioDataUri);
        } catch (ttsErr) {
             setIsGenerating(false);
        }
