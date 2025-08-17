@@ -76,27 +76,21 @@ function CommunicationPracticePage() {
   }, [messages]);
 
 
-  const playAudio = async (audioDataUri: string) => {
-    return new Promise<void>((resolve, reject) => {
-        const audio = new Audio(audioDataUri);
-        
-        audio.onended = () => {
-             setIsGenerating(false);
-             resolve();
-        };
-
-        audio.onerror = (e) => {
-            toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive"});
-            setIsGenerating(false);
-            reject(new Error("Audio playback error"));
-        };
-
-        audio.play().catch(error => {
-            toast({ title: "Audio Playback Failed", description: `Could not automatically play the audio. ${error}`, variant: "destructive"});
-            setIsGenerating(false);
-            reject(error);
-        });
+  const playAudio = (audioDataUri: string) => {
+    const audio = new Audio(audioDataUri);
+    audio.play().catch(error => {
+        toast({ title: "Audio Playback Failed", description: `Could not automatically play the audio. ${error}`, variant: "destructive"});
+        setIsGenerating(false);
     });
+
+    audio.onended = () => {
+        setIsGenerating(false);
+    };
+
+    audio.onerror = (e) => {
+        toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive"});
+        setIsGenerating(false);
+    };
   };
 
 
@@ -125,7 +119,7 @@ function CommunicationPracticePage() {
         const errorMessage = "I can't provide feedback on an empty message. Please say something, and I'll be happy to help you practice!";
         setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: errorMessage, isGenerating: false } : m));
         const ttsResultOnError = await textToSpeech({ text: errorMessage });
-        await playAudio(ttsResultOnError.audioDataUri);
+        playAudio(ttsResultOnError.audioDataUri);
         return;
       }
       
@@ -144,7 +138,7 @@ function CommunicationPracticePage() {
 
       // Generate and play audio
       const ttsResult = await textToSpeech({ text: aiResponseText });
-      await playAudio(ttsResult.audioDataUri);
+      playAudio(ttsResult.audioDataUri);
 
     } catch (err) {
       console.error("Failed to get feedback:", err);
@@ -153,7 +147,7 @@ function CommunicationPracticePage() {
        setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: errorMessage, isGenerating: false } : m));
        try {
         const ttsResult = await textToSpeech({ text: errorMessage });
-        await playAudio(ttsResult.audioDataUri);
+        playAudio(ttsResult.audioDataUri);
        } catch (ttsErr) {
             setIsGenerating(false);
        }
