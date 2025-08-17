@@ -81,27 +81,22 @@ function CommunicationPracticePage() {
   }, [messages]);
 
   const playAudio = useCallback((audioDataUri: string) => {
+    if (recognitionRef.current && isRecording) {
+      recognitionRef.current.stop();
+    }
     const audio = audioRef.current;
     if (audio) {
-      // Stop any speech recognition in progress
-      if (recognitionRef.current && isRecording) {
-        recognitionRef.current.stop();
-      }
-      
-      // If audio is already playing, pause and reset it before playing the new one
       if (!audio.paused) {
         audio.pause();
         audio.currentTime = 0;
       }
-
       audio.src = audioDataUri;
       audio.play().catch(e => {
-        // AbortError is expected if we interrupt playback, so we can safely ignore it.
         if (e.name !== 'AbortError') {
           console.error("Audio playback failed:", e);
           toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
-          setIsSpeaking(false); // Ensure state is reset on error
         }
+        setIsSpeaking(false);
       });
     }
   }, [isRecording, toast]);
@@ -129,14 +124,12 @@ function CommunicationPracticePage() {
         playAudio(ttsResult.audioDataUri);
   
       } else {
-        // If AI returns an empty response, just remove the "thinking" message
         setMessages(prev => prev.filter(m => m.id !== assistantMessageId));
       }
   
     } catch (err) {
       console.error("Failed to get feedback:", err);
       const errorMessage = "I'm having a little trouble connecting right now. Let's try that again in a moment.";
-      // Display the error message in the chat, but do not convert it to speech.
       setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: errorMessage, isGenerating: false } : m));
     } finally {
       setIsGenerating(false);
@@ -238,7 +231,7 @@ function CommunicationPracticePage() {
           }
           if (audioRef.current) {
             audioRef.current.pause();
-            audioRef.current.src = "";
+            audioRef.current = null;
           }
            if (speechTimeoutRef.current) {
                 clearTimeout(speechTimeoutRef.current);
@@ -520,3 +513,5 @@ export default function CommunicationPracticePageWrapperWithAuth() {
     </AuthProvider>
   );
 }
+
+    
