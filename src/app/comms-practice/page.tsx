@@ -16,7 +16,7 @@ import {
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MessageCircle, LogOut, Settings, Home as HomeIcon, History, Shield, BrainCircuit, Send, Sparkles, Volume2, Copy, Mic } from 'lucide-react';
+import { MessageCircle, LogOut, Settings, Home as HomeIcon, History, Shield, BrainCircuit, Copy, Mic } from 'lucide-react';
 import GethubLogo from '@/components/gethub-logo';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
@@ -25,7 +25,7 @@ import { Button } from '@/components/ui/button';
 import { generateCommunicationFeedback } from '@/ai/flows/generate-communication-feedback';
 import { textToSpeech } from '@/ai/flows/text-to-speech';
 import { LoaderCircle } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -408,10 +408,7 @@ function CommunicationPracticePage() {
                 {messages.length === 0 && !isGenerating && (
                     <Card className="max-w-2xl mx-auto border-dashed">
                         <CardHeader className="text-center items-center">
-                            <Avatar className="w-16 h-16 mb-4">
-                                <AvatarImage src="https://i.ibb.co/xqNC3WZC/logo-jpg.jpg" alt="AI Assistant" />
-                                <AvatarFallback>AI</AvatarFallback>
-                            </Avatar>
+                             <GethubLogo className="w-16 h-16 mb-4" width={64} height={64} />
                             <CardTitle>Start a Conversation</CardTitle>
                             <CardDescription>Practice your English by clicking the microphone and speaking. GETHUB will reply and help you improve.</CardDescription>
                         </CardHeader>
@@ -420,10 +417,7 @@ function CommunicationPracticePage() {
                 {messages.map((message) => (
                     <div key={message.id} className={`flex items-start gap-4 ${message.role === 'user' ? 'justify-end' : ''}`}>
                          {message.role === 'assistant' && (
-                            <Avatar className="w-8 h-8">
-                                <AvatarImage src="https://i.ibb.co/xqNC3WZC/logo-jpg.jpg" alt="AI Assistant" />
-                                <AvatarFallback>AI</AvatarFallback>
-                            </Avatar>
+                           <GethubLogo className="w-8 h-8" width={32} height={32} />
                         )}
                         <div className={`max-w-xl rounded-lg p-4 ${message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-secondary'}`}>
                              <div className="prose prose-sm prose-invert max-w-none text-current" dangerouslySetInnerHTML={{ __html: markdownToHtml(message.content) }} />
@@ -445,10 +439,7 @@ function CommunicationPracticePage() {
                 ))}
                 {isGenerating && audioPlayer && (
                      <div className="flex items-start gap-4">
-                        <Avatar className="w-8 h-8">
-                            <AvatarImage src="https://i.ibb.co/xqNC3WZC/logo-jpg.jpg" alt="AI Assistant" />
-                            <AvatarFallback>AI</AvatarFallback>
-                        </Avatar>
+                        <GethubLogo className="w-8 h-8" width={32} height={32} />
                         <div className="max-w-xl rounded-lg p-4 bg-secondary">
                              <div className="flex items-center gap-2">
                                 <LoaderCircle className="w-4 h-4 animate-spin" />

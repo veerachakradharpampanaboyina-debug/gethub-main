@@ -45,7 +45,7 @@ function PracticeExamGenerator() {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push(`/practice?topic=${encodeURIComponent(topic)}`);
+      router.push(`/login?redirect=/practice?topic=${encodeURIComponent(topic)}`);
     }
   }, [user, loading, router, topic]);
 
