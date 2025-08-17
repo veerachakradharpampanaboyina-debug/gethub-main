@@ -131,15 +131,15 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
             });
         }
       },
-      x: 10,
-      y: 10,
+      x: 15,
+      y: 15,
       autoPaging: 'text',
       html2canvas: {
-          scale: 0.75, // Adjust scale to fit content better
+          scale: 0.8, 
           useCORS: true,
           logging: false,
       },
-       margin: [20, 20, 20, 20],
+       margin: [10, 10, 10, 10],
     });
   };
 
@@ -447,5 +447,3 @@ export default function ExamPageClient({ exam }: { exam: ExamDetails }) {
     </AuthProvider>
   );
 }
-
-    
