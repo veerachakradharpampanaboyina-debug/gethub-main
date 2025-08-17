@@ -17,7 +17,7 @@ import { RATE_LIMIT_EXCEEDED_AUDIO } from '@/assets/rate-limit-exceeded';
 
 const TextToSpeechInputSchema = z.object({
   text: z.string().describe('The text to be converted to speech.'),
-  voice: z.enum(['Algenib', 'Achernar', 'Sirius', 'Vega', 'Canopus']).optional().default('Algenib').describe('The pre-built voice to use for the speech.'),
+  voice: z.enum(['Algenib', 'Vega']).optional().default('Algenib').describe('The pre-built voice to use for the speech. Algenib is male, Vega is female.'),
 });
 export type TextToSpeechInput = z.infer<typeof TextToSpeechInputSchema>;
 

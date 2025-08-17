@@ -16,20 +16,22 @@ import {
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MessageCircle, LogOut, Settings, Home as HomeIcon, History, Shield, BrainCircuit, Copy, Mic } from 'lucide-react';
+import { MessageCircle, LogOut, Settings, Home as HomeIcon, History, Shield, BrainCircuit, Copy, Mic, Volume2 } from 'lucide-react';
 import GethubLogo from '@/components/gethub-logo';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { generateCommunicationFeedback } from '@/ai/flows/generate-communication-feedback';
-import { textToSpeech } from '@/ai/flows/text-to-speech';
+import { textToSpeech, TextToSpeechInput } from '@/ai/flows/text-to-speech';
 import { LoaderCircle } from 'lucide-react';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { markdownToHtml } from '@/lib/utils';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 
 type Message = {
@@ -52,6 +54,7 @@ function CommunicationPracticePage() {
   const [isRecording, setIsRecording] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [audioToPlay, setAudioToPlay] = useState<string | null>(null);
+  const [voice, setVoice] = useState<TextToSpeechInput['voice']>('Algenib');
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
@@ -78,7 +81,9 @@ function CommunicationPracticePage() {
       audioRef.current.src = audioDataUri;
       audioRef.current.play().catch(e => {
         console.error("Audio playback failed:", e);
-        toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
+        if (e.name !== 'AbortError') {
+          toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
+        }
         setIsGenerating(false);
       });
     }
@@ -108,7 +113,7 @@ function CommunicationPracticePage() {
         setMessages(prev => prev.map(m => m.isGenerating ? { ...m, content: aiResponseText, isGenerating: false } : m));
       
         if (aiResponseText.trim()) {
-            const ttsResult = await textToSpeech({ text: aiResponseText });
+            const ttsResult = await textToSpeech({ text: aiResponseText, voice: voice });
             setAudioToPlay(ttsResult.audioDataUri);
         } else {
             setIsGenerating(false);
@@ -120,7 +125,7 @@ function CommunicationPracticePage() {
         setMessages(prev => prev.map(m => m.isGenerating ? { ...m, content: errorMessage, isGenerating: false } : m));
         setIsGenerating(false);
     }
-  }, [isGenerating, toast]);
+  }, [isGenerating, toast, voice]);
   
    useEffect(() => {
     if (!SpeechRecognition) {
@@ -181,7 +186,9 @@ function CommunicationPracticePage() {
 
         audioRef.current.onerror = (e) => {
             console.error("Audio element error:", e);
-            toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
+             if ((e.target as HTMLAudioElement)?.error?.code !== 20) { // Not an AbortError
+                toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
+             }
             setIsGenerating(false);
         };
       }
@@ -336,6 +343,17 @@ function CommunicationPracticePage() {
                 AI Language Coach
             </h1>
           </div>
+          <RadioGroup value={voice} onValueChange={(v) => setVoice(v as TextToSpeechInput['voice'])} className="flex items-center gap-4" disabled={isUIActive}>
+             <Label>Voice:</Label>
+            <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Algenib" id="male-voice" />
+                <Label htmlFor="male-voice">Male</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Vega" id="female-voice" />
+                <Label htmlFor="female-voice">Female</Label>
+            </div>
+          </RadioGroup>
         </header>
         <main className="flex flex-col h-[calc(100vh-61px)]">
           <ScrollArea className="flex-1 p-4 md:p-6 lg:p-8" ref={scrollAreaRef}>
@@ -367,6 +385,9 @@ function CommunicationPracticePage() {
                             <div className="flex gap-2 mt-3 -mb-2">
                                 <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleCopyText(message.content)}>
                                     <Copy className="w-4 h-4"/>
+                                </Button>
+                                 <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setAudioToPlay(message.content)}>
+                                    <Volume2 className="w-4 h-4"/>
                                 </Button>
                             </div>
                            )}
