@@ -85,25 +85,22 @@ function CommunicationPracticePage() {
     if (recognitionRef.current && isRecording) {
       recognitionRef.current.stop();
     }
-    if (audioRef.current) {
-      // Stop and reset any currently playing audio to prevent overlap errors
-      if (!audioRef.current.paused) {
-          audioRef.current.pause();
+    const audio = audioRef.current;
+    if (audio) {
+      if (!audio.paused) {
+          audio.pause();
       }
-      audioRef.current.src = ""; // Clear the source
-      audioRef.current.load(); // Important: call load() after changing src
-      audioRef.current.src = audioDataUri;
-      audioRef.current.play().catch(e => {
-        // AbortError is expected if we interrupt playback, so we can ignore it.
+      audio.src = audioDataUri;
+      audio.play().catch(e => {
         if (e.name !== 'AbortError') {
             console.error("Audio playback failed:", e);
             toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
-             // Ensure speaking state is reset on other errors
             setIsSpeaking(false);
         }
       });
     }
   }, [toast, isRecording]);
+
 
   useEffect(() => {
     if (audioToPlay) {
@@ -228,12 +225,10 @@ function CommunicationPracticePage() {
 
         audioRef.current.onerror = (e) => {
             const target = e.target as HTMLAudioElement;
-            // Error code 20 is a DOMException for abort, which is expected if we interrupt playback.
             if (target.error && target.error.code !== 20) { 
                 console.error("Audio element error:", e);
                 toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
             }
-            // Always ensure speaking state is reset, even on error.
             setIsSpeaking(false);
         };
       }
@@ -263,7 +258,6 @@ function CommunicationPracticePage() {
     } else {
        if (audioRef.current && !audioRef.current.paused) {
          audioRef.current.pause();
-         audioRef.current.src = "";
        }
       setUserInput('');
       recognitionRef.current?.start();
@@ -527,5 +521,3 @@ export default function CommunicationPracticePageWrapperWithAuth() {
     </AuthProvider>
   );
 }
-
-    
