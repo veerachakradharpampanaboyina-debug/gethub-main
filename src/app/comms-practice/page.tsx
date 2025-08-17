@@ -82,24 +82,26 @@ function CommunicationPracticePage() {
   }, [messages]);
 
   const playAudio = useCallback((audioDataUri: string) => {
-    if (recognitionRef.current && isRecording) {
-      recognitionRef.current.stop();
-    }
     const audio = audioRef.current;
     if (audio) {
+      if (recognitionRef.current && isRecording) {
+        recognitionRef.current.stop();
+      }
       if (!audio.paused) {
-          audio.pause();
+        audio.pause();
+        audio.currentTime = 0;
       }
       audio.src = audioDataUri;
       audio.play().catch(e => {
+        // AbortError is expected if we interrupt playback, so we can safely ignore it.
         if (e.name !== 'AbortError') {
-            console.error("Audio playback failed:", e);
-            toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
-            setIsSpeaking(false);
+          console.error("Audio playback failed:", e);
+          toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
+          setIsSpeaking(false);
         }
       });
     }
-  }, [toast, isRecording]);
+  }, [isRecording, toast]);
 
 
   useEffect(() => {
@@ -109,38 +111,38 @@ function CommunicationPracticePage() {
     }
   }, [audioToPlay, playAudio]);
 
- const handleSendMessage = useCallback(async (text: string) => {
+  const handleSendMessage = useCallback(async (text: string) => {
     if (!text.trim() || isGenerating || isSpeaking) return;
-
+  
     setUserInput('');
     setIsGenerating(true);
-    
+      
     const userMessage: Message = { id: `user-${Date.now()}`, role: 'user', content: text };
     const assistantMessageId = `assistant-${Date.now()}`;
     const thinkingMessage: Message = { id: assistantMessageId, role: 'assistant', content: '', isGenerating: true };
-
+  
     setMessages(prev => [...prev, userMessage, thinkingMessage]);
-
+  
     try {
-        const feedbackResult = await generateCommunicationFeedback({ text, nativeLanguage });
-        const aiResponseText = feedbackResult.response;
-        
-        if (aiResponseText.trim()) {
-            const ttsResult = await textToSpeech({ text: aiResponseText, voice });
-            
-            setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: aiResponseText, isGenerating: false } : m));
-            setAudioToPlay(ttsResult.audioDataUri);
-
-        } else {
-             setMessages(prev => prev.filter(m => m.id !== assistantMessageId));
-        }
-
+      const feedbackResult = await generateCommunicationFeedback({ text, nativeLanguage });
+      const aiResponseText = feedbackResult.response;
+          
+      if (aiResponseText.trim()) {
+        const ttsResult = await textToSpeech({ text: aiResponseText, voice });
+              
+        setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: aiResponseText, isGenerating: false } : m));
+        setAudioToPlay(ttsResult.audioDataUri);
+  
+      } else {
+        setMessages(prev => prev.filter(m => m.id !== assistantMessageId));
+      }
+  
     } catch (err) {
-        console.error("Failed to get feedback:", err);
-        const errorMessage = "I'm having a little trouble connecting right now. Let's try that again in a moment.";
-        setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: errorMessage, isGenerating: false } : m));
+      console.error("Failed to get feedback:", err);
+      const errorMessage = "I'm having a little trouble connecting right now. Let's try that again in a moment.";
+      setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: errorMessage, isGenerating: false } : m));
     } finally {
-        setIsGenerating(false);
+      setIsGenerating(false);
     }
   }, [isGenerating, isSpeaking, voice, nativeLanguage]);
   
@@ -222,8 +224,10 @@ function CommunicationPracticePage() {
         };
 
         audioRef.current.onerror = (e) => {
+            // Most errors are now caught by the play().catch() block.
+            // This is a final fallback.
             const target = e.target as HTMLAudioElement;
-            if (target.error && target.error.code !== 20) { 
+            if (target.error && target.error.code !== 20) { // 20 is AbortError
                 console.error("Audio element error:", e);
                 toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
             }
@@ -519,5 +523,3 @@ export default function CommunicationPracticePageWrapperWithAuth() {
     </AuthProvider>
   );
 }
-
-    
