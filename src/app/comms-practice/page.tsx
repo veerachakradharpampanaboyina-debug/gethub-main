@@ -40,7 +40,6 @@ type Message = {
   isGenerating?: boolean;
 };
 
-// Check for SpeechRecognition API
 const SpeechRecognition =
   (typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition));
 
@@ -60,8 +59,6 @@ function CommunicationPracticePage() {
   const recognitionRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const speechTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const lastThinkingMessageIdRef = useRef<string | null>(null);
-  const lastAiResponseTextRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -70,7 +67,6 @@ function CommunicationPracticePage() {
   }, [user, loading, router]);
   
   useEffect(() => {
-    // Scroll to the bottom when messages change
     if (scrollAreaRef.current) {
         const viewport = scrollAreaRef.current.querySelector('div[data-radix-scroll-area-viewport]');
         if (viewport) {
@@ -86,7 +82,6 @@ function CommunicationPracticePage() {
     if (audioRef.current) {
       audioRef.current.src = audioDataUri;
       audioRef.current.play().catch(e => {
-        // We can ignore the AbortError, which happens when we interrupt the audio
         if (e.name !== 'AbortError') {
             console.error("Audio playback failed:", e);
             toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
@@ -98,7 +93,7 @@ function CommunicationPracticePage() {
   useEffect(() => {
     if (audioToPlay) {
       playAudio(audioToPlay);
-      setAudioToPlay(null); // Reset after trying to play
+      setAudioToPlay(null);
     }
   }, [audioToPlay, playAudio]);
 
@@ -110,23 +105,23 @@ function CommunicationPracticePage() {
     
     const userMessage: Message = { id: `user-${Date.now()}`, role: 'user', content: text };
     const thinkingMessage: Message = { id: `assistant-thinking-${Date.now()}`, role: 'assistant', content: '', isGenerating: true };
-    lastThinkingMessageIdRef.current = thinkingMessage.id;
-
 
     setMessages(prev => [...prev, userMessage, thinkingMessage]);
 
     try {
         const feedbackResult = await generateCommunicationFeedback({ text });
         const aiResponseText = feedbackResult.response;
-        lastAiResponseTextRef.current = aiResponseText;
         
         if (aiResponseText.trim()) {
-            const ttsResult = await textToSpeech({ text: aiResponseText, voice: voice });
+            const ttsResult = await textToSpeech({ text: aiResponseText, voice });
+            
+            // This is the synchronized update.
+            setMessages(prev => prev.map(m => m.id === thinkingMessage.id ? { ...m, content: aiResponseText, isGenerating: false } : m));
             setIsGenerating(false);
             setAudioToPlay(ttsResult.audioDataUri);
             setIsSpeaking(true);
+
         } else {
-            // If there's no response text, just stop the generating state
              setMessages(prev => prev.filter(m => m.id !== thinkingMessage.id));
              setIsGenerating(false);
         }
@@ -140,9 +135,8 @@ function CommunicationPracticePage() {
   }, [isGenerating, voice]);
   
    useEffect(() => {
-    if (!SpeechRecognition) {
-      return;
-    }
+    if (!SpeechRecognition) return;
+
     if (!recognitionRef.current) {
         const recognition = new SpeechRecognition();
         recognition.continuous = true;
@@ -167,16 +161,14 @@ function CommunicationPracticePage() {
             if (transcriptToSend && !transcriptSent) {
                 transcriptSent = true;
                 handleSendMessage(transcriptToSend);
-                finalTranscript = ''; // Clear transcript after sending
+                finalTranscript = ''; 
             }
         };
 
         recognition.onresult = (event) => {
-          // Clear any existing timeout
            if (speechTimeoutRef.current) {
                 clearTimeout(speechTimeoutRef.current);
-                speechTimeoutRef.current = null;
-            }
+           }
 
           let interimTranscript = '';
           for (let i = event.resultIndex; i < event.results.length; ++i) {
@@ -188,13 +180,11 @@ function CommunicationPracticePage() {
           }
           setUserInput(finalTranscript + interimTranscript);
           
-          // Set a new timeout to send the transcript after a pause
-           speechTimeoutRef.current = setTimeout(sendFinalTranscript, 2000); // 2 second pause
+           speechTimeoutRef.current = setTimeout(sendFinalTranscript, 2000);
         };
 
         recognition.onend = () => {
           setIsRecording(false);
-          // Send any remaining transcript if it wasn't sent by the timeout
           sendFinalTranscript();
         };
 
@@ -210,38 +200,27 @@ function CommunicationPracticePage() {
   }, [toast, handleSendMessage]);
 
   useEffect(() => {
-      // Setup audio element and its event listeners
       if (!audioRef.current) {
         audioRef.current = new Audio();
         
+        audioRef.current.onplay = () => {
+            setIsSpeaking(true);
+        };
+
         audioRef.current.onended = () => {
             setIsSpeaking(false);
-            if (lastThinkingMessageIdRef.current && lastAiResponseTextRef.current) {
-              setMessages(prev =>
-                prev.map(m =>
-                  m.id === lastThinkingMessageIdRef.current
-                    ? { ...m, content: lastAiResponseTextRef.current!, isGenerating: false }
-                    : m
-                )
-              );
-              lastThinkingMessageIdRef.current = null;
-              lastAiResponseTextRef.current = null;
-            }
         };
 
         audioRef.current.onerror = (e) => {
             const target = e.target as HTMLAudioElement;
-            // Not an AbortError which is code 20
             if (target.error && target.error.code !== 20) { 
                 console.error("Audio element error:", e);
                 toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
             }
-            // Ensure state is reset on error regardless
             setIsSpeaking(false);
         };
       }
 
-      // Cleanup function
       return () => {
           if (recognitionRef.current) {
             recognitionRef.current.abort();
@@ -266,7 +245,6 @@ function CommunicationPracticePage() {
     } else {
        if (audioRef.current && !audioRef.current.paused) {
          audioRef.current.pause();
-         setIsSpeaking(false); // Stop speaking state if audio is interrupted
        }
       setUserInput('');
       recognitionRef.current?.start();
@@ -507,3 +485,5 @@ export default function CommunicationPracticePageWrapperWithAuth() {
     </AuthProvider>
   );
 }
+
+    
