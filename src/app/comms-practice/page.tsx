@@ -97,60 +97,55 @@ function CommunicationPracticePage() {
   const handleSendMessage = async (text: string) => {
     if (!text.trim() || isGenerating) return;
 
-    // Prevent duplicate sends by checking isGenerating
     setIsGenerating(true);
 
     const userMessage: Message = { id: `user-${Date.now()}`, role: 'user', content: text };
     setMessages(prev => [...prev, userMessage]);
     setUserInput('');
     
-    // Create a placeholder for the assistant's response
-     const assistantMessageId = `assistant-thinking-${Date.now()}`;
-     const assistantThinkingMessage: Message = {
-       id: assistantMessageId,
-       role: 'assistant',
-       content: '',
-       isGenerating: true,
-     };
-     setMessages(prev => [...prev, assistantThinkingMessage]);
+    const assistantMessageId = `assistant-thinking-${Date.now()}`;
+    const assistantThinkingMessage: Message = {
+        id: assistantMessageId,
+        role: 'assistant',
+        content: '',
+        isGenerating: true,
+    };
+    setMessages(prev => [...prev, assistantThinkingMessage]);
 
     try {
-      if (!text.trim()) {
-        const errorMessage = "I can't provide feedback on an empty message. Please say something, and I'll be happy to help you practice!";
-        setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: errorMessage, isGenerating: false } : m));
-        const ttsResultOnError = await textToSpeech({ text: errorMessage });
-        playAudio(ttsResultOnError.audioDataUri);
-        return;
-      }
+        if (!text.trim()) {
+            const errorMessage = "I can't provide feedback on an empty message. Please say something, and I'll be happy to help you practice!";
+            setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: errorMessage, isGenerating: false } : m));
+            const ttsResultOnError = await textToSpeech({ text: errorMessage });
+            playAudio(ttsResultOnError.audioDataUri);
+            return;
+        }
       
-      const feedbackResult = await generateCommunicationFeedback({ text: userMessage.content });
-      const aiResponseText = feedbackResult.response;
+        const feedbackResult = await generateCommunicationFeedback({ text: userMessage.content });
+        const aiResponseText = feedbackResult.response;
 
-      // Update the assistant's message with the actual response
-       setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: aiResponseText, isGenerating: false } : m));
+        setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: aiResponseText, isGenerating: false } : m));
       
-      if (!aiResponseText.trim()) {
-         const emptyResponseMessage = "I'm sorry, I couldn't generate a response. Could you try saying that again?";
-         setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: emptyResponseMessage, isGenerating: false } : m));
-         setIsGenerating(false);
-         return;
-      }
+        if (!aiResponseText.trim()) {
+            const emptyResponseMessage = "I'm sorry, I couldn't generate a response. Could you try saying that again?";
+            setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: emptyResponseMessage, isGenerating: false } : m));
+            setIsGenerating(false);
+            return;
+        }
 
-      // Generate and play audio
-      const ttsResult = await textToSpeech({ text: aiResponseText });
-      playAudio(ttsResult.audioDataUri);
+        const ttsResult = await textToSpeech({ text: aiResponseText });
+        playAudio(ttsResult.audioDataUri);
 
     } catch (err) {
-      console.error("Failed to get feedback:", err);
-      // Let's create a more helpful, conversational error message.
-      const errorMessage = "I'm having a little trouble connecting right now. Let's try that again in a moment.";
-       setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: errorMessage, isGenerating: false } : m));
-       try {
-        const ttsResult = await textToSpeech({ text: errorMessage });
-        playAudio(ttsResult.audioDataUri);
-       } catch (ttsErr) {
+        console.error("Failed to get feedback:", err);
+        const errorMessage = "I'm having a little trouble connecting right now. Let's try that again in a moment.";
+        setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: errorMessage, isGenerating: false } : m));
+        try {
+            const ttsResult = await textToSpeech({ text: errorMessage });
+            playAudio(ttsResult.audioDataUri);
+        } catch (ttsErr) {
             setIsGenerating(false);
-       }
+        }
     }
   };
   
@@ -166,11 +161,9 @@ function CommunicationPracticePage() {
     
     recognition.onstart = () => {
         setIsRecording(true);
-        // Reset transcript refs at the start of a new recording session
         finalTranscriptRef.current = '';
         setUserInput('');
         
-        // Set a 5-minute timeout for the entire recording session.
         if (recordingTimeoutRef.current) {
           clearTimeout(recordingTimeoutRef.current);
         }
@@ -182,7 +175,6 @@ function CommunicationPracticePage() {
     };
 
     recognition.onresult = (event) => {
-      // Clear the previous timeout on any speech result
       if (speechTimeoutRef.current) {
         clearTimeout(speechTimeoutRef.current);
       }
@@ -196,12 +188,9 @@ function CommunicationPracticePage() {
           interimTranscript += event.results[i][0].transcript;
         }
       }
-      // Combine the final part of this result with the already accumulated final transcript
       finalTranscriptRef.current = (finalTranscriptRef.current + ' ' + currentFinalTranscript).trim();
-      // Show the complete final transcript + the current interim part
       setUserInput(finalTranscriptRef.current + interimTranscript);
       
-      // Set a timeout to stop if there's a 3-second pause
       speechTimeoutRef.current = setTimeout(() => {
          if (recognitionRef.current && isRecording) {
             recognitionRef.current.stop();
@@ -211,7 +200,6 @@ function CommunicationPracticePage() {
 
     recognition.onend = () => {
       setIsRecording(false);
-      // Clear any pending timeouts
       if (speechTimeoutRef.current) {
         clearTimeout(speechTimeoutRef.current);
       }
@@ -221,16 +209,13 @@ function CommunicationPracticePage() {
 
       const transcriptToSend = finalTranscriptRef.current.trim();
       
-      // Only send if there is content and a message is not already being generated
       if (transcriptToSend && !isGenerating) {
         handleSendMessage(transcriptToSend);
       }
-      // Reset for the next turn
       finalTranscriptRef.current = '';
     };
 
     recognition.onerror = (event) => {
-      // Avoid "no-speech" error toasts, as they are common
       if (event.error !== 'no-speech') {
         toast({ title: "Speech Recognition Error", description: `Error: ${event.error}`, variant: "destructive"});
       }
@@ -494,3 +479,5 @@ export default function CommunicationPracticePageWrapperWithAuth() {
     </AuthProvider>
   );
 }
+
+    
