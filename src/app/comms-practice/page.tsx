@@ -84,10 +84,10 @@ function CommunicationPracticePage() {
         if (e.name !== 'AbortError') {
             console.error("Audio playback failed:", e);
             toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
-            setIsGenerating(false);
         }
       });
     }
+    setIsGenerating(false);
   }, [toast]);
 
   useEffect(() => {
@@ -355,7 +355,7 @@ function CommunicationPracticePage() {
                 <Label htmlFor="male-voice">Male</Label>
             </div>
             <div className="flex items-center space-x-2">
-                <RadioGroupItem value="Vega" id="female-voice" />
+                <RadioGroupItem value="Schedar" id="female-voice" />
                 <Label htmlFor="female-voice">Female</Label>
             </div>
           </RadioGroup>
@@ -462,5 +462,3 @@ export default function CommunicationPracticePageWrapperWithAuth() {
     </AuthProvider>
   );
 }
-
-    
