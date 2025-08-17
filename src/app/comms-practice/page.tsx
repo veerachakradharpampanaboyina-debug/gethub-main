@@ -81,11 +81,14 @@ function CommunicationPracticePage() {
         const audio = new Audio(audioDataUri);
         
         audio.onended = () => {
-            setIsGenerating(false);
-            if (recognitionRef.current && recognitionRef.current.state !== 'speaking') {
-                recognitionRef.current.start();
-            }
-            resolve();
+            // Wait for 3 seconds before enabling the mic
+            setTimeout(() => {
+                setIsGenerating(false);
+                if (recognitionRef.current && recognitionRef.current.state !== 'speaking') {
+                    recognitionRef.current.start();
+                }
+                resolve();
+            }, 3000); // 3-second delay
         };
 
         audio.onerror = () => {
