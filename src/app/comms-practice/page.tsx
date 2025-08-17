@@ -51,7 +51,8 @@ function CommunicationPracticePage() {
   const [userInput, setUserInput] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  
+  const [audioToPlay, setAudioToPlay] = useState<string | null>(null);
+
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -71,35 +72,24 @@ function CommunicationPracticePage() {
         }
     }
   }, [messages]);
-  
+
   const playAudio = useCallback((audioDataUri: string) => {
-    return new Promise<void>((resolve, reject) => {
-        if (!audioRef.current) {
-            audioRef.current = new Audio();
-        }
-        const audio = audioRef.current;
-        
-        const handleEnded = () => {
-            audio.removeEventListener('ended', handleEnded);
-            audio.removeEventListener('error', handleError);
-            resolve();
-        };
-
-        const handleError = (e: Event) => {
-            audio.removeEventListener('ended', handleEnded);
-            audio.removeEventListener('error', handleError);
-            toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
-            reject(e);
-        };
-
-        audio.addEventListener('ended', handleEnded);
-        audio.addEventListener('error', handleError);
-
-        audio.src = audioDataUri;
-        audio.play().catch(handleError);
-    });
+    if (audioRef.current) {
+      audioRef.current.src = audioDataUri;
+      audioRef.current.play().catch(e => {
+        console.error("Audio playback failed:", e);
+        toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
+        setIsGenerating(false);
+      });
+    }
   }, [toast]);
 
+  useEffect(() => {
+    if (audioToPlay) {
+      playAudio(audioToPlay);
+      setAudioToPlay(null); // Reset after playing
+    }
+  }, [audioToPlay, playAudio]);
 
   const handleSendMessage = useCallback(async (text: string) => {
     if (!text.trim() || isGenerating) return;
@@ -109,29 +99,28 @@ function CommunicationPracticePage() {
     
     const userMessage: Message = { id: `user-${Date.now()}`, role: 'user', content: text };
     
-    // Add user message and a thinking indicator for the assistant
     setMessages(prev => [...prev, userMessage, { id: `assistant-thinking-${Date.now()}`, role: 'assistant', content: '', isGenerating: true }]);
 
     try {
         const feedbackResult = await generateCommunicationFeedback({ text });
         const aiResponseText = feedbackResult.response;
 
-        // Update assistant message with the real content
         setMessages(prev => prev.map(m => m.isGenerating ? { ...m, content: aiResponseText, isGenerating: false } : m));
       
         if (aiResponseText.trim()) {
             const ttsResult = await textToSpeech({ text: aiResponseText });
-            await playAudio(ttsResult.audioDataUri);
+            setAudioToPlay(ttsResult.audioDataUri);
+        } else {
+            setIsGenerating(false);
         }
 
     } catch (err) {
         console.error("Failed to get feedback:", err);
         const errorMessage = "I'm having a little trouble connecting right now. Let's try that again in a moment.";
         setMessages(prev => prev.map(m => m.isGenerating ? { ...m, content: errorMessage, isGenerating: false } : m));
-    } finally {
         setIsGenerating(false);
     }
-  }, [isGenerating, playAudio]);
+  }, [isGenerating, toast]);
   
    useEffect(() => {
     if (!SpeechRecognition) {
@@ -179,18 +168,35 @@ function CommunicationPracticePage() {
 
         recognitionRef.current = recognition;
     }
-
-    // Cleanup function
-    return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.abort();
-      }
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
-    }
-
   }, [toast, handleSendMessage]);
+
+  useEffect(() => {
+      // Setup audio element and its event listeners
+      if (!audioRef.current) {
+        audioRef.current = new Audio();
+        
+        audioRef.current.onended = () => {
+            setIsGenerating(false);
+        };
+
+        audioRef.current.onerror = (e) => {
+            console.error("Audio element error:", e);
+            toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
+            setIsGenerating(false);
+        };
+      }
+
+      // Cleanup function
+      return () => {
+          if (recognitionRef.current) {
+            recognitionRef.current.abort();
+          }
+          if (audioRef.current) {
+            audioRef.current.pause();
+            // No need to remove listeners if we re-use the same audio element
+          }
+      };
+  }, [toast]);
 
 
   const handleToggleRecording = () => {
@@ -203,6 +209,7 @@ function CommunicationPracticePage() {
     } else {
        if (audioRef.current && !audioRef.current.paused) {
          audioRef.current.pause();
+         setIsGenerating(false);
        }
       setUserInput('');
       recognitionRef.current?.start();
@@ -383,7 +390,7 @@ function CommunicationPracticePage() {
                     placeholder={isRecording ? "Listening..." : "Click the mic to speak, or type here..."}
                     className="pr-16 min-h-[52px]" 
                     rows={1}
-                    disabled={isGenerating}
+                    disabled={isGenerating || isRecording}
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1">
                     {SpeechRecognition && (
@@ -432,5 +439,3 @@ export default function CommunicationPracticePageWrapperWithAuth() {
     </AuthProvider>
   );
 }
-
-    
