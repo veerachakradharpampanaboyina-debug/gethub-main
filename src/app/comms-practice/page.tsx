@@ -76,29 +76,33 @@ function CommunicationPracticePage() {
   }, [messages]);
 
 
-  const playAudioAndListen = async (audioDataUri: string) => {
+  const playAudioAndListen = async (audioDataUri: string, responseText: string) => {
     return new Promise<void>((resolve, reject) => {
         const audio = new Audio(audioDataUri);
         
         audio.onended = () => {
-            // Wait for 3 seconds before enabling the mic
-            setTimeout(() => {
-                setIsGenerating(false);
-                if (recognitionRef.current && recognitionRef.current.state !== 'speaking') {
-                    recognitionRef.current.start();
-                }
+             setIsGenerating(false);
+             // Only enable mic if the AI asked a question
+            if (responseText.trim().endsWith('?')) {
+                 setTimeout(() => {
+                    if (recognitionRef.current && !isRecording) {
+                        recognitionRef.current.start();
+                    }
+                    resolve();
+                }, 3000); // 3-second delay
+            } else {
                 resolve();
-            }, 3000); // 3-second delay
+            }
         };
 
-        audio.onerror = () => {
+        audio.onerror = (e) => {
             toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive"});
             setIsGenerating(false);
             reject(new Error("Audio playback error"));
         };
 
         audio.play().catch(error => {
-            toast({ title: "Audio Playback Failed", description: "Could not automatically play the audio.", variant: "destructive"});
+            toast({ title: "Audio Playback Failed", description: `Could not automatically play the audio. ${error}`, variant: "destructive"});
             setIsGenerating(false);
             reject(error);
         });
@@ -109,63 +113,57 @@ function CommunicationPracticePage() {
   const handleSendMessage = async (text: string) => {
     if (!text.trim() || isGenerating) return;
 
-    // Prevent duplicate sends
+    // Prevent duplicate sends by checking isGenerating
     setIsGenerating(true);
 
     const userMessage: Message = { id: `user-${Date.now()}`, role: 'user', content: text };
     setMessages(prev => [...prev, userMessage]);
     setUserInput('');
     
+    // Create a placeholder for the assistant's response
+     const assistantMessageId = `assistant-thinking-${Date.now()}`;
+     const assistantThinkingMessage: Message = {
+       id: assistantMessageId,
+       role: 'assistant',
+       content: '',
+       isGenerating: true,
+     };
+     setMessages(prev => [...prev, assistantThinkingMessage]);
+
     try {
       if (!text.trim()) {
         const errorMessage = "I can't provide feedback on an empty message. Please say something, and I'll be happy to help you practice!";
-        setMessages(prev => [...prev, {id: `assistant-error-${Date.now()}`, role: 'assistant', content: errorMessage}]);
+        setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: errorMessage, isGenerating: false } : m));
         const ttsResultOnError = await textToSpeech({ text: errorMessage });
-        await playAudioAndListen(ttsResultOnError.audioDataUri);
+        await playAudioAndListen(ttsResultOnError.audioDataUri, errorMessage);
         return;
       }
       
       const feedbackResult = await generateCommunicationFeedback({ text: userMessage.content });
       const aiResponseText = feedbackResult.response;
 
-      const assistantMessage: Message = {
-        id: `assistant-${Date.now()}`,
-        role: 'assistant',
-        content: aiResponseText,
-      };
-      setMessages(prev => [...prev, assistantMessage]);
+      // Update the assistant's message with the actual response
+       setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: aiResponseText, isGenerating: false } : m));
       
       if (!aiResponseText.trim()) {
          const emptyResponseMessage = "I'm sorry, I couldn't generate a response. Could you try saying that again?";
-         setMessages(prev => {
-            const newMessages = [...prev];
-            const lastMessage = newMessages[newMessages.length - 1];
-            if (lastMessage.role === 'assistant') {
-                lastMessage.content = emptyResponseMessage;
-            }
-            return newMessages;
-         });
+         setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: emptyResponseMessage, isGenerating: false } : m));
          setIsGenerating(false);
          return;
       }
 
       // Generate and play audio
       const ttsResult = await textToSpeech({ text: aiResponseText });
-      await playAudioAndListen(ttsResult.audioDataUri);
+      await playAudioAndListen(ttsResult.audioDataUri, aiResponseText);
 
     } catch (err) {
       console.error("Failed to get feedback:", err);
       // Let's create a more helpful, conversational error message.
       const errorMessage = "I'm having a little trouble connecting right now. Let's try that again in a moment.";
-      const assistantMessage: Message = {
-        id: `assistant-error-${Date.now()}`,
-        role: 'assistant',
-        content: errorMessage,
-      };
-      setMessages(prev => [...prev, assistantMessage]);
+       setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: errorMessage, isGenerating: false } : m));
        try {
         const ttsResult = await textToSpeech({ text: errorMessage });
-        await playAudioAndListen(ttsResult.audioDataUri);
+        await playAudioAndListen(ttsResult.audioDataUri, errorMessage);
        } catch (ttsErr) {
             setIsGenerating(false);
        }
@@ -184,20 +182,23 @@ function CommunicationPracticePage() {
     
     recognition.onstart = () => {
         setIsRecording(true);
+        // Reset transcript refs at the start of a new recording session
         finalTranscriptRef.current = '';
+        setUserInput('');
         
         // Set a 5-minute timeout for the entire recording session.
         if (recordingTimeoutRef.current) {
           clearTimeout(recordingTimeoutRef.current);
         }
         recordingTimeoutRef.current = setTimeout(() => {
-          if (recognitionRef.current && recognitionRef.current.state === 'speaking') {
+          if (recognitionRef.current && isRecording) {
             recognitionRef.current.stop();
           }
         }, 5 * 60 * 1000); // 5 minutes
     };
 
     recognition.onresult = (event) => {
+      // Clear the previous timeout on any speech result
       if (speechTimeoutRef.current) {
         clearTimeout(speechTimeoutRef.current);
       }
@@ -211,11 +212,14 @@ function CommunicationPracticePage() {
           interimTranscript += event.results[i][0].transcript;
         }
       }
+      // Combine the final part of this result with the already accumulated final transcript
       finalTranscriptRef.current = (finalTranscriptRef.current + ' ' + currentFinalTranscript).trim();
+      // Show the complete final transcript + the current interim part
       setUserInput(finalTranscriptRef.current + interimTranscript);
       
+      // Set a timeout to stop if there's a 3-second pause
       speechTimeoutRef.current = setTimeout(() => {
-         if (recognitionRef.current && recognitionRef.current.state === 'speaking') {
+         if (recognitionRef.current && isRecording) {
             recognitionRef.current.stop();
          }
       }, 3000); // 3-second pause
@@ -223,6 +227,7 @@ function CommunicationPracticePage() {
 
     recognition.onend = () => {
       setIsRecording(false);
+      // Clear any pending timeouts
       if (speechTimeoutRef.current) {
         clearTimeout(speechTimeoutRef.current);
       }
@@ -232,16 +237,21 @@ function CommunicationPracticePage() {
 
       const transcriptToSend = finalTranscriptRef.current.trim();
       
+      // Only send if there is content and a message is not already being generated
       if (transcriptToSend && !isGenerating) {
         handleSendMessage(transcriptToSend);
       }
+      // Reset for the next turn
       finalTranscriptRef.current = '';
     };
 
     recognition.onerror = (event) => {
-      toast({ title: "Speech Recognition Error", description: event.error, variant: "destructive"});
+      // Avoid "no-speech" error toasts, as they are common
+      if (event.error !== 'no-speech') {
+        toast({ title: "Speech Recognition Error", description: `Error: ${event.error}`, variant: "destructive"});
+      }
       setIsRecording(false);
-      if (recognitionRef.current && recognitionRef.current.state === 'speaking') {
+      if (recognitionRef.current && isRecording) {
         recognitionRef.current.stop();
       }
     };
@@ -255,12 +265,12 @@ function CommunicationPracticePage() {
        if (recordingTimeoutRef.current) {
         clearTimeout(recordingTimeoutRef.current);
       }
-      if (recognitionRef.current && recognitionRef.current.state === 'speaking') {
+      if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
     }
 
-  }, [toast, isGenerating]);
+  }, [toast, isGenerating, isRecording]);
 
 
   const handleToggleRecording = () => {
@@ -269,13 +279,13 @@ function CommunicationPracticePage() {
       return;
     }
     if (isRecording) {
-      if (recognitionRef.current?.state === 'speaking') {
+      if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
     } else {
-      setUserInput('');
-      finalTranscriptRef.current = '';
-      recognitionRef.current.start();
+      if (recognitionRef.current) {
+        recognitionRef.current.start();
+      }
     }
   };
 
@@ -416,8 +426,15 @@ function CommunicationPracticePage() {
                            <GethubLogo className="w-8 h-8" width={32} height={32} />
                         )}
                         <div className={`max-w-xl rounded-lg p-4 ${message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-secondary'}`}>
+                           {message.isGenerating ? (
+                              <div className="flex items-center gap-2">
+                                <LoaderCircle className="w-4 h-4 animate-spin" />
+                                <span>GETHUB is thinking...</span>
+                              </div>
+                           ) : (
                              <div className="prose prose-sm prose-invert max-w-none text-current" dangerouslySetInnerHTML={{ __html: markdownToHtml(message.content) }} />
-                           {message.role === 'assistant' && (
+                           )}
+                           {message.role === 'assistant' && !message.isGenerating && (
                             <div className="flex gap-2 mt-3 -mb-2">
                                 <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleCopyText(message.content)}>
                                     <Copy className="w-4 h-4"/>
@@ -433,17 +450,6 @@ function CommunicationPracticePage() {
                         )}
                     </div>
                 ))}
-                {isGenerating && messages[messages.length - 1]?.role === 'user' && (
-                     <div className="flex items-start gap-4">
-                        <GethubLogo className="w-8 h-8" width={32} height={32} />
-                        <div className="max-w-xl rounded-lg p-4 bg-secondary">
-                             <div className="flex items-center gap-2">
-                                <LoaderCircle className="w-4 h-4 animate-spin" />
-                                <span>GETHUB is thinking...</span>
-                              </div>
-                        </div>
-                    </div>
-                )}
             </div>
           </ScrollArea>
           <div className="p-4 border-t bg-background">
