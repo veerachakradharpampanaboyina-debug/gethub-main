@@ -24,7 +24,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { generateCommunicationFeedback } from '@/ai/flows/generate-communication-feedback';
 import { textToSpeech, TextToSpeechInput } from '@/ai/flows/text-to-speech';
-import { LoaderCircle } from 'lucide-react';
+import { LoaderCircle } from 'lucide-redacted';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
@@ -61,6 +61,8 @@ function CommunicationPracticePage() {
   const recognitionRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const speechTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastThinkingMessageIdRef = useRef<string | null>(null);
+  const lastAiResponseTextRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -109,29 +111,31 @@ function CommunicationPracticePage() {
     
     const userMessage: Message = { id: `user-${Date.now()}`, role: 'user', content: text };
     const thinkingMessage: Message = { id: `assistant-thinking-${Date.now()}`, role: 'assistant', content: '', isGenerating: true };
+    lastThinkingMessageIdRef.current = thinkingMessage.id;
+
 
     setMessages(prev => [...prev, userMessage, thinkingMessage]);
 
     try {
         const feedbackResult = await generateCommunicationFeedback({ text });
         const aiResponseText = feedbackResult.response;
+        lastAiResponseTextRef.current = aiResponseText;
         
         if (aiResponseText.trim()) {
             const ttsResult = await textToSpeech({ text: aiResponseText, voice: voice });
-            // Update the message content and set the audio to play at the same time
-            setMessages(prev => prev.map(m => m.id === thinkingMessage.id ? { ...m, content: aiResponseText, isGenerating: false } : m));
+            setIsGenerating(false);
             setAudioToPlay(ttsResult.audioDataUri);
             setIsSpeaking(true);
         } else {
             // If there's no response text, just stop the generating state
-            setMessages(prev => prev.filter(m => m.id !== thinkingMessage.id));
+             setMessages(prev => prev.filter(m => m.id !== thinkingMessage.id));
+             setIsGenerating(false);
         }
 
     } catch (err) {
         console.error("Failed to get feedback:", err);
         const errorMessage = "I'm having a little trouble connecting right now. Let's try that again in a moment.";
         setMessages(prev => prev.map(m => m.id === thinkingMessage.id ? { ...m, content: errorMessage, isGenerating: false } : m));
-    } finally {
         setIsGenerating(false);
     }
   }, [isGenerating, voice]);
@@ -213,6 +217,17 @@ function CommunicationPracticePage() {
         
         audioRef.current.onended = () => {
             setIsSpeaking(false);
+            if (lastThinkingMessageIdRef.current && lastAiResponseTextRef.current) {
+              setMessages(prev =>
+                prev.map(m =>
+                  m.id === lastThinkingMessageIdRef.current
+                    ? { ...m, content: lastAiResponseTextRef.current!, isGenerating: false }
+                    : m
+                )
+              );
+              lastThinkingMessageIdRef.current = null;
+              lastAiResponseTextRef.current = null;
+            }
         };
 
         audioRef.current.onerror = (e) => {
@@ -387,7 +402,7 @@ function CommunicationPracticePage() {
             </div>
             <div className="flex items-center space-x-2">
                 <RadioGroupItem value="Schedar" id="female-voice" />
-                <Label htmlFor="female-voice">Victor</Label>
+                <Label htmlFor="female-voice">Emma</Label>
             </div>
           </RadioGroup>
         </header>
