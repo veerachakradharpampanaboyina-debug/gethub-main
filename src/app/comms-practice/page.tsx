@@ -51,8 +51,7 @@ function CommunicationPracticePage() {
   const [userInput, setUserInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  const [audioPlayer, setAudioPlayer] = useState<HTMLAudioElement | null>(null);
-
+  
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
   const speechTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -74,7 +73,34 @@ function CommunicationPracticePage() {
             viewport.scrollTop = viewport.scrollHeight;
         }
     }
-  }, [messages, isGenerating]);
+  }, [messages]);
+
+
+  const playAudioAndListen = async (audioDataUri: string) => {
+    return new Promise<void>((resolve, reject) => {
+        const audio = new Audio(audioDataUri);
+        
+        audio.onended = () => {
+            setIsGenerating(false);
+            if (recognitionRef.current && recognitionRef.current.state !== 'speaking') {
+                recognitionRef.current.start();
+            }
+            resolve();
+        };
+
+        audio.onerror = () => {
+            toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive"});
+            setIsGenerating(false);
+            reject(new Error("Audio playback error"));
+        };
+
+        audio.play().catch(error => {
+            toast({ title: "Audio Playback Failed", description: "Could not automatically play the audio.", variant: "destructive"});
+            setIsGenerating(false);
+            reject(error);
+        });
+    });
+  };
 
 
   const handleSendMessage = async (text: string) => {
@@ -92,20 +118,10 @@ function CommunicationPracticePage() {
         const errorMessage = "I can't provide feedback on an empty message. Please say something, and I'll be happy to help you practice!";
         setMessages(prev => [...prev, {id: `assistant-error-${Date.now()}`, role: 'assistant', content: errorMessage}]);
         const ttsResultOnError = await textToSpeech({ text: errorMessage });
-        const audioError = new Audio(ttsResultOnError.audioDataUri);
-        setAudioPlayer(audioError);
-        audioError.play();
-
-        audioError.onended = () => {
-          setIsGenerating(false);
-          setAudioPlayer(null);
-           if (recognitionRef.current && recognitionRef.current.state !== 'speaking') {
-            recognitionRef.current.start();
-          }
-        };
+        await playAudioAndListen(ttsResultOnError.audioDataUri);
         return;
       }
-      // 1. Get conversational response from the AI
+      
       const feedbackResult = await generateCommunicationFeedback({ text: userMessage.content });
       const aiResponseText = feedbackResult.response;
 
@@ -114,9 +130,8 @@ function CommunicationPracticePage() {
         role: 'assistant',
         content: aiResponseText,
       };
-      
       setMessages(prev => [...prev, assistantMessage]);
-
+      
       if (!aiResponseText.trim()) {
          const emptyResponseMessage = "I'm sorry, I couldn't generate a response. Could you try saying that again?";
          setMessages(prev => {
@@ -131,28 +146,9 @@ function CommunicationPracticePage() {
          return;
       }
 
-      // 2. Generate speech from the AI's response
+      // Generate and play audio
       const ttsResult = await textToSpeech({ text: aiResponseText });
-
-      // 3. Play the audio. 
-      const audio = new Audio(ttsResult.audioDataUri);
-      setAudioPlayer(audio);
-      audio.play();
-      
-      audio.onended = () => {
-        setIsGenerating(false);
-        setAudioPlayer(null);
-        // Automatically start listening for the next user response
-        if (recognitionRef.current && recognitionRef.current.state !== 'speaking') {
-            recognitionRef.current.start();
-        }
-      };
-      
-      audio.onerror = () => {
-        toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive"});
-        setIsGenerating(false);
-        setAudioPlayer(null);
-      }
+      await playAudioAndListen(ttsResult.audioDataUri);
 
     } catch (err) {
       console.error("Failed to get feedback:", err);
@@ -166,16 +162,7 @@ function CommunicationPracticePage() {
       setMessages(prev => [...prev, assistantMessage]);
        try {
         const ttsResult = await textToSpeech({ text: errorMessage });
-        const audio = new Audio(ttsResult.audioDataUri);
-        setAudioPlayer(audio);
-        audio.play();
-        audio.onended = () => {
-            setIsGenerating(false);
-            setAudioPlayer(null);
-             if (recognitionRef.current && recognitionRef.current.state !== 'speaking') {
-                recognitionRef.current.start();
-            }
-        };
+        await playAudioAndListen(ttsResult.audioDataUri);
        } catch (ttsErr) {
             setIsGenerating(false);
        }
@@ -201,8 +188,8 @@ function CommunicationPracticePage() {
           clearTimeout(recordingTimeoutRef.current);
         }
         recordingTimeoutRef.current = setTimeout(() => {
-          if (recognition.state === 'speaking') {
-            recognition.stop();
+          if (recognitionRef.current && recognitionRef.current.state === 'speaking') {
+            recognitionRef.current.stop();
           }
         }, 5 * 60 * 1000); // 5 minutes
     };
@@ -225,8 +212,8 @@ function CommunicationPracticePage() {
       setUserInput(finalTranscriptRef.current + interimTranscript);
       
       speechTimeoutRef.current = setTimeout(() => {
-         if (recognition.state === 'speaking') {
-            recognition.stop();
+         if (recognitionRef.current && recognitionRef.current.state === 'speaking') {
+            recognitionRef.current.stop();
          }
       }, 3000); // 3-second pause
     };
@@ -251,8 +238,8 @@ function CommunicationPracticePage() {
     recognition.onerror = (event) => {
       toast({ title: "Speech Recognition Error", description: event.error, variant: "destructive"});
       setIsRecording(false);
-      if (recognition.state === 'speaking') {
-        recognition.stop();
+      if (recognitionRef.current && recognitionRef.current.state === 'speaking') {
+        recognitionRef.current.stop();
       }
     };
     
@@ -443,7 +430,7 @@ function CommunicationPracticePage() {
                         )}
                     </div>
                 ))}
-                {isGenerating && (
+                {isGenerating && messages[messages.length - 1]?.role === 'user' && (
                      <div className="flex items-start gap-4">
                         <GethubLogo className="w-8 h-8" width={32} height={32} />
                         <div className="max-w-xl rounded-lg p-4 bg-secondary">
@@ -465,7 +452,7 @@ function CommunicationPracticePage() {
                     placeholder={isRecording ? "Listening..." : "Click the mic to speak, or type here..."}
                     className="pr-16 min-h-[52px]" 
                     rows={1}
-                    disabled={isGenerating}
+                    disabled={isGenerating || isRecording}
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1">
                     {SpeechRecognition && (
