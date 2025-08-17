@@ -86,8 +86,8 @@ function CommunicationPracticePage() {
       const feedbackResult = await generateCommunicationFeedback({ text: userMessage.content });
       const formattedContent = `**Feedback:**\n${feedbackResult.feedback}\n\n**Corrected Text:**\n${feedbackResult.correctedText}\n\n**Suggestions:**\n${feedbackResult.suggestions.map(s => `* ${s}`).join('\n')}`;
 
-      // 2. Generate speech from the feedback
-      const ttsResult = await textToSpeech({ text: feedbackResult.correctedText });
+      // 2. Generate speech from the AI's feedback
+      const ttsResult = await textToSpeech({ text: feedbackResult.feedback });
 
       // 3. Play the audio. The text will be revealed when it ends.
       const audio = new Audio(ttsResult.audioDataUri);
