@@ -55,6 +55,9 @@ function CommunicationPracticePage() {
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
+  const speechTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const finalTranscriptRef = useRef('');
+
 
   useEffect(() => {
     if (!loading && !user) {
@@ -85,6 +88,17 @@ function CommunicationPracticePage() {
       // 1. Get conversational response from the AI
       const feedbackResult = await generateCommunicationFeedback({ text: userMessage.content });
       const aiResponseText = feedbackResult.response;
+
+      if (!aiResponseText.trim()) {
+        const assistantMessage: Message = {
+            id: `assistant-${Date.now()}`,
+            role: 'assistant',
+            content: "I'm sorry, I couldn't generate a response. Could you try saying that again?",
+        };
+        setMessages(prev => [...prev, assistantMessage]);
+        setIsGenerating(false);
+        return;
+      }
 
       // 2. Generate speech from the AI's response
       const ttsResult = await textToSpeech({ text: aiResponseText });
@@ -149,30 +163,46 @@ function CommunicationPracticePage() {
     recognition.interimResults = true;
     recognition.lang = 'en-US';
 
-    let finalTranscript = '';
     
     recognition.onstart = () => {
         setIsRecording(true);
+        finalTranscriptRef.current = '';
     };
 
     recognition.onresult = (event) => {
+      if (speechTimeoutRef.current) {
+        clearTimeout(speechTimeoutRef.current);
+      }
+      
       let interimTranscript = '';
-      finalTranscript = ''; // Reset final transcript on new result
+      let currentFinalTranscript = '';
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript;
+          currentFinalTranscript += event.results[i][0].transcript;
         } else {
           interimTranscript += event.results[i][0].transcript;
         }
       }
-      setUserInput(finalTranscript + interimTranscript);
+      finalTranscriptRef.current = currentFinalTranscript.trim() || finalTranscriptRef.current;
+      setUserInput(finalTranscriptRef.current + interimTranscript);
+      
+      speechTimeoutRef.current = setTimeout(() => {
+         recognition.stop();
+      }, 2000); // 2-second pause
     };
 
     recognition.onend = () => {
       setIsRecording(false);
-      if (finalTranscript.trim()) {
-        handleSendMessage(finalTranscript.trim());
+      if (speechTimeoutRef.current) {
+        clearTimeout(speechTimeoutRef.current);
       }
+      if (finalTranscriptRef.current.trim()) {
+        handleSendMessage(finalTranscriptRef.current.trim());
+      } else if(userInput.trim() && !isGenerating) {
+        // Fallback for browsers that don't give a final result before 'onend'
+        handleSendMessage(userInput.trim());
+      }
+      finalTranscriptRef.current = '';
     };
 
     recognition.onerror = (event) => {
@@ -182,7 +212,14 @@ function CommunicationPracticePage() {
     
     recognitionRef.current = recognition;
 
-  }, [toast, isGenerating]);
+    return () => {
+      if (speechTimeoutRef.current) {
+        clearTimeout(speechTimeoutRef.current);
+      }
+      recognition.stop();
+    }
+
+  }, [toast, isGenerating, userInput]);
 
 
   const handleToggleRecording = () => {
@@ -193,6 +230,7 @@ function CommunicationPracticePage() {
     if (isRecording) {
       recognitionRef.current.stop();
     } else {
+      setUserInput('');
       recognitionRef.current.start();
     }
   };
@@ -379,7 +417,7 @@ function CommunicationPracticePage() {
                     value={userInput}
                     onChange={(e) => setUserInput(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(userInput); } }}
-                    placeholder={isRecording ? "Listening..." : "Click the mic to speak..."}
+                    placeholder={isRecording ? "Listening..." : "Click the mic to speak, or type here..."}
                     className="pr-16 min-h-[52px]" 
                     rows={1}
                     disabled={isGenerating}
@@ -396,6 +434,14 @@ function CommunicationPracticePage() {
                           <Mic className="w-5 h-5" />
                       </Button>
                     )}
+                     <Button 
+                        type="button" 
+                        size="icon" 
+                        onClick={() => handleSendMessage(userInput)}
+                        disabled={isGenerating || !userInput.trim()}
+                      >
+                        <Send className="w-5 h-5" />
+                      </Button>
                   </div>
              </div>
           </div>
