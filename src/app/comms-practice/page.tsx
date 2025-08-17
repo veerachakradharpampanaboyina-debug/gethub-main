@@ -53,6 +53,7 @@ function CommunicationPracticePage() {
   const [userInput, setUserInput] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [audioToPlay, setAudioToPlay] = useState<string | null>(null);
   const [voice, setVoice] = useState<TextToSpeechInput['voice']>('Algenib');
 
@@ -119,6 +120,8 @@ function CommunicationPracticePage() {
             const ttsResult = await textToSpeech({ text: aiResponseText, voice: voice });
             // Update the message content and set the audio to play at the same time
             setMessages(prev => prev.map(m => m.id === thinkingMessage.id ? { ...m, content: aiResponseText, isGenerating: false } : m));
+            setIsGenerating(false);
+            setIsSpeaking(true);
             setAudioToPlay(ttsResult.audioDataUri);
         } else {
             // If there's no response text, just stop the generating state
@@ -210,7 +213,7 @@ function CommunicationPracticePage() {
         audioRef.current = new Audio();
         
         audioRef.current.onended = () => {
-            setIsGenerating(false);
+            setIsSpeaking(false);
         };
 
         audioRef.current.onerror = (e) => {
@@ -221,7 +224,7 @@ function CommunicationPracticePage() {
                 toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
             }
             // Ensure state is reset on error regardless
-            setIsGenerating(false);
+            setIsSpeaking(false);
         };
       }
 
@@ -250,7 +253,7 @@ function CommunicationPracticePage() {
     } else {
        if (audioRef.current && !audioRef.current.paused) {
          audioRef.current.pause();
-         setIsGenerating(false); // Stop generating state if audio is interrupted
+         setIsSpeaking(false); // Stop speaking state if audio is interrupted
        }
       setUserInput('');
       recognitionRef.current?.start();
@@ -270,7 +273,7 @@ function CommunicationPracticePage() {
     );
   }
 
-  const isUIActive = isRecording || isGenerating;
+  const isUIActive = isRecording || isGenerating || isSpeaking;
 
   return (
     <SidebarProvider>
@@ -442,7 +445,7 @@ function CommunicationPracticePage() {
                     placeholder={isRecording ? "Listening..." : "Click the mic to speak, or type here..."}
                     className="pr-16 min-h-[52px]" 
                     rows={1}
-                    disabled={isGenerating || isRecording}
+                    disabled={isUIActive}
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1">
                     {SpeechRecognition && (
@@ -451,7 +454,7 @@ function CommunicationPracticePage() {
                           size="icon" 
                           variant={isRecording ? "destructive" : "ghost"}
                           onClick={handleToggleRecording}
-                          disabled={isGenerating}
+                          disabled={isGenerating || isSpeaking}
                       >
                           <Mic className="w-5 h-5" />
                       </Button>
@@ -491,7 +494,5 @@ export default function CommunicationPracticePageWrapperWithAuth() {
     </AuthProvider>
   );
 }
-
-    
 
     
