@@ -80,29 +80,26 @@ function CommunicationPracticePage() {
   const handleSendMessage = async (text: string) => {
     if (!text.trim() || isGenerating) return;
 
+    // Prevent duplicate sends
+    setIsGenerating(true);
+
     const userMessage: Message = { id: `user-${Date.now()}`, role: 'user', content: text };
     setMessages(prev => [...prev, userMessage]);
     setUserInput('');
-    setIsGenerating(true);
-
+    
     try {
       if (!text.trim()) {
         const errorMessage = "I can't provide feedback on an empty message. Please say something, and I'll be happy to help you practice!";
+        setMessages(prev => [...prev, {id: `assistant-error-${Date.now()}`, role: 'assistant', content: errorMessage}]);
         const ttsResultOnError = await textToSpeech({ text: errorMessage });
         const audioError = new Audio(ttsResultOnError.audioDataUri);
         setAudioPlayer(audioError);
         audioError.play();
 
         audioError.onended = () => {
-          const assistantErrorMessage: Message = {
-              id: `assistant-error-${Date.now()}`,
-              role: 'assistant',
-              content: errorMessage,
-          };
-          setMessages(prev => [...prev, assistantErrorMessage]);
           setIsGenerating(false);
           setAudioPlayer(null);
-           if (recognitionRef.current) {
+           if (recognitionRef.current && recognitionRef.current.state !== 'speaking') {
             recognitionRef.current.start();
           }
         };
@@ -112,12 +109,14 @@ function CommunicationPracticePage() {
       const feedbackResult = await generateCommunicationFeedback({ text: userMessage.content });
       const aiResponseText = feedbackResult.response;
 
+      const assistantMessage: Message = {
+        id: `assistant-${Date.now()}`,
+        role: 'assistant',
+        content: aiResponseText,
+      };
+
       if (!aiResponseText.trim()) {
-        const assistantMessage: Message = {
-            id: `assistant-${Date.now()}`,
-            role: 'assistant',
-            content: "I'm sorry, I couldn't generate a response. Could you try saying that again?",
-        };
+        assistantMessage.content = "I'm sorry, I couldn't generate a response. Could you try saying that again?";
         setMessages(prev => [...prev, assistantMessage]);
         setIsGenerating(false);
         return;
@@ -132,16 +131,11 @@ function CommunicationPracticePage() {
       audio.play();
       
       audio.onended = () => {
-        const assistantMessage: Message = {
-          id: `assistant-${Date.now()}`,
-          role: 'assistant',
-          content: aiResponseText,
-        };
         setMessages(prev => [...prev, assistantMessage]);
         setIsGenerating(false);
         setAudioPlayer(null);
         // Automatically start listening for the next user response
-        if (recognitionRef.current) {
+        if (recognitionRef.current && recognitionRef.current.state !== 'speaking') {
             recognitionRef.current.start();
         }
       };
@@ -149,11 +143,6 @@ function CommunicationPracticePage() {
       audio.onerror = () => {
         toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive"});
         // If audio fails, show the text anyway.
-         const assistantMessage: Message = {
-          id: `assistant-${Date.now()}`,
-          role: 'assistant',
-          content: aiResponseText,
-        };
         setMessages(prev => [...prev, assistantMessage]);
         setIsGenerating(false);
         setAudioPlayer(null);
@@ -163,25 +152,27 @@ function CommunicationPracticePage() {
       console.error("Failed to get feedback:", err);
       // Let's create a more helpful, conversational error message.
       const errorMessage = "I'm having a little trouble connecting right now. Let's try that again in a moment.";
-      const ttsResult = await textToSpeech({ text: errorMessage });
-      const audio = new Audio(ttsResult.audioDataUri);
-      setAudioPlayer(audio);
-      audio.play();
-      
-      audio.onended = () => {
-        const assistantMessage: Message = {
-          id: `assistant-${Date.now()}`,
-          role: 'assistant',
-          content: errorMessage,
-        };
-        setMessages(prev => [...prev, assistantMessage]);
-        setIsGenerating(false);
-        setAudioPlayer(null);
-         // Automatically start listening for the next user response even on error
-        if (recognitionRef.current) {
-            recognitionRef.current.start();
-        }
+      const assistantMessage: Message = {
+        id: `assistant-error-${Date.now()}`,
+        role: 'assistant',
+        content: errorMessage,
       };
+      setMessages(prev => [...prev, assistantMessage]);
+       try {
+        const ttsResult = await textToSpeech({ text: errorMessage });
+        const audio = new Audio(ttsResult.audioDataUri);
+        setAudioPlayer(audio);
+        audio.play();
+        audio.onended = () => {
+            setIsGenerating(false);
+            setAudioPlayer(null);
+             if (recognitionRef.current && recognitionRef.current.state !== 'speaking') {
+                recognitionRef.current.start();
+            }
+        };
+       } catch (ttsErr) {
+            setIsGenerating(false);
+       }
     }
   };
   
@@ -204,7 +195,7 @@ function CommunicationPracticePage() {
           clearTimeout(recordingTimeoutRef.current);
         }
         recordingTimeoutRef.current = setTimeout(() => {
-          if (isRecording) {
+          if (recognition.state === 'speaking') {
             recognition.stop();
           }
         }, 5 * 60 * 1000); // 5 minutes
@@ -224,11 +215,13 @@ function CommunicationPracticePage() {
           interimTranscript += event.results[i][0].transcript;
         }
       }
-      finalTranscriptRef.current = currentFinalTranscript.trim() || finalTranscriptRef.current;
+      finalTranscriptRef.current = (finalTranscriptRef.current + ' ' + currentFinalTranscript).trim();
       setUserInput(finalTranscriptRef.current + interimTranscript);
       
       speechTimeoutRef.current = setTimeout(() => {
-         recognition.stop();
+         if (recognition.state === 'speaking') {
+            recognition.stop();
+         }
       }, 3000); // 3-second pause
     };
 
@@ -240,11 +233,11 @@ function CommunicationPracticePage() {
       if (recordingTimeoutRef.current) {
         clearTimeout(recordingTimeoutRef.current);
       }
-      if (finalTranscriptRef.current.trim()) {
-        handleSendMessage(finalTranscriptRef.current.trim());
-      } else if(userInput.trim() && !isGenerating) {
-        // Fallback for browsers that don't give a final result before 'onend'
-        handleSendMessage(userInput.trim());
+
+      const transcriptToSend = finalTranscriptRef.current.trim();
+      
+      if (transcriptToSend && !isGenerating) {
+        handleSendMessage(transcriptToSend);
       }
       finalTranscriptRef.current = '';
     };
@@ -252,6 +245,9 @@ function CommunicationPracticePage() {
     recognition.onerror = (event) => {
       toast({ title: "Speech Recognition Error", description: event.error, variant: "destructive"});
       setIsRecording(false);
+      if (recognition.state === 'speaking') {
+        recognition.stop();
+      }
     };
     
     recognitionRef.current = recognition;
@@ -263,10 +259,12 @@ function CommunicationPracticePage() {
        if (recordingTimeoutRef.current) {
         clearTimeout(recordingTimeoutRef.current);
       }
-      recognition.stop();
+      if (recognitionRef.current && recognitionRef.current.state === 'speaking') {
+        recognitionRef.current.stop();
+      }
     }
 
-  }, [toast, isGenerating, userInput, isRecording]);
+  }, [toast, isGenerating]);
 
 
   const handleToggleRecording = () => {
@@ -275,9 +273,12 @@ function CommunicationPracticePage() {
       return;
     }
     if (isRecording) {
-      recognitionRef.current.stop();
+      if (recognitionRef.current?.state === 'speaking') {
+        recognitionRef.current.stop();
+      }
     } else {
       setUserInput('');
+      finalTranscriptRef.current = '';
       recognitionRef.current.start();
     }
   };
@@ -442,7 +443,7 @@ function CommunicationPracticePage() {
                         )}
                     </div>
                 ))}
-                {isGenerating && (
+                {isGenerating && audioPlayer && (
                      <div className="flex items-start gap-4">
                         <Avatar className="w-8 h-8">
                             <AvatarImage src="https://i.ibb.co/xqNC3WZC/logo-jpg.jpg" alt="AI Assistant" />
@@ -516,5 +517,3 @@ export default function CommunicationPracticePageWrapperWithAuth() {
     </AuthProvider>
   );
 }
-
-    

@@ -22,11 +22,15 @@ export function markdownToHtml(markdown: string): string {
     // Horizontal Rule
     .replace(/^\s*(\*|-|_){3,}\s*$/gim, '<hr>')
     // Unordered lists
-    .replace(/^\s*[-*] (.*)/gim, '<ul>\n<li>$1</li>\n</ul>')
-    .replace(/<\/ul>\n<ul>/g, '')
+    .replace(/^\s*[-*] (.*)/gim, '<li>$1</li>')
+    .replace(/(<\/li>\n)?<li>/g, '<li>')
+    .replace(/<li>/g, '<ul><li>')
+    .replace(/<\/li>\n/g, '</li></ul>')
      // Ordered lists
-    .replace(/^\s*\d+\. (.*)/gim, '<ol>\n<li>$1</li>\n</ol>')
-    .replace(/<\/ol>\n<ol>/g, '')
+    .replace(/^\s*\d+\. (.*)/gim, '<li>$1</li>')
+    .replace(/<\/li>\n<li>/g, '<li>')
+    .replace(/<li>/g, '<ol><li>')
+    .replace(/<\/li>\n/g, '</li></ol>')
     // Newlines to <br>
     .replace(/\n/g, '<br />');
 

@@ -98,33 +98,28 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
     html2canvas(notesElement, {
         scale: 2, // Higher scale for better quality
         useCORS: true,
-        backgroundColor: '#ffffff', // Force white background
-        windowWidth: notesElement.scrollWidth,
-        windowHeight: notesElement.scrollHeight,
+        backgroundColor: '#ffffff', // Force white background for PDF
     }).then(canvas => {
         const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF({
-            orientation: 'p',
-            unit: 'mm',
-            format: 'a4'
-        });
+        const pdf = new jsPDF('p', 'mm', 'a4');
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
+
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
         const canvasAspectRatio = canvasWidth / canvasHeight;
-        
-        let imgWidth = pdfWidth;
-        let imgHeight = pdfWidth / canvasAspectRatio;
+
+        const imgWidth = pdfWidth;
+        const imgHeight = imgWidth / canvasAspectRatio;
 
         let heightLeft = imgHeight;
         let position = 0;
-        
+
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
         heightLeft -= pdfHeight;
 
         while (heightLeft > 0) {
-            position = heightLeft - imgHeight; // BUG: this was miscalculated
+            position -= pdfHeight;
             pdf.addPage();
             pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
             heightLeft -= pdfHeight;
