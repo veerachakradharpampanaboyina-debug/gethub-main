@@ -15,7 +15,7 @@ import {
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, Settings, Home as HomeIcon, History, BrainCircuit, Shield, BookCopy, Info, FileText, Download, MessageCircle } from 'lucide-react';
+import { LogOut, Settings, Home as HomeIcon, History, BrainCircuit, Shield, BookCopy, Info, FileText, Download, MessageCircle, CalendarClock } from 'lucide-react';
 import { ExamDetails, ExamPaper } from '@/lib/types';
 import GethubLogo from '@/components/gethub-logo';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
@@ -52,6 +52,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Separator } from '@/components/ui/separator';
 import { markdownToHtml } from '@/lib/utils';
+import { getLatestScheduledExam } from '@/services/scheduled-exam-service';
 
 function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
   const { user, loading, logout } = useAuth();
@@ -61,6 +62,7 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
   const [generatedNotes, setGeneratedNotes] = useState('');
   const [notesError, setNotesError] = useState<string | null>(null);
   const [currentTopic, setCurrentTopic] = useState('');
+  const [hasWeeklyExam, setHasWeeklyExam] = useState<boolean | null>(null);
   const notesContentRef = useRef<HTMLDivElement>(null);
 
 
@@ -69,6 +71,12 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
       router.push(`/login?redirect=/exam/${exam.examId}`);
     }
   }, [user, loading, router, exam.examId]);
+
+  useEffect(() => {
+      getLatestScheduledExam(exam.examId).then((result) => {
+          setHasWeeklyExam(!!result);
+      });
+  }, [exam.examId]);
   
   const handleGenerateNotes = async (topic: string) => {
     setCurrentTopic(topic);
@@ -129,7 +137,7 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
     });
 };
 
-  if (loading || !user) {
+  if (loading || !user || hasWeeklyExam === null) {
     return (
       <div className="flex h-screen items-center justify-center">
         <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
@@ -255,7 +263,7 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
             </h1>
           </div>
         </header>
-        <main className="p-4 md:p-6 lg:p-8">
+        <main className="p-4 md:p-6 lg:p-8 space-y-6">
             <Card className="bg-secondary/30">
                 <CardHeader>
                     <CardTitle>Syllabus & Preparation</CardTitle>
@@ -265,8 +273,29 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
                 </CardHeader>
             </Card>
 
+             {hasWeeklyExam && (
+                <Card className="border-primary/50 bg-primary/10">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-3 text-primary">
+                            <CalendarClock /> Weekly Scheduled Exam
+                        </CardTitle>
+                        <CardDescription className="text-primary/80">
+                           A new question paper is available for this exam. Test your knowledge with the latest questions.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardFooter>
+                         <Button asChild>
+                            <Link href={`/scheduled-exam/${exam.examId}`}>
+                                Start Weekly Exam
+                            </Link>
+                        </Button>
+                    </CardFooter>
+                </Card>
+             )}
+
+
             {exam.stages && exam.stages.length > 0 ? (
-                 <Accordion type="multiple" className="w-full space-y-4 mt-6">
+                 <Accordion type="multiple" className="w-full space-y-4">
                    {exam.stages.map((stage) => (
                     <AccordionItem value={stage.stageId} key={stage.stageId} className="border rounded-lg bg-secondary/50">
                         <AccordionTrigger className="p-4 text-lg font-semibold hover:no-underline">
