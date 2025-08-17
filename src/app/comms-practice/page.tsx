@@ -76,7 +76,7 @@ function CommunicationPracticePage() {
     }
   }, [messages]);
 
- const playAudio = useCallback((audioDataUri: string) => {
+  const playAudio = useCallback((audioDataUri: string) => {
     if (audioRef.current) {
       audioRef.current.src = audioDataUri;
       audioRef.current.play().catch(e => {
@@ -185,7 +185,7 @@ function CommunicationPracticePage() {
             setIsGenerating(false);
         };
 
-        audioRef.current.onerror = (e: Event) => {
+        audioRef.current.onerror = (e) => {
             console.error("Audio element error:", e);
             // Ignore AbortError which is expected if user interrupts playback
             if ((e.target as HTMLAudioElement)?.error?.code !== 20) { 
