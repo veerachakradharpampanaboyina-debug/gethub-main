@@ -145,10 +145,12 @@ function CommunicationPracticePage() {
         recognition.lang = 'en-US';
         
         let finalTranscript = '';
+        let transcriptSent = false;
     
         recognition.onstart = () => {
             setIsRecording(true);
             finalTranscript = '';
+            transcriptSent = false;
         };
         
         const sendFinalTranscript = () => {
@@ -156,9 +158,11 @@ function CommunicationPracticePage() {
                 clearTimeout(speechTimeoutRef.current);
                 speechTimeoutRef.current = null;
             }
-             const transcriptToSend = finalTranscript.trim();
-            if (transcriptToSend) {
+            const transcriptToSend = finalTranscript.trim();
+            if (transcriptToSend && !transcriptSent) {
+                transcriptSent = true;
                 handleSendMessage(transcriptToSend);
+                finalTranscript = ''; // Clear transcript after sending
             }
         };
 
