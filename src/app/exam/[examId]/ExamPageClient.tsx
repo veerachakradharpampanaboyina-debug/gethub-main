@@ -53,10 +53,12 @@ import html2canvas from 'html2canvas';
 import { Separator } from '@/components/ui/separator';
 import { markdownToHtml } from '@/lib/utils';
 import { getLatestScheduledExam } from '@/services/scheduled-exam-service';
+import { useToast } from '@/hooks/use-toast';
 
 function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
   const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
   const [isGeneratingNotes, setIsGeneratingNotes] = useState(false);
   const [generatedNotes, setGeneratedNotes] = useState('');
@@ -104,36 +106,47 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
     if (!notesElement) return;
 
     html2canvas(notesElement, {
-        scale: 2, // Higher scale for better quality
+        scale: 2,
         useCORS: true,
-        backgroundColor: '#ffffff', // Force white background for PDF
+        backgroundColor: '#ffffff',
+        logging: false, // reduce console noise
+        allowTaint: true,
     }).then(canvas => {
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
+        try {
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
 
-        const canvasWidth = canvas.width;
-        const canvasHeight = canvas.height;
-        const canvasAspectRatio = canvasWidth / canvasHeight;
+            const canvasWidth = canvas.width;
+            const canvasHeight = canvas.height;
+            const canvasAspectRatio = canvasWidth / canvasHeight;
 
-        const imgWidth = pdfWidth;
-        const imgHeight = imgWidth / canvasAspectRatio;
+            const imgWidth = pdfWidth;
+            const imgHeight = imgWidth / canvasAspectRatio;
 
-        let heightLeft = imgHeight;
-        let position = 0;
+            let heightLeft = imgHeight;
+            let position = 0;
 
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pdfHeight;
-
-        while (heightLeft > 0) {
-            position -= pdfHeight;
-            pdf.addPage();
-            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
             heightLeft -= pdfHeight;
-        }
 
-        pdf.save(`${currentTopic.replace(/\s+/g, '_').toLowerCase()}_notes.pdf`);
+            while (heightLeft > 0) {
+                position -= pdfHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+                heightLeft -= pdfHeight;
+            }
+
+            pdf.save(`${currentTopic.replace(/\s+/g, '_').toLowerCase()}_notes.pdf`);
+        } catch(error) {
+            console.error("Failed to generate PDF:", error);
+            toast({
+                title: "PDF Generation Failed",
+                description: "There was an issue creating the PDF. The content may be too complex to render.",
+                variant: "destructive"
+            })
+        }
     });
 };
 
