@@ -109,18 +109,26 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
             format: 'a4'
         });
         const pdfWidth = pdf.internal.pageSize.getWidth();
-        const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        const canvasAspectRatio = canvasWidth / canvasHeight;
+        const pdfAspectRatio = pdfWidth / pdfHeight;
+        
+        let imgWidth = pdfWidth;
+        let imgHeight = pdfWidth / canvasAspectRatio;
+
         let heightLeft = imgHeight;
         let position = 0;
-
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, imgHeight);
-        heightLeft -= pdf.internal.pageSize.getHeight();
+        
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
 
         while (heightLeft > 0) {
-            position = heightLeft - imgHeight;
+            position = -pdfHeight + (heightLeft > imgHeight ? 0 : (imgHeight - heightLeft));
             pdf.addPage();
-            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-            heightLeft -= pdf.internal.pageSize.getHeight();
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pdfHeight;
         }
 
         pdf.save(`${currentTopic.replace(/\s+/g, '_').toLowerCase()}_notes.pdf`);
@@ -362,7 +370,7 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
             ) : notesError ? (
               <div className="text-destructive p-4">{notesError}</div>
             ) : (
-              <div className="prose prose-sm md:prose-base max-w-none p-6">
+               <div className="prose prose-sm md:prose-base max-w-none p-2">
                  <div ref={notesContentRef} className="bg-white text-black p-8 font-serif">
                     <div dangerouslySetInnerHTML={{ __html: markdownToHtml(generatedNotes) }} />
                  </div>

@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowRight, BrainCircuit, BookOpenCheck, LogOut, Settings, Library, Briefcase, History } from 'lucide-react';
+import { ArrowRight, BrainCircuit, BookOpenCheck, LogOut, Settings, Library, Briefcase, History, Facebook, Twitter, Instagram } from 'lucide-react';
 import GethubLogo from '@/components/gethub-logo';
 import { examCategories } from '@/lib/exam-categories';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
@@ -19,6 +19,7 @@ import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 
 
 function HomePageContent() {
@@ -97,6 +98,31 @@ function HomePageContent() {
                 </div>
             </section>
             
+            <section id="gallery" className="py-20 px-4 border-b border-white/10 bg-secondary/30">
+                <div className="text-center mb-12">
+                    <h2 className="text-3xl font-bold tracking-tight">Our Success Stories</h2>
+                    <p className="text-muted-foreground mt-2">See how GETHUB has helped students achieve their dreams.</p>
+                </div>
+                <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-8 items-center">
+                    <div className="grid grid-cols-2 gap-4">
+                        <Image src="https://placehold.co/600x400.png" alt="Student studying" width={600} height={400} className="rounded-lg shadow-lg" data-ai-hint="student studying"/>
+                        <Image src="https://placehold.co/600x400.png" alt="Exam hall" width={600} height={400} className="rounded-lg shadow-lg" data-ai-hint="exam hall"/>
+                        <Image src="https://placehold.co/600x400.png" alt="Graduation ceremony" width={600} height={400} className="rounded-lg shadow-lg" data-ai-hint="graduation ceremony"/>
+                        <Image src="https://placehold.co/600x400.png" alt="Student celebrating" width={600} height={400} className="rounded-lg shadow-lg" data-ai-hint="student celebrating"/>
+                    </div>
+                    <div className="prose prose-invert text-lg">
+                        <h3>From Aspiration to Achievement</h3>
+                        <p>Join thousands of students who have transformed their preparation with GETHUB. Our AI-powered tools, detailed syllabus breakdowns, and on-demand practice exams provide the edge you need to excel in competitive exams.</p>
+                        <p>Whether you're aiming for civil services, engineering, or medical school, our platform is designed to guide you at every step of your journey. Start today and unlock your potential.</p>
+                         <Button asChild size="lg">
+                            <Link href="#exams">
+                                Explore Exams <ArrowRight className="ml-2"/>
+                            </Link>
+                        </Button>
+                    </div>
+                </div>
+            </section>
+
             <section id="exams" className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
               <div className="text-center mb-12">
                   <h2 className="text-3xl font-bold tracking-tight">Choose Your Exam</h2>
@@ -122,8 +148,15 @@ function HomePageContent() {
               </div>
           </section>
         </main>
-        <footer className="p-6 border-t border-white/10 text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} GETHUB. All rights reserved.
+        <footer className="p-6 border-t border-white/10">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+             <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} GETHUB. All rights reserved.</p>
+             <div className="flex gap-4">
+                <Link href="#" className="text-muted-foreground hover:text-primary"><Facebook /></Link>
+                <Link href="#" className="text-muted-foreground hover:text-primary"><Twitter /></Link>
+                <Link href="#" className="text-muted-foreground hover:text-primary"><Instagram /></Link>
+             </div>
+          </div>
         </footer>
     </div>
   );
