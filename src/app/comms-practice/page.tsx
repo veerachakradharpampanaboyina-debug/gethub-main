@@ -139,8 +139,6 @@ function CommunicationPracticePage() {
         console.error("Failed to get feedback:", err);
         const errorMessage = "I'm having a little trouble connecting right now. Let's try that again in a moment.";
         setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: errorMessage, isGenerating: false } : m));
-        const ttsResult = await textToSpeech({ text: errorMessage, voice });
-        setAudioToPlay(ttsResult.audioDataUri);
     } finally {
         setIsGenerating(false);
     }
@@ -521,3 +519,5 @@ export default function CommunicationPracticePageWrapperWithAuth() {
     </AuthProvider>
   );
 }
+
+    
