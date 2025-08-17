@@ -78,6 +78,9 @@ function CommunicationPracticePage() {
   }, [messages]);
 
   const playAudio = useCallback((audioDataUri: string) => {
+    if (recognitionRef.current && isRecording) {
+      recognitionRef.current.stop();
+    }
     if (audioRef.current) {
       audioRef.current.src = audioDataUri;
       audioRef.current.play().catch(e => {
@@ -88,7 +91,7 @@ function CommunicationPracticePage() {
         }
       });
     }
-  }, [toast]);
+  }, [toast, isRecording]);
 
   useEffect(() => {
     if (audioToPlay) {
@@ -142,12 +145,10 @@ function CommunicationPracticePage() {
         recognition.lang = 'en-US';
         
         let finalTranscript = '';
-        let hasSent = false;
     
         recognition.onstart = () => {
             setIsRecording(true);
             finalTranscript = '';
-            hasSent = false;
         };
         
         const sendFinalTranscript = () => {
@@ -156,8 +157,7 @@ function CommunicationPracticePage() {
                 speechTimeoutRef.current = null;
             }
              const transcriptToSend = finalTranscript.trim();
-            if (transcriptToSend && !hasSent) {
-                hasSent = true;
+            if (transcriptToSend) {
                 handleSendMessage(transcriptToSend);
             }
         };
@@ -180,7 +180,7 @@ function CommunicationPracticePage() {
           setUserInput(finalTranscript + interimTranscript);
           
           // Set a new timeout to send the transcript after a pause
-           speechTimeoutRef.current = setTimeout(sendFinalTranscript, 1500); // 1.5 second pause
+           speechTimeoutRef.current = setTimeout(sendFinalTranscript, 2000); // 2 second pause
         };
 
         recognition.onend = () => {
@@ -246,6 +246,7 @@ function CommunicationPracticePage() {
     } else {
        if (audioRef.current && !audioRef.current.paused) {
          audioRef.current.pause();
+         setIsGenerating(false); // Stop generating state if audio is interrupted
        }
       setUserInput('');
       recognitionRef.current?.start();
