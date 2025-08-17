@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview Converts text to speech using a Genkit flow.
@@ -73,7 +74,7 @@ const textToSpeechFlow = ai.defineFlow(
                 responseModalities: ['AUDIO'],
                 speechConfig: {
                 voiceConfig: {
-                    prebuiltVoiceConfig: { voiceName: input.voice },
+                    prebuiltVoiceConfig: { voiceName: input.voice || 'Algenib' },
                 },
                 },
             },
