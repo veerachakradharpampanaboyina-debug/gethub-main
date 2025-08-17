@@ -140,11 +140,18 @@ function CommunicationPracticePage() {
   };
 
   const handleTextToSpeech = async (text: string, messageId: string) => {
-    const audioMessagePlaceholder: Message = { id: `audio-${Date.now()}`, role: 'audio', content: '', isGenerating: true };
+    // Prevent creating duplicate audio messages
+    const existingAudio = messages.find(m => m.role === 'audio' && m.content.includes(messageId));
+    if(existingAudio) return;
+
+    const audioMessagePlaceholder: Message = { id: `audio-${messageId}`, role: 'audio', content: messageId, isGenerating: true };
     setMessages(prev => {
         const index = prev.findIndex(m => m.id === messageId);
         const newMessages = [...prev];
-        newMessages.splice(index + 1, 0, audioMessagePlaceholder);
+        // Insert audio message placeholder after the assistant message
+        if (index !== -1) {
+          newMessages.splice(index + 1, 0, audioMessagePlaceholder);
+        }
         return newMessages;
     });
 
@@ -313,23 +320,23 @@ function CommunicationPracticePage() {
                 )}
                 {messages.map((message) => (
                     <div key={message.id} className={`flex items-start gap-4 ${message.role === 'user' ? 'justify-end' : ''}`}>
-                         {message.role === 'assistant' && (
+                         {(message.role === 'assistant' || (message.role === 'audio' && message.isGenerating)) && (
                             <Avatar className="w-8 h-8">
                                 <AvatarImage src="https://i.ibb.co/xqNC3WZC/logo-jpg.jpg" alt="AI Assistant" />
                                 <AvatarFallback>AI</AvatarFallback>
                             </Avatar>
                         )}
-                        <div className={`max-w-xl rounded-lg p-4 ${message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-secondary'}`}>
+                        <div className={`max-w-xl rounded-lg p-4 ${message.role === 'user' ? 'bg-primary text-primary-foreground' : (message.role === 'audio' ? 'bg-transparent p-0' : 'bg-secondary')}`}>
                            {message.isGenerating ? (
                              <div className="flex items-center gap-2">
                                 <LoaderCircle className="w-4 h-4 animate-spin" />
                                 <span>Generating...</span>
                               </div>
                            ) : message.role === 'audio' && message.audioDataUri ? (
-                                <audio controls src={message.audioDataUri} className="h-10">Your browser does not support the audio element.</audio>
-                           ) : (
+                                <audio controls autoPlay src={message.audioDataUri} className="h-10">Your browser does not support the audio element.</audio>
+                           ) : message.role !== 'audio' ? (
                              <div className="prose prose-sm prose-invert max-w-none text-current" dangerouslySetInnerHTML={{ __html: markdownToHtml(message.content) }} />
-                           )}
+                           ) : null }
                            {message.role === 'assistant' && !message.isGenerating && (
                             <div className="flex gap-2 mt-3 -mb-2">
                                 <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleTextToSpeech(message.content, message.id)}>
