@@ -16,7 +16,7 @@ import {
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MessageCircle, LogOut, Settings, Home as HomeIcon, History, Shield, BrainCircuit, Copy, Mic } from 'lucide-react';
+import { MessageCircle, LogOut, Settings, Home as HomeIcon, History, Shield, BrainCircuit, Copy, Mic, LoaderCircle } from 'lucide-react';
 import GethubLogo from '@/components/gethub-logo';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
@@ -24,7 +24,6 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { generateCommunicationFeedback } from '@/ai/flows/generate-communication-feedback';
 import { textToSpeech, TextToSpeechInput } from '@/ai/flows/text-to-speech';
-import { LoaderCircle } from 'lucide-redacted';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
