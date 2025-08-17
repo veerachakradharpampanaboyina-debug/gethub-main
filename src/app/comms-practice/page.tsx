@@ -85,6 +85,7 @@ function CommunicationPracticePage() {
           audioRef.current.pause();
       }
       audioRef.current.src = ""; // Clear the source
+      audioRef.current.load(); // Important: call load() after changing src
       audioRef.current.src = audioDataUri;
       audioRef.current.play().catch(e => {
         // AbortError is expected if we interrupt playback, so we can ignore it.
