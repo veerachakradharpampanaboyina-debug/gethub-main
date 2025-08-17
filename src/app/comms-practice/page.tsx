@@ -120,19 +120,18 @@ function CommunicationPracticePage() {
             const ttsResult = await textToSpeech({ text: aiResponseText, voice: voice });
             // Update the message content and set the audio to play at the same time
             setMessages(prev => prev.map(m => m.id === thinkingMessage.id ? { ...m, content: aiResponseText, isGenerating: false } : m));
-            setIsGenerating(false);
-            setIsSpeaking(true);
             setAudioToPlay(ttsResult.audioDataUri);
+            setIsSpeaking(true);
         } else {
             // If there's no response text, just stop the generating state
             setMessages(prev => prev.filter(m => m.id !== thinkingMessage.id));
-            setIsGenerating(false);
         }
 
     } catch (err) {
         console.error("Failed to get feedback:", err);
         const errorMessage = "I'm having a little trouble connecting right now. Let's try that again in a moment.";
         setMessages(prev => prev.map(m => m.id === thinkingMessage.id ? { ...m, content: errorMessage, isGenerating: false } : m));
+    } finally {
         setIsGenerating(false);
     }
   }, [isGenerating, voice]);
@@ -494,5 +493,3 @@ export default function CommunicationPracticePageWrapperWithAuth() {
     </AuthProvider>
   );
 }
-
-    
