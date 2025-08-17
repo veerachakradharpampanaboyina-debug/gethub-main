@@ -186,9 +186,9 @@ function CommunicationPracticePage() {
         };
 
         audioRef.current.onerror = (e) => {
-            console.error("Audio element error:", e);
-            // Ignore AbortError which is expected if user interrupts playback
-            if ((e.target as HTMLAudioElement)?.error?.code !== 20) { 
+            const target = e.target as HTMLAudioElement;
+            if (target.error && target.error.code !== 20) { // Not an AbortError
+                console.error("Audio element error:", e);
                 toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
             }
             setIsGenerating(false); // Ensure state is reset on error
