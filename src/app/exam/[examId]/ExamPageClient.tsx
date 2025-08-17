@@ -49,7 +49,6 @@ import {
 } from '@/components/ui/dialog';
 import { generateSyllabusNotes } from '@/ai/flows/generate-syllabus-notes';
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import { Separator } from '@/components/ui/separator';
 import { markdownToHtml } from '@/lib/utils';
 import { getLatestScheduledExam } from '@/services/scheduled-exam-service';
@@ -102,49 +101,34 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
   };
   
   const handleDownloadPdf = async () => {
-    const notesElement = notesContentRef.current;
-    if (!notesElement) return;
+    const content = notesContentRef.current;
+    if (!content) {
+        toast({
+            title: "Download Error",
+            description: "Could not find the content to download.",
+            variant: "destructive"
+        });
+        return;
+    }
 
     try {
-        const canvas = await html2canvas(notesElement, {
-            scale: 2,
-            useCORS: true,
-            backgroundColor: '#ffffff',
+        const pdf = new jsPDF('p', 'pt', 'a4');
+        await pdf.html(content, {
+            autoPaging: 'text',
+            margin: [20, 20, 20, 20],
+            width: 555, // A4 width in points (595) minus margins
+            windowWidth: content.scrollWidth,
+            callback: function (doc) {
+                doc.save(`${currentTopic.replace(/\s+/g, '_').toLowerCase()}_notes.pdf`);
+            }
         });
-        
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-
-        const canvasWidth = canvas.width;
-        const canvasHeight = canvas.height;
-        const canvasAspectRatio = canvasWidth / canvasHeight;
-
-        const imgWidth = pdfWidth;
-        const imgHeight = imgWidth / canvasAspectRatio;
-
-        let heightLeft = imgHeight;
-        let position = 0;
-
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
-        heightLeft -= pdfHeight;
-
-        while (heightLeft > 0) {
-            position -= pdfHeight;
-            pdf.addPage();
-            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
-            heightLeft -= pdfHeight;
-        }
-
-        pdf.save(`${currentTopic.replace(/\s+/g, '_').toLowerCase()}_notes.pdf`);
-    } catch(error) {
+    } catch (error) {
         console.error("Failed to generate PDF:", error);
         toast({
             title: "PDF Generation Failed",
-            description: "There was an issue creating the PDF. The content may be too complex to render.",
+            description: "There was an issue creating the PDF. Please try again.",
             variant: "destructive"
-        })
+        });
     }
 };
 
