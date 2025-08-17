@@ -114,24 +114,32 @@ function CommunicationPracticePage() {
         role: 'assistant',
         content: aiResponseText,
       };
+      
+      setMessages(prev => [...prev, assistantMessage]);
 
       if (!aiResponseText.trim()) {
-        assistantMessage.content = "I'm sorry, I couldn't generate a response. Could you try saying that again?";
-        setMessages(prev => [...prev, assistantMessage]);
-        setIsGenerating(false);
-        return;
+         const emptyResponseMessage = "I'm sorry, I couldn't generate a response. Could you try saying that again?";
+         setMessages(prev => {
+            const newMessages = [...prev];
+            const lastMessage = newMessages[newMessages.length - 1];
+            if (lastMessage.role === 'assistant') {
+                lastMessage.content = emptyResponseMessage;
+            }
+            return newMessages;
+         });
+         setIsGenerating(false);
+         return;
       }
 
       // 2. Generate speech from the AI's response
       const ttsResult = await textToSpeech({ text: aiResponseText });
 
-      // 3. Play the audio. The text will be revealed when it ends.
+      // 3. Play the audio. 
       const audio = new Audio(ttsResult.audioDataUri);
       setAudioPlayer(audio);
       audio.play();
       
       audio.onended = () => {
-        setMessages(prev => [...prev, assistantMessage]);
         setIsGenerating(false);
         setAudioPlayer(null);
         // Automatically start listening for the next user response
@@ -142,8 +150,6 @@ function CommunicationPracticePage() {
       
       audio.onerror = () => {
         toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive"});
-        // If audio fails, show the text anyway.
-        setMessages(prev => [...prev, assistantMessage]);
         setIsGenerating(false);
         setAudioPlayer(null);
       }
@@ -437,7 +443,7 @@ function CommunicationPracticePage() {
                         )}
                     </div>
                 ))}
-                {isGenerating && audioPlayer && (
+                {isGenerating && (
                      <div className="flex items-start gap-4">
                         <GethubLogo className="w-8 h-8" width={32} height={32} />
                         <div className="max-w-xl rounded-lg p-4 bg-secondary">
