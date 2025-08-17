@@ -76,15 +76,16 @@ function CommunicationPracticePage() {
     }
   }, [messages]);
 
-  const playAudio = useCallback((audioDataUri: string) => {
+ const playAudio = useCallback((audioDataUri: string) => {
     if (audioRef.current) {
       audioRef.current.src = audioDataUri;
       audioRef.current.play().catch(e => {
-        console.error("Audio playback failed:", e);
+        // We can ignore the AbortError, which happens when we interrupt the audio
         if (e.name !== 'AbortError') {
-          toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
+            console.error("Audio playback failed:", e);
+            toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
+            setIsGenerating(false);
         }
-        setIsGenerating(false);
       });
     }
   }, [toast]);
@@ -92,7 +93,7 @@ function CommunicationPracticePage() {
   useEffect(() => {
     if (audioToPlay) {
       playAudio(audioToPlay);
-      setAudioToPlay(null); // Reset after playing
+      setAudioToPlay(null); // Reset after trying to play
     }
   }, [audioToPlay, playAudio]);
 
@@ -125,7 +126,7 @@ function CommunicationPracticePage() {
         setMessages(prev => prev.map(m => m.isGenerating ? { ...m, content: errorMessage, isGenerating: false } : m));
         setIsGenerating(false);
     }
-  }, [isGenerating, toast, voice]);
+  }, [isGenerating, voice]);
   
    useEffect(() => {
     if (!SpeechRecognition) {
@@ -184,12 +185,13 @@ function CommunicationPracticePage() {
             setIsGenerating(false);
         };
 
-        audioRef.current.onerror = (e) => {
+        audioRef.current.onerror = (e: Event) => {
             console.error("Audio element error:", e);
-             if ((e.target as HTMLAudioElement)?.error?.code !== 20) { // Not an AbortError
+            // Ignore AbortError which is expected if user interrupts playback
+            if ((e.target as HTMLAudioElement)?.error?.code !== 20) { 
                 toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
-             }
-            setIsGenerating(false);
+            }
+            setIsGenerating(false); // Ensure state is reset on error
         };
       }
 
@@ -216,7 +218,6 @@ function CommunicationPracticePage() {
     } else {
        if (audioRef.current && !audioRef.current.paused) {
          audioRef.current.pause();
-         setIsGenerating(false);
        }
       setUserInput('');
       recognitionRef.current?.start();
@@ -227,6 +228,19 @@ function CommunicationPracticePage() {
     navigator.clipboard.writeText(text);
     toast({ title: "Copied!", description: "The text has been copied to your clipboard." });
   };
+  
+   const handleReplayAudio = async (text: string) => {
+        if (isGenerating) return;
+        setIsGenerating(true);
+        try {
+            const ttsResult = await textToSpeech({ text, voice });
+            setAudioToPlay(ttsResult.audioDataUri);
+        } catch (err) {
+            console.error("Failed to get TTS for replay:", err);
+            toast({ title: "Audio Error", description: "Could not replay the audio.", variant: "destructive" });
+            setIsGenerating(false);
+        }
+    };
   
   if (loading || !user) {
     return (
@@ -386,7 +400,7 @@ function CommunicationPracticePage() {
                                 <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleCopyText(message.content)}>
                                     <Copy className="w-4 h-4"/>
                                 </Button>
-                                 <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setAudioToPlay(message.content)}>
+                                 <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleReplayAudio(message.content)}>
                                     <Volume2 className="w-4 h-4"/>
                                 </Button>
                             </div>
@@ -460,3 +474,5 @@ export default function CommunicationPracticePageWrapperWithAuth() {
     </AuthProvider>
   );
 }
+
+    
