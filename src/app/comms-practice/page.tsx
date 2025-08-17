@@ -117,6 +117,10 @@ function CommunicationPracticePage() {
         setMessages(prev => [...prev, assistantMessage]);
         setIsGenerating(false);
         setAudioPlayer(null);
+        // Automatically start listening for the next user response
+        if (recognitionRef.current) {
+            recognitionRef.current.start();
+        }
       };
       
       audio.onerror = () => {
@@ -150,6 +154,10 @@ function CommunicationPracticePage() {
         setMessages(prev => [...prev, assistantMessage]);
         setIsGenerating(false);
         setAudioPlayer(null);
+         // Automatically start listening for the next user response even on error
+        if (recognitionRef.current) {
+            recognitionRef.current.start();
+        }
       };
     }
   };
