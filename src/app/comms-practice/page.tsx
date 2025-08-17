@@ -351,11 +351,11 @@ function CommunicationPracticePage() {
              <Label>Voice:</Label>
             <div className="flex items-center space-x-2">
                 <RadioGroupItem value="Algenib" id="male-voice" />
-                <Label htmlFor="male-voice">Male</Label>
+                <Label htmlFor="male-voice">John</Label>
             </div>
             <div className="flex items-center space-x-2">
                 <RadioGroupItem value="Schedar" id="female-voice" />
-                <Label htmlFor="female-voice">Emma</Label>
+                <Label htmlFor="female-voice">Victor</Label>
             </div>
           </RadioGroup>
         </header>
