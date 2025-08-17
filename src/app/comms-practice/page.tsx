@@ -83,8 +83,8 @@ function CommunicationPracticePage() {
       // Stop and reset any currently playing audio to prevent overlap errors
       if (!audioRef.current.paused) {
           audioRef.current.pause();
-          audioRef.current.currentTime = 0;
       }
+      audioRef.current.src = ""; // Clear the source
       audioRef.current.src = audioDataUri;
       audioRef.current.play().catch(e => {
         // AbortError is expected if we interrupt playback, so we can ignore it.
@@ -495,5 +495,3 @@ export default function CommunicationPracticePageWrapperWithAuth() {
     </AuthProvider>
   );
 }
-
-    
