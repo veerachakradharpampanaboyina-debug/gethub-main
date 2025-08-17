@@ -50,7 +50,6 @@ function CommunicationPracticePage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [userInput, setUserInput] = useState('');
   const [isRecording, setIsRecording] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -73,50 +72,33 @@ function CommunicationPracticePage() {
     }
   }, [messages]);
   
-  // Setup audio element and its event listeners
-  useEffect(() => {
-    if (typeof window !== 'undefined' && !audioRef.current) {
-      audioRef.current = new Audio();
-    }
-
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    const handleAudioEnd = () => setIsSpeaking(false);
-    const handleAudioError = () => {
-        toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
-        setIsSpeaking(false);
-    };
-    
-    audio.addEventListener('ended', handleAudioEnd);
-    audio.addEventListener('error', handleAudioError);
-    
-    // Cleanup function
-    return () => {
-        audio.removeEventListener('ended', handleAudioEnd);
-        audio.removeEventListener('error', handleAudioError);
-        audio.pause();
-    };
-  }, [toast]);
-
-
   const playAudio = useCallback((audioDataUri: string) => {
-    const audio = audioRef.current;
-    if (!audio || !audioDataUri) return;
-    
-    // Stop any currently playing audio
-    if (isSpeaking) {
-      audio.pause();
-      audio.currentTime = 0;
-    }
-    
-    setIsSpeaking(true);
-    audio.src = audioDataUri;
-    audio.play().catch(error => {
-      toast({ title: "Audio Playback Failed", description: `Could not play the audio. ${error}`, variant: "destructive" });
-      setIsSpeaking(false);
+    return new Promise<void>((resolve, reject) => {
+        if (!audioRef.current) {
+            audioRef.current = new Audio();
+        }
+        const audio = audioRef.current;
+        
+        const handleEnded = () => {
+            audio.removeEventListener('ended', handleEnded);
+            audio.removeEventListener('error', handleError);
+            resolve();
+        };
+
+        const handleError = (e: Event) => {
+            audio.removeEventListener('ended', handleEnded);
+            audio.removeEventListener('error', handleError);
+            toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
+            reject(e);
+        };
+
+        audio.addEventListener('ended', handleEnded);
+        audio.addEventListener('error', handleError);
+
+        audio.src = audioDataUri;
+        audio.play().catch(handleError);
     });
-  }, [toast, isSpeaking]);
+  }, [toast]);
 
 
   const handleSendMessage = useCallback(async (text: string) => {
@@ -139,7 +121,7 @@ function CommunicationPracticePage() {
       
         if (aiResponseText.trim()) {
             const ttsResult = await textToSpeech({ text: aiResponseText });
-            playAudio(ttsResult.audioDataUri);
+            await playAudio(ttsResult.audioDataUri);
         }
 
     } catch (err) {
@@ -198,6 +180,7 @@ function CommunicationPracticePage() {
         recognitionRef.current = recognition;
     }
 
+    // Cleanup function
     return () => {
       if (recognitionRef.current) {
         recognitionRef.current.abort();
@@ -218,10 +201,8 @@ function CommunicationPracticePage() {
     if (isRecording) {
       recognitionRef.current?.stop();
     } else {
-       if (isSpeaking && audioRef.current) {
+       if (audioRef.current && !audioRef.current.paused) {
          audioRef.current.pause();
-         audioRef.current.currentTime = 0;
-         setIsSpeaking(false);
        }
       setUserInput('');
       recognitionRef.current?.start();
@@ -241,7 +222,7 @@ function CommunicationPracticePage() {
     );
   }
 
-  const isUIActive = isRecording || isSpeaking || isGenerating;
+  const isUIActive = isRecording || isGenerating;
 
   return (
     <SidebarProvider>
@@ -402,7 +383,7 @@ function CommunicationPracticePage() {
                     placeholder={isRecording ? "Listening..." : "Click the mic to speak, or type here..."}
                     className="pr-16 min-h-[52px]" 
                     rows={1}
-                    disabled={isSpeaking || isGenerating}
+                    disabled={isGenerating}
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1">
                     {SpeechRecognition && (
@@ -411,7 +392,7 @@ function CommunicationPracticePage() {
                           size="icon" 
                           variant={isRecording ? "destructive" : "ghost"}
                           onClick={handleToggleRecording}
-                          disabled={isSpeaking || isGenerating}
+                          disabled={isGenerating}
                       >
                           <Mic className="w-5 h-5" />
                       </Button>
