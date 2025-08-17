@@ -187,11 +187,13 @@ function CommunicationPracticePage() {
 
         audioRef.current.onerror = (e) => {
             const target = e.target as HTMLAudioElement;
-            if (target.error && target.error.code !== 20) { // Not an AbortError
+            // Not an AbortError which is code 20
+            if (target.error && target.error.code !== 20) { 
                 console.error("Audio element error:", e);
                 toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
             }
-            setIsGenerating(false); // Ensure state is reset on error
+            // Ensure state is reset on error regardless
+            setIsGenerating(false);
         };
       }
 
