@@ -16,7 +16,7 @@ import {
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MessageCircle, LogOut, Settings, Home as HomeIcon, History, Shield, BrainCircuit, Copy, Mic, Volume2 } from 'lucide-react';
+import { MessageCircle, LogOut, Settings, Home as HomeIcon, History, Shield, BrainCircuit, Copy, Mic } from 'lucide-react';
 import GethubLogo from '@/components/gethub-logo';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
@@ -59,6 +59,7 @@ function CommunicationPracticePage() {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const speechTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -103,8 +104,9 @@ function CommunicationPracticePage() {
     setIsGenerating(true);
     
     const userMessage: Message = { id: `user-${Date.now()}`, role: 'user', content: text };
-    
-    setMessages(prev => [...prev, userMessage, { id: `assistant-thinking-${Date.now()}`, role: 'assistant', content: '', isGenerating: true }]);
+    const thinkingMessage: Message = { id: `assistant-thinking-${Date.now()}`, role: 'assistant', content: '', isGenerating: true };
+
+    setMessages(prev => [...prev, userMessage, thinkingMessage]);
 
     try {
         const feedbackResult = await generateCommunicationFeedback({ text });
@@ -113,18 +115,18 @@ function CommunicationPracticePage() {
         if (aiResponseText.trim()) {
             const ttsResult = await textToSpeech({ text: aiResponseText, voice: voice });
             // Update the message content and set the audio to play at the same time
-            setMessages(prev => prev.map(m => m.isGenerating ? { ...m, content: aiResponseText, isGenerating: false } : m));
+            setMessages(prev => prev.map(m => m.id === thinkingMessage.id ? { ...m, content: aiResponseText, isGenerating: false } : m));
             setAudioToPlay(ttsResult.audioDataUri);
         } else {
             // If there's no response text, just stop the generating state
-            setMessages(prev => prev.filter(m => !m.isGenerating));
+            setMessages(prev => prev.filter(m => m.id !== thinkingMessage.id));
             setIsGenerating(false);
         }
 
     } catch (err) {
         console.error("Failed to get feedback:", err);
         const errorMessage = "I'm having a little trouble connecting right now. Let's try that again in a moment.";
-        setMessages(prev => prev.map(m => m.isGenerating ? { ...m, content: errorMessage, isGenerating: false } : m));
+        setMessages(prev => prev.map(m => m.id === thinkingMessage.id ? { ...m, content: errorMessage, isGenerating: false } : m));
         setIsGenerating(false);
     }
   }, [isGenerating, voice]);
@@ -140,13 +142,33 @@ function CommunicationPracticePage() {
         recognition.lang = 'en-US';
         
         let finalTranscript = '';
+        let hasSent = false;
     
         recognition.onstart = () => {
             setIsRecording(true);
             finalTranscript = '';
+            hasSent = false;
+        };
+        
+        const sendFinalTranscript = () => {
+            if (speechTimeoutRef.current) {
+                clearTimeout(speechTimeoutRef.current);
+                speechTimeoutRef.current = null;
+            }
+             const transcriptToSend = finalTranscript.trim();
+            if (transcriptToSend && !hasSent) {
+                hasSent = true;
+                handleSendMessage(transcriptToSend);
+            }
         };
 
         recognition.onresult = (event) => {
+          // Clear any existing timeout
+           if (speechTimeoutRef.current) {
+                clearTimeout(speechTimeoutRef.current);
+                speechTimeoutRef.current = null;
+            }
+
           let interimTranscript = '';
           for (let i = event.resultIndex; i < event.results.length; ++i) {
             if (event.results[i].isFinal) {
@@ -156,14 +178,15 @@ function CommunicationPracticePage() {
             }
           }
           setUserInput(finalTranscript + interimTranscript);
+          
+          // Set a new timeout to send the transcript after a pause
+           speechTimeoutRef.current = setTimeout(sendFinalTranscript, 1500); // 1.5 second pause
         };
 
         recognition.onend = () => {
           setIsRecording(false);
-          const transcriptToSend = finalTranscript.trim();
-          if (transcriptToSend) {
-            handleSendMessage(transcriptToSend);
-          }
+          // Send any remaining transcript if it wasn't sent by the timeout
+          sendFinalTranscript();
         };
 
         recognition.onerror = (event) => {
@@ -205,8 +228,10 @@ function CommunicationPracticePage() {
           }
           if (audioRef.current) {
             audioRef.current.pause();
-            // No need to remove listeners if we re-use the same audio element
           }
+           if (speechTimeoutRef.current) {
+                clearTimeout(speechTimeoutRef.current);
+           }
       };
   }, [toast]);
 
@@ -461,3 +486,5 @@ export default function CommunicationPracticePageWrapperWithAuth() {
     </AuthProvider>
   );
 }
+
+    
