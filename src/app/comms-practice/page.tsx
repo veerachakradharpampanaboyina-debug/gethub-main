@@ -82,16 +82,12 @@ function CommunicationPracticePage() {
     setIsGenerating(true);
 
     try {
-      // 1. Get text feedback from the AI
+      // 1. Get conversational response from the AI
       const feedbackResult = await generateCommunicationFeedback({ text: userMessage.content });
-      const formattedContent = `**Feedback:**\n${feedbackResult.feedback}\n\n**Corrected Text:**\n${feedbackResult.correctedText}\n\n**Suggestions:**\n${feedbackResult.suggestions.map(s => `* ${s}`).join('\n')}`;
+      const aiResponseText = feedbackResult.response;
 
-      // 2. Generate speech from the AI's feedback
-      const textForSpeech = feedbackResult.feedback.trim() !== '' 
-        ? feedbackResult.feedback 
-        : "I couldn't find anything to correct. Great job!";
-
-      const ttsResult = await textToSpeech({ text: textForSpeech });
+      // 2. Generate speech from the AI's response
+      const ttsResult = await textToSpeech({ text: aiResponseText });
 
       // 3. Play the audio. The text will be revealed when it ends.
       const audio = new Audio(ttsResult.audioDataUri);
@@ -102,7 +98,7 @@ function CommunicationPracticePage() {
         const assistantMessage: Message = {
           id: `assistant-${Date.now()}`,
           role: 'assistant',
-          content: formattedContent,
+          content: aiResponseText,
         };
         setMessages(prev => [...prev, assistantMessage]);
         setIsGenerating(false);
@@ -115,7 +111,7 @@ function CommunicationPracticePage() {
          const assistantMessage: Message = {
           id: `assistant-${Date.now()}`,
           role: 'assistant',
-          content: formattedContent,
+          content: aiResponseText,
         };
         setMessages(prev => [...prev, assistantMessage]);
         setIsGenerating(false);
@@ -331,7 +327,7 @@ function CommunicationPracticePage() {
                                 <AvatarFallback>AI</AvatarFallback>
                             </Avatar>
                             <CardTitle>Start a Conversation</CardTitle>
-                            <CardDescription>Practice your English by typing or speaking. I'll provide feedback on your grammar, clarity, and tone.</CardDescription>
+                            <CardDescription>Practice your English by clicking the microphone and speaking. GETHUB will reply and help you improve.</CardDescription>
                         </CardHeader>
                     </Card>
                 )}
@@ -370,7 +366,7 @@ function CommunicationPracticePage() {
                         <div className="max-w-xl rounded-lg p-4 bg-secondary">
                              <div className="flex items-center gap-2">
                                 <LoaderCircle className="w-4 h-4 animate-spin" />
-                                <span>AI is thinking...</span>
+                                <span>GETHUB is thinking...</span>
                               </div>
                         </div>
                     </div>
@@ -383,7 +379,7 @@ function CommunicationPracticePage() {
                     value={userInput}
                     onChange={(e) => setUserInput(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(userInput); } }}
-                    placeholder={isRecording ? "Listening..." : "Type or click the mic to speak..."}
+                    placeholder={isRecording ? "Listening..." : "Click the mic to speak..."}
                     className="pr-16 min-h-[52px]" 
                     rows={1}
                     disabled={isGenerating}
