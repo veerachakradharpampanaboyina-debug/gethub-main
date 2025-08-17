@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowRight, BrainCircuit, BookOpenCheck, LogOut, Settings, History, Facebook, Twitter, Instagram, MessageCircle, PenTool, BotMessageSquare, MessageSquare, GalleryHorizontal } from 'lucide-react';
+import { ArrowRight, BrainCircuit, BookOpenCheck, LogOut, Settings, History, Facebook, Twitter, Instagram, MessageCircle, PenTool, BotMessageSquare, MessageSquare, GalleryHorizontal, Check } from 'lucide-react';
 import GethubLogo from '@/components/gethub-logo';
 import { examCategories } from '@/lib/exam-categories';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
@@ -191,6 +191,45 @@ function HomePageContent() {
                         </CardHeader>
                         <CardContent>
                            <CardDescription>Improve your written and spoken English with our AI coach, providing feedback on grammar, clarity, and tone.</CardDescription>
+                        </CardContent>
+                    </Card>
+                </div>
+            </section>
+            
+            <section id="future-updates" className="py-20 px-4 border-b border-white/10 bg-secondary/30">
+                <div className="text-center mb-12">
+                    <h2 className="text-3xl font-bold tracking-tight">The Future of GETHUB</h2>
+                    <p className="text-muted-foreground mt-2 max-w-3xl mx-auto">Get ready for an even more powerful learning experience. Our upcoming membership plan will unlock exclusive, next-generation AI features.</p>
+                </div>
+                <div className="max-w-4xl mx-auto">
+                    <Card className="bg-background/50 border-primary/30 p-8">
+                        <CardHeader className="p-0 text-center">
+                            <CardTitle className="text-2xl text-primary">GETHUB Premium Membership</CardTitle>
+                            <CardDescription className="mt-2">Unlock your full potential with these upcoming benefits:</CardDescription>
+                        </CardHeader>
+                        <CardContent className="p-0 mt-8">
+                            <ul className="space-y-4 text-lg">
+                                <li className="flex items-start gap-4">
+                                    <Check className="w-6 h-6 text-primary mt-1 flex-shrink-0"/>
+                                    <span><span className="font-semibold text-foreground">AI-Powered Full Learning:</span> Dive deep into subjects with unlimited practice attempts and adaptive learning paths.</span>
+                                </li>
+                                <li className="flex items-start gap-4">
+                                    <Check className="w-6 h-6 text-primary mt-1 flex-shrink-0"/>
+                                    <span><span className="font-semibold text-foreground">AI-Generated Notes:</span> Instantly download comprehensive study notes for any topic, tailored to your exam.</span>
+                                </li>
+                                <li className="flex items-start gap-4">
+                                    <Check className="w-6 h-6 text-primary mt-1 flex-shrink-0"/>
+                                    <span><span className="font-semibold text-foreground">Personalized Tutor Guidance:</span> Get expert help and mentorship from our AI tutors and human experts.</span>
+                                </li>
+                                <li className="flex items-start gap-4">
+                                    <Check className="w-6 h-6 text-primary mt-1 flex-shrink-0"/>
+                                    <span><span className="font-semibold text-foreground">Flexible Online Classes:</span> Attend live and recorded classes that fit your schedule and learning pace.</span>
+                                </li>
+                                 <li className="flex items-start gap-4">
+                                    <Check className="w-6 h-6 text-primary mt-1 flex-shrink-0"/>
+                                    <span><span className="font-semibold text-foreground">And Many More AI Features:</span> Access a growing suite of cutting-edge tools designed for your success.</span>
+                                </li>
+                            </ul>
                         </CardContent>
                     </Card>
                 </div>
