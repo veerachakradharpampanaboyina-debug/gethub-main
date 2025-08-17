@@ -186,6 +186,14 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
+              <SidebarMenuItem>
+                <Link href="/gallery">
+                  <SidebarMenuButton tooltip="Gallery">
+                    <GalleryHorizontal />
+                    <span>Gallery</span>
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroup>
           <SidebarGroup>
