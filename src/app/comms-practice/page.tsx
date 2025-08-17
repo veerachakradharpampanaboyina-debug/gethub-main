@@ -34,9 +34,8 @@ import { markdownToHtml } from '@/lib/utils';
 
 type Message = {
   id: string;
-  role: 'user' | 'assistant' | 'audio';
+  role: 'user' | 'assistant';
   content: string;
-  audioDataUri?: string;
   isGenerating?: boolean;
 };
 
@@ -52,6 +51,8 @@ function CommunicationPracticePage() {
   const [userInput, setUserInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [audioPlayer, setAudioPlayer] = useState<HTMLAudioElement | null>(null);
+
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
 
@@ -69,7 +70,7 @@ function CommunicationPracticePage() {
             viewport.scrollTop = viewport.scrollHeight;
         }
     }
-  }, [messages]);
+  }, [messages, isGenerating]);
 
   useEffect(() => {
     if (!SpeechRecognition) {
@@ -81,16 +82,13 @@ function CommunicationPracticePage() {
     recognition.lang = 'en-US';
 
     recognition.onresult = (event) => {
-      let interimTranscript = '';
       let finalTranscript = '';
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
           finalTranscript += event.results[i][0].transcript;
-        } else {
-          interimTranscript += event.results[i][0].transcript;
         }
       }
-      setUserInput(userInput + finalTranscript + interimTranscript);
+      setUserInput(prev => prev + finalTranscript);
     };
 
     recognition.onend = () => {
@@ -104,72 +102,60 @@ function CommunicationPracticePage() {
     
     recognitionRef.current = recognition;
 
-  }, [toast, userInput]);
-
+  }, [toast]);
 
   const handleSendMessage = async () => {
     if (!userInput.trim()) return;
 
     const userMessage: Message = { id: `user-${Date.now()}`, role: 'user', content: userInput };
-    const assistantMessagePlaceholder: Message = { id: `assistant-${Date.now()}`, role: 'assistant', content: '', isGenerating: true };
-
-    setMessages(prev => [...prev, userMessage, assistantMessagePlaceholder]);
+    setMessages(prev => [...prev, userMessage]);
     setUserInput('');
     setIsGenerating(true);
 
     try {
-      const feedbackResult = await generateCommunicationFeedback({ text: userInput });
-      
+      // 1. Get text feedback from the AI
+      const feedbackResult = await generateCommunicationFeedback({ text: userMessage.content });
       const formattedContent = `**Feedback:**\n${feedbackResult.feedback}\n\n**Corrected Text:**\n${feedbackResult.correctedText}\n\n**Suggestions:**\n${feedbackResult.suggestions.map(s => `* ${s}`).join('\n')}`;
 
-      const assistantMessage: Message = {
-        id: `assistant-${Date.now()}`,
-        role: 'assistant',
-        content: formattedContent,
+      // 2. Generate speech from the feedback
+      const ttsResult = await textToSpeech({ text: feedbackResult.correctedText });
+
+      // 3. Play the audio. The text will be revealed when it ends.
+      const audio = new Audio(ttsResult.audioDataUri);
+      setAudioPlayer(audio);
+      audio.play();
+      
+      audio.onended = () => {
+        const assistantMessage: Message = {
+          id: `assistant-${Date.now()}`,
+          role: 'assistant',
+          content: formattedContent,
+        };
+        setMessages(prev => [...prev, assistantMessage]);
+        setIsGenerating(false);
+        setAudioPlayer(null);
       };
       
-      setMessages(prev => prev.map(m => m.id === assistantMessagePlaceholder.id ? assistantMessage : m));
+      audio.onerror = () => {
+        toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive"});
+        // If audio fails, show the text anyway.
+         const assistantMessage: Message = {
+          id: `assistant-${Date.now()}`,
+          role: 'assistant',
+          content: formattedContent,
+        };
+        setMessages(prev => [...prev, assistantMessage]);
+        setIsGenerating(false);
+        setAudioPlayer(null);
+      }
 
     } catch (err) {
       console.error("Failed to get feedback:", err);
       toast({ title: "Error", description: "Failed to get feedback from the AI.", variant: "destructive" });
-      setMessages(prev => prev.filter(m => m.id !== assistantMessagePlaceholder.id));
-    } finally {
       setIsGenerating(false);
     }
   };
 
-  const handleTextToSpeech = async (text: string, messageId: string) => {
-    // Prevent creating duplicate audio messages
-    const existingAudio = messages.find(m => m.role === 'audio' && m.content.includes(messageId));
-    if(existingAudio) return;
-
-    const audioMessagePlaceholder: Message = { id: `audio-${messageId}`, role: 'audio', content: messageId, isGenerating: true };
-    setMessages(prev => {
-        const index = prev.findIndex(m => m.id === messageId);
-        const newMessages = [...prev];
-        // Insert audio message placeholder after the assistant message
-        if (index !== -1) {
-          newMessages.splice(index + 1, 0, audioMessagePlaceholder);
-        }
-        return newMessages;
-    });
-
-    try {
-      const ttsResult = await textToSpeech({ text });
-      const audioMessage: Message = {
-        id: audioMessagePlaceholder.id,
-        role: 'audio',
-        content: `Audio for: "${text.substring(0, 30)}..."`,
-        audioDataUri: ttsResult.audioDataUri
-      };
-      setMessages(prev => prev.map(m => m.id === audioMessagePlaceholder.id ? audioMessage : m));
-    } catch(err) {
-      console.error("Failed to generate audio:", err);
-      toast({ title: "Error", description: "Failed to generate audio.", variant: "destructive" });
-      setMessages(prev => prev.filter(m => m.id !== audioMessagePlaceholder.id));
-    }
-  }
 
   const handleToggleRecording = () => {
      if (!SpeechRecognition) {
@@ -178,10 +164,11 @@ function CommunicationPracticePage() {
     }
     if (isRecording) {
       recognitionRef.current.stop();
+      setIsRecording(false);
     } else {
       recognitionRef.current.start();
+      setIsRecording(true);
     }
-    setIsRecording(!isRecording);
   };
 
   const handleCopyText = (text: string) => {
@@ -306,7 +293,7 @@ function CommunicationPracticePage() {
         <main className="flex flex-col h-[calc(100vh-61px)]">
           <ScrollArea className="flex-1 p-4 md:p-6 lg:p-8" ref={scrollAreaRef}>
             <div className="space-y-6">
-                {messages.length === 0 && (
+                {messages.length === 0 && !isGenerating && (
                     <Card className="max-w-2xl mx-auto border-dashed">
                         <CardHeader className="text-center items-center">
                             <Avatar className="w-16 h-16 mb-4">
@@ -320,28 +307,16 @@ function CommunicationPracticePage() {
                 )}
                 {messages.map((message) => (
                     <div key={message.id} className={`flex items-start gap-4 ${message.role === 'user' ? 'justify-end' : ''}`}>
-                         {(message.role === 'assistant' || (message.role === 'audio' && message.isGenerating)) && (
+                         {message.role === 'assistant' && (
                             <Avatar className="w-8 h-8">
                                 <AvatarImage src="https://i.ibb.co/xqNC3WZC/logo-jpg.jpg" alt="AI Assistant" />
                                 <AvatarFallback>AI</AvatarFallback>
                             </Avatar>
                         )}
-                        <div className={`max-w-xl rounded-lg p-4 ${message.role === 'user' ? 'bg-primary text-primary-foreground' : (message.role === 'audio' ? 'bg-transparent p-0' : 'bg-secondary')}`}>
-                           {message.isGenerating ? (
-                             <div className="flex items-center gap-2">
-                                <LoaderCircle className="w-4 h-4 animate-spin" />
-                                <span>Generating...</span>
-                              </div>
-                           ) : message.role === 'audio' && message.audioDataUri ? (
-                                <audio controls autoPlay src={message.audioDataUri} className="h-10">Your browser does not support the audio element.</audio>
-                           ) : message.role !== 'audio' ? (
+                        <div className={`max-w-xl rounded-lg p-4 ${message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-secondary'}`}>
                              <div className="prose prose-sm prose-invert max-w-none text-current" dangerouslySetInnerHTML={{ __html: markdownToHtml(message.content) }} />
-                           ) : null }
-                           {message.role === 'assistant' && !message.isGenerating && (
+                           {message.role === 'assistant' && (
                             <div className="flex gap-2 mt-3 -mb-2">
-                                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleTextToSpeech(message.content, message.id)}>
-                                    <Volume2 className="w-4 h-4"/>
-                                </Button>
                                 <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleCopyText(message.content)}>
                                     <Copy className="w-4 h-4"/>
                                 </Button>
@@ -356,6 +331,20 @@ function CommunicationPracticePage() {
                         )}
                     </div>
                 ))}
+                {isGenerating && (
+                     <div className="flex items-start gap-4">
+                        <Avatar className="w-8 h-8">
+                            <AvatarImage src="https://i.ibb.co/xqNC3WZC/logo-jpg.jpg" alt="AI Assistant" />
+                            <AvatarFallback>AI</AvatarFallback>
+                        </Avatar>
+                        <div className="max-w-xl rounded-lg p-4 bg-secondary">
+                             <div className="flex items-center gap-2">
+                                <LoaderCircle className="w-4 h-4 animate-spin" />
+                                <span>AI is thinking...</span>
+                              </div>
+                        </div>
+                    </div>
+                )}
             </div>
           </ScrollArea>
           <div className="p-4 border-t bg-background">
