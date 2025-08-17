@@ -87,7 +87,11 @@ function CommunicationPracticePage() {
       const formattedContent = `**Feedback:**\n${feedbackResult.feedback}\n\n**Corrected Text:**\n${feedbackResult.correctedText}\n\n**Suggestions:**\n${feedbackResult.suggestions.map(s => `* ${s}`).join('\n')}`;
 
       // 2. Generate speech from the AI's feedback
-      const ttsResult = await textToSpeech({ text: feedbackResult.feedback });
+      const textForSpeech = feedbackResult.feedback.trim() !== '' 
+        ? feedbackResult.feedback 
+        : "I couldn't find anything to correct. Great job!";
+
+      const ttsResult = await textToSpeech({ text: textForSpeech });
 
       // 3. Play the audio. The text will be revealed when it ends.
       const audio = new Audio(ttsResult.audioDataUri);
@@ -120,8 +124,23 @@ function CommunicationPracticePage() {
 
     } catch (err) {
       console.error("Failed to get feedback:", err);
-      toast({ title: "Error", description: "Failed to get feedback from the AI.", variant: "destructive" });
-      setIsGenerating(false);
+      // Let's create a more helpful, conversational error message.
+      const errorMessage = "I'm having a little trouble connecting right now. Let's try that again in a moment.";
+      const ttsResult = await textToSpeech({ text: errorMessage });
+      const audio = new Audio(ttsResult.audioDataUri);
+      setAudioPlayer(audio);
+      audio.play();
+      
+      audio.onended = () => {
+        const assistantMessage: Message = {
+          id: `assistant-${Date.now()}`,
+          role: 'assistant',
+          content: errorMessage,
+        };
+        setMessages(prev => [...prev, assistantMessage]);
+        setIsGenerating(false);
+        setAudioPlayer(null);
+      };
     }
   };
   
@@ -416,5 +435,3 @@ export default function CommunicationPracticePageWrapperWithAuth() {
     </AuthProvider>
   );
 }
-
-    
