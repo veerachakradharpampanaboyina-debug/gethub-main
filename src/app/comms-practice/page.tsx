@@ -56,6 +56,7 @@ function CommunicationPracticePage() {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
   const speechTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const recordingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const finalTranscriptRef = useRef('');
 
 
@@ -85,6 +86,28 @@ function CommunicationPracticePage() {
     setIsGenerating(true);
 
     try {
+      if (!text.trim()) {
+        const errorMessage = "I can't provide feedback on an empty message. Please say something, and I'll be happy to help you practice!";
+        const ttsResultOnError = await textToSpeech({ text: errorMessage });
+        const audioError = new Audio(ttsResultOnError.audioDataUri);
+        setAudioPlayer(audioError);
+        audioError.play();
+
+        audioError.onended = () => {
+          const assistantErrorMessage: Message = {
+              id: `assistant-error-${Date.now()}`,
+              role: 'assistant',
+              content: errorMessage,
+          };
+          setMessages(prev => [...prev, assistantErrorMessage]);
+          setIsGenerating(false);
+          setAudioPlayer(null);
+           if (recognitionRef.current) {
+            recognitionRef.current.start();
+          }
+        };
+        return;
+      }
       // 1. Get conversational response from the AI
       const feedbackResult = await generateCommunicationFeedback({ text: userMessage.content });
       const aiResponseText = feedbackResult.response;
@@ -175,6 +198,16 @@ function CommunicationPracticePage() {
     recognition.onstart = () => {
         setIsRecording(true);
         finalTranscriptRef.current = '';
+        
+        // Set a 5-minute timeout for the entire recording session.
+        if (recordingTimeoutRef.current) {
+          clearTimeout(recordingTimeoutRef.current);
+        }
+        recordingTimeoutRef.current = setTimeout(() => {
+          if (isRecording) {
+            recognition.stop();
+          }
+        }, 5 * 60 * 1000); // 5 minutes
     };
 
     recognition.onresult = (event) => {
@@ -204,6 +237,9 @@ function CommunicationPracticePage() {
       if (speechTimeoutRef.current) {
         clearTimeout(speechTimeoutRef.current);
       }
+      if (recordingTimeoutRef.current) {
+        clearTimeout(recordingTimeoutRef.current);
+      }
       if (finalTranscriptRef.current.trim()) {
         handleSendMessage(finalTranscriptRef.current.trim());
       } else if(userInput.trim() && !isGenerating) {
@@ -224,10 +260,13 @@ function CommunicationPracticePage() {
       if (speechTimeoutRef.current) {
         clearTimeout(speechTimeoutRef.current);
       }
+       if (recordingTimeoutRef.current) {
+        clearTimeout(recordingTimeoutRef.current);
+      }
       recognition.stop();
     }
 
-  }, [toast, isGenerating, userInput]);
+  }, [toast, isGenerating, userInput, isRecording]);
 
 
   const handleToggleRecording = () => {
@@ -477,3 +516,5 @@ export default function CommunicationPracticePageWrapperWithAuth() {
     </AuthProvider>
   );
 }
+
+    
