@@ -231,19 +231,6 @@ function CommunicationPracticePage() {
     toast({ title: "Copied!", description: "The text has been copied to your clipboard." });
   };
   
-   const handleReplayAudio = async (text: string) => {
-        if (isGenerating) return;
-        setIsGenerating(true);
-        try {
-            const ttsResult = await textToSpeech({ text, voice });
-            setAudioToPlay(ttsResult.audioDataUri);
-        } catch (err) {
-            console.error("Failed to get TTS for replay:", err);
-            toast({ title: "Audio Error", description: "Could not replay the audio.", variant: "destructive" });
-            setIsGenerating(false);
-        }
-    };
-  
   if (loading || !user) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -402,9 +389,6 @@ function CommunicationPracticePage() {
                                 <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleCopyText(message.content)}>
                                     <Copy className="w-4 h-4"/>
                                 </Button>
-                                 <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleReplayAudio(message.content)}>
-                                    <Volume2 className="w-4 h-4"/>
-                                </Button>
                             </div>
                            )}
                         </div>
@@ -476,5 +460,3 @@ export default function CommunicationPracticePageWrapperWithAuth() {
     </AuthProvider>
   );
 }
-
-    
