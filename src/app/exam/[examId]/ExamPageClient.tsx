@@ -108,9 +108,8 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
     html2canvas(notesElement, {
         scale: 2,
         useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false, // reduce console noise
-        allowTaint: true,
+        backgroundColor: '#ffffff', // Set a white background
+        logging: false,
     }).then(canvas => {
         try {
             const imgData = canvas.toDataURL('image/png');
