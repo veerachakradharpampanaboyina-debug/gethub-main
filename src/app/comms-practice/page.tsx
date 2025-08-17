@@ -72,42 +72,11 @@ function CommunicationPracticePage() {
     }
   }, [messages, isGenerating]);
 
-  useEffect(() => {
-    if (!SpeechRecognition) {
-      return;
-    }
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
 
-    recognition.onresult = (event) => {
-      let finalTranscript = '';
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript;
-        }
-      }
-      setUserInput(prev => prev + finalTranscript);
-    };
+  const handleSendMessage = async (text: string) => {
+    if (!text.trim() || isGenerating) return;
 
-    recognition.onend = () => {
-      setIsRecording(false);
-    };
-
-    recognition.onerror = (event) => {
-      toast({ title: "Speech Recognition Error", description: event.error, variant: "destructive"});
-      setIsRecording(false);
-    };
-    
-    recognitionRef.current = recognition;
-
-  }, [toast]);
-
-  const handleSendMessage = async () => {
-    if (!userInput.trim()) return;
-
-    const userMessage: Message = { id: `user-${Date.now()}`, role: 'user', content: userInput };
+    const userMessage: Message = { id: `user-${Date.now()}`, role: 'user', content: text };
     setMessages(prev => [...prev, userMessage]);
     setUserInput('');
     setIsGenerating(true);
@@ -155,6 +124,50 @@ function CommunicationPracticePage() {
       setIsGenerating(false);
     }
   };
+  
+   useEffect(() => {
+    if (!SpeechRecognition) {
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    let finalTranscript = '';
+    
+    recognition.onstart = () => {
+        setIsRecording(true);
+    };
+
+    recognition.onresult = (event) => {
+      let interimTranscript = '';
+      finalTranscript = ''; // Reset final transcript on new result
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript;
+        } else {
+          interimTranscript += event.results[i][0].transcript;
+        }
+      }
+      setUserInput(finalTranscript + interimTranscript);
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+      if (finalTranscript.trim()) {
+        handleSendMessage(finalTranscript.trim());
+      }
+    };
+
+    recognition.onerror = (event) => {
+      toast({ title: "Speech Recognition Error", description: event.error, variant: "destructive"});
+      setIsRecording(false);
+    };
+    
+    recognitionRef.current = recognition;
+
+  }, [toast, isGenerating]);
 
 
   const handleToggleRecording = () => {
@@ -164,10 +177,8 @@ function CommunicationPracticePage() {
     }
     if (isRecording) {
       recognitionRef.current.stop();
-      setIsRecording(false);
     } else {
       recognitionRef.current.start();
-      setIsRecording(true);
     }
   };
 
@@ -352,9 +363,9 @@ function CommunicationPracticePage() {
                  <Textarea 
                     value={userInput}
                     onChange={(e) => setUserInput(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
-                    placeholder={isRecording ? "Listening..." : "Type or speak your message here..."}
-                    className="pr-28 min-h-[52px]" 
+                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(userInput); } }}
+                    placeholder={isRecording ? "Listening..." : "Type or click the mic to speak..."}
+                    className="pr-16 min-h-[52px]" 
                     rows={1}
                     disabled={isGenerating}
                   />
@@ -367,17 +378,9 @@ function CommunicationPracticePage() {
                           onClick={handleToggleRecording}
                           disabled={isGenerating}
                       >
-                          <Mic className="w-4 h-4" />
+                          <Mic className="w-5 h-5" />
                       </Button>
                     )}
-                    <Button 
-                        type="submit" 
-                        size="icon" 
-                        onClick={handleSendMessage}
-                        disabled={isGenerating || !userInput.trim()}
-                    >
-                        {isGenerating ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                    </Button>
                   </div>
              </div>
           </div>
@@ -413,3 +416,5 @@ export default function CommunicationPracticePageWrapperWithAuth() {
     </AuthProvider>
   );
 }
+
+    
