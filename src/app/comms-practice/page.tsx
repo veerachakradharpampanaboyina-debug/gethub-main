@@ -110,13 +110,15 @@ function CommunicationPracticePage() {
     try {
         const feedbackResult = await generateCommunicationFeedback({ text });
         const aiResponseText = feedbackResult.response;
-
-        setMessages(prev => prev.map(m => m.isGenerating ? { ...m, content: aiResponseText, isGenerating: false } : m));
-      
+        
         if (aiResponseText.trim()) {
             const ttsResult = await textToSpeech({ text: aiResponseText, voice: voice });
+            // Update the message content and set the audio to play at the same time
+            setMessages(prev => prev.map(m => m.isGenerating ? { ...m, content: aiResponseText, isGenerating: false } : m));
             setAudioToPlay(ttsResult.audioDataUri);
         } else {
+            // If there's no response text, just stop the generating state
+            setMessages(prev => prev.filter(m => !m.isGenerating));
             setIsGenerating(false);
         }
 
@@ -460,3 +462,5 @@ export default function CommunicationPracticePageWrapperWithAuth() {
     </AuthProvider>
   );
 }
+
+    
