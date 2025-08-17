@@ -15,7 +15,7 @@ import {
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { BrainCircuit, LogOut, Settings, Home as HomeIcon, History, Shield, Library, MessageCircle, CalendarClock } from 'lucide-react';
+import { BrainCircuit, LogOut, Settings, Home as HomeIcon, History, Shield, Library, MessageCircle, CalendarClock, GalleryHorizontal } from 'lucide-react';
 import type { Exam } from '@/lib/types';
 import { ExamView } from '@/components/exam-view';
 import GethubLogo from '@/components/gethub-logo';
@@ -111,6 +111,14 @@ function ScheduledExamPage({ params }: { params: { examId: string } }) {
                   <SidebarMenuButton tooltip="Exam History">
                     <History />
                     <span>History</span>
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+               <SidebarMenuItem>
+                <Link href="/gallery">
+                  <SidebarMenuButton tooltip="Gallery">
+                    <GalleryHorizontal />
+                    <span>Gallery</span>
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
