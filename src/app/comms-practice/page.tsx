@@ -80,14 +80,20 @@ function CommunicationPracticePage() {
       recognitionRef.current.stop();
     }
     if (audioRef.current) {
+      // Stop and reset any currently playing audio to prevent overlap errors
+      if (!audioRef.current.paused) {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+      }
       audioRef.current.src = audioDataUri;
       audioRef.current.play().catch(e => {
+        // AbortError is expected if we interrupt playback, so we can ignore it.
         if (e.name !== 'AbortError') {
             console.error("Audio playback failed:", e);
             toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
+             // Ensure speaking state is reset on other errors
+            setIsSpeaking(false);
         }
-        // Ensure speaking state is reset on error
-        setIsSpeaking(false);
       });
     }
   }, [toast, isRecording]);
@@ -100,7 +106,7 @@ function CommunicationPracticePage() {
   }, [audioToPlay, playAudio]);
 
   const handleSendMessage = useCallback(async (text: string) => {
-    if (!text.trim() || isGenerating) return;
+    if (!text.trim() || isGenerating || isSpeaking) return;
 
     setUserInput('');
     setIsGenerating(true);
@@ -117,6 +123,7 @@ function CommunicationPracticePage() {
         if (aiResponseText.trim()) {
             const ttsResult = await textToSpeech({ text: aiResponseText, voice });
             
+            // This is the synchronized update
             setMessages(prev => prev.map(m => m.id === thinkingMessage.id ? { ...m, content: aiResponseText, isGenerating: false } : m));
             setAudioToPlay(ttsResult.audioDataUri);
 
@@ -131,7 +138,7 @@ function CommunicationPracticePage() {
     } finally {
         setIsGenerating(false);
     }
-  }, [isGenerating, voice]);
+  }, [isGenerating, isSpeaking, voice]);
   
    useEffect(() => {
     if (!SpeechRecognition) return;
@@ -158,9 +165,9 @@ function CommunicationPracticePage() {
             }
             const transcriptToSend = finalTranscript.trim();
             if (transcriptToSend && !transcriptSent) {
-                transcriptSent = true;
+                transcriptSent = true; // Mark as sent to prevent duplicates
                 handleSendMessage(transcriptToSend);
-                finalTranscript = ''; 
+                finalTranscript = ''; // Clear after sending
             }
         };
 
@@ -184,7 +191,7 @@ function CommunicationPracticePage() {
 
         recognition.onend = () => {
           setIsRecording(false);
-          sendFinalTranscript();
+          sendFinalTranscript(); // Send any remaining transcript when recording is stopped
         };
 
         recognition.onerror = (event) => {
@@ -212,10 +219,12 @@ function CommunicationPracticePage() {
 
         audioRef.current.onerror = (e) => {
             const target = e.target as HTMLAudioElement;
+            // Error code 20 is a DOMException for abort, which is expected if we interrupt playback.
             if (target.error && target.error.code !== 20) { 
                 console.error("Audio element error:", e);
                 toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
             }
+            // Always ensure speaking state is reset, even on error.
             setIsSpeaking(false);
         };
       }
