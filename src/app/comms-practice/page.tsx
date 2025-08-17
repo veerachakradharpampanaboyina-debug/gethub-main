@@ -105,14 +105,15 @@ function CommunicationPracticePage() {
     }
   }, [audioToPlay, playAudio]);
 
-  const handleSendMessage = useCallback(async (text: string) => {
+ const handleSendMessage = useCallback(async (text: string) => {
     if (!text.trim() || isGenerating || isSpeaking) return;
 
     setUserInput('');
     setIsGenerating(true);
     
     const userMessage: Message = { id: `user-${Date.now()}`, role: 'user', content: text };
-    const thinkingMessage: Message = { id: `assistant-thinking-${Date.now()}`, role: 'assistant', content: '', isGenerating: true };
+    const assistantMessageId = `assistant-${Date.now()}`;
+    const thinkingMessage: Message = { id: assistantMessageId, role: 'assistant', content: '', isGenerating: true };
 
     setMessages(prev => [...prev, userMessage, thinkingMessage]);
 
@@ -123,18 +124,17 @@ function CommunicationPracticePage() {
         if (aiResponseText.trim()) {
             const ttsResult = await textToSpeech({ text: aiResponseText, voice });
             
-            // This is the synchronized update
-            setMessages(prev => prev.map(m => m.id === thinkingMessage.id ? { ...m, content: aiResponseText, isGenerating: false } : m));
+            setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: aiResponseText, isGenerating: false } : m));
             setAudioToPlay(ttsResult.audioDataUri);
 
         } else {
-             setMessages(prev => prev.filter(m => m.id !== thinkingMessage.id));
+             setMessages(prev => prev.filter(m => m.id !== assistantMessageId));
         }
 
     } catch (err) {
         console.error("Failed to get feedback:", err);
         const errorMessage = "I'm having a little trouble connecting right now. Let's try that again in a moment.";
-        setMessages(prev => prev.map(m => m.id === thinkingMessage.id ? { ...m, content: errorMessage, isGenerating: false } : m));
+        setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: errorMessage, isGenerating: false } : m));
     } finally {
         setIsGenerating(false);
     }
