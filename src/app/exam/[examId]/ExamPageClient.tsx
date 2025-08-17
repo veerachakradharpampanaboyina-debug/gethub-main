@@ -100,37 +100,48 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
     }
   };
   
-  const handleDownloadPdf = async () => {
+  const handleDownloadPdf = () => {
     const content = notesContentRef.current;
     if (!content) {
-        toast({
-            title: "Download Error",
-            description: "Could not find the content to download.",
-            variant: "destructive"
-        });
-        return;
+      toast({
+        title: 'Download Error',
+        description: 'Could not find the content to download.',
+        variant: 'destructive',
+      });
+      return;
     }
 
-    try {
-        const pdf = new jsPDF('p', 'pt', 'a4');
-        await pdf.html(content, {
-            autoPaging: 'text',
-            margin: [20, 20, 20, 20],
-            width: 555, // A4 width in points (595) minus margins
-            windowWidth: content.scrollWidth,
-            callback: function (doc) {
-                doc.save(`${currentTopic.replace(/\s+/g, '_').toLowerCase()}_notes.pdf`);
-            }
-        });
-    } catch (error) {
-        console.error("Failed to generate PDF:", error);
-        toast({
-            title: "PDF Generation Failed",
-            description: "There was an issue creating the PDF. Please try again.",
-            variant: "destructive"
-        });
-    }
-};
+    toast({
+      title: 'Generating PDF...',
+      description: 'This may take a moment. Please wait.',
+    });
+
+    const pdf = new jsPDF('p', 'pt', 'a4');
+    
+    pdf.html(content, {
+      callback: function (doc) {
+        try {
+          doc.save(`${currentTopic.replace(/\s+/g, '_').toLowerCase()}_notes.pdf`);
+        } catch (error) {
+            console.error("Failed to save PDF:", error);
+            toast({
+                title: "PDF Generation Failed",
+                description: "There was an issue saving the PDF. Please try again.",
+                variant: "destructive"
+            });
+        }
+      },
+      x: 10,
+      y: 10,
+      autoPaging: 'text',
+      html2canvas: {
+          scale: 0.75, // Adjust scale to fit content better
+          useCORS: true,
+          logging: false,
+      },
+       margin: [20, 20, 20, 20],
+    });
+  };
 
   if (loading || !user || hasWeeklyExam === null) {
     return (
@@ -436,3 +447,5 @@ export default function ExamPageClient({ exam }: { exam: ExamDetails }) {
     </AuthProvider>
   );
 }
+
+    
