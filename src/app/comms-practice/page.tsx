@@ -16,7 +16,7 @@ import {
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MessageCircle, LogOut, Settings, Home as HomeIcon, History, Shield, BrainCircuit, Send, Sparkles, Volume2, Copy } from 'lucide-react';
+import { MessageCircle, LogOut, Settings, Home as HomeIcon, History, Shield, BrainCircuit, Send, Sparkles, Volume2, Copy, Mic } from 'lucide-react';
 import GethubLogo from '@/components/gethub-logo';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
@@ -38,6 +38,10 @@ type Message = {
   isGenerating?: boolean;
 };
 
+// Check for SpeechRecognition API
+const SpeechRecognition =
+  (typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition));
+
 function CommunicationPracticePage() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
@@ -45,7 +49,9 @@ function CommunicationPracticePage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [userInput, setUserInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -62,6 +68,41 @@ function CommunicationPracticePage() {
         }
     }
   }, [messages]);
+
+  useEffect(() => {
+    if (!SpeechRecognition) {
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onresult = (event) => {
+      let interimTranscript = '';
+      let finalTranscript = '';
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript;
+        } else {
+          interimTranscript += event.results[i][0].transcript;
+        }
+      }
+      setUserInput(userInput + finalTranscript + interimTranscript);
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+    };
+
+    recognition.onerror = (event) => {
+      toast({ title: "Speech Recognition Error", description: event.error, variant: "destructive"});
+      setIsRecording(false);
+    };
+    
+    recognitionRef.current = recognition;
+
+  }, [toast, userInput]);
 
 
   const handleSendMessage = async () => {
@@ -117,6 +158,19 @@ function CommunicationPracticePage() {
       setMessages(prev => prev.filter(m => m.id !== audioMessagePlaceholder.id));
     }
   }
+
+  const handleToggleRecording = () => {
+     if (!SpeechRecognition) {
+      toast({ title: "Browser Not Supported", description: "Your browser does not support speech recognition.", variant: "destructive"});
+      return;
+    }
+    if (isRecording) {
+      recognitionRef.current.stop();
+    } else {
+      recognitionRef.current.start();
+    }
+    setIsRecording(!isRecording);
+  };
 
   const handleCopyText = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -244,7 +298,7 @@ function CommunicationPracticePage() {
                     <Card className="max-w-2xl mx-auto border-dashed">
                         <CardHeader className="text-center">
                             <CardTitle>Start a Conversation</CardTitle>
-                            <CardDescription>Type a sentence or two below and click send to get AI feedback on your English writing.</CardDescription>
+                            <CardDescription>Type a sentence or use the microphone to practice your English. Click send to get AI feedback.</CardDescription>
                         </CardHeader>
                     </Card>
                 )}
@@ -294,20 +348,32 @@ function CommunicationPracticePage() {
                     value={userInput}
                     onChange={(e) => setUserInput(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
-                    placeholder="Type your message here..." 
-                    className="pr-20 min-h-[52px]" 
+                    placeholder={isRecording ? "Listening..." : "Type or speak your message here..."}
+                    className="pr-28 min-h-[52px]" 
                     rows={1}
                     disabled={isGenerating}
                   />
-                 <Button 
-                    type="submit" 
-                    size="icon" 
-                    className="absolute right-3 top-1/2 -translate-y-1/2"
-                    onClick={handleSendMessage}
-                    disabled={isGenerating || !userInput.trim()}
-                 >
-                    {isGenerating ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                 </Button>
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1">
+                    {SpeechRecognition && (
+                      <Button 
+                          type="button" 
+                          size="icon" 
+                          variant={isRecording ? "destructive" : "ghost"}
+                          onClick={handleToggleRecording}
+                          disabled={isGenerating}
+                      >
+                          <Mic className="w-4 h-4" />
+                      </Button>
+                    )}
+                    <Button 
+                        type="submit" 
+                        size="icon" 
+                        onClick={handleSendMessage}
+                        disabled={isGenerating || !userInput.trim()}
+                    >
+                        {isGenerating ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    </Button>
+                  </div>
              </div>
           </div>
         </main>
@@ -342,3 +408,5 @@ export default function CommunicationPracticePageWrapperWithAuth() {
     </AuthProvider>
   );
 }
+
+    

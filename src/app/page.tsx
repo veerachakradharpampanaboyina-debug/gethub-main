@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowRight, BrainCircuit, BookOpenCheck, LogOut, Settings, Library, Briefcase, History, Facebook, Twitter, Instagram, MessageCircle, MessageSquare } from 'lucide-react';
+import { ArrowRight, BrainCircuit, BookOpenCheck, LogOut, Settings, Library, Briefcase, History, Facebook, Twitter, Instagram, MessageCircle, MessageSquare, Mic, PenTool, BotMessageSquare } from 'lucide-react';
 import GethubLogo from '@/components/gethub-logo';
 import { examCategories } from '@/lib/exam-categories';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
@@ -118,11 +118,11 @@ function HomePageContent() {
                         data-ai-hint="student studying"
                       />
                        <Image 
-                        src="https://placehold.co/400x600.png"
+                        src="https://placehold.co/400x400.png"
                         alt="Success story 2"
                         width={400}
-                        height={600}
-                        className="rounded-lg shadow-lg col-span-1 row-span-2 object-cover"
+                        height={400}
+                        className="rounded-lg shadow-lg col-span-1 row-span-1 object-cover"
                         data-ai-hint="happy graduate"
                       />
                        <Image 
@@ -130,7 +130,7 @@ function HomePageContent() {
                         alt="Success story 3"
                         width={600}
                         height={400}
-                        className="rounded-lg shadow-lg col-span-1 row-span-1 object-cover"
+                        className="rounded-lg shadow-lg col-span-2 row-span-1 object-cover"
                         data-ai-hint="group celebration"
                       />
                    </div>
@@ -146,6 +146,49 @@ function HomePageContent() {
                     </div>
                 </div>
             </section>
+
+             <section id="benefits" className="py-20 px-4 border-b border-white/10">
+                <div className="text-center mb-12">
+                    <h2 className="text-3xl font-bold tracking-tight">Why Choose GETHUB?</h2>
+                    <p className="text-muted-foreground mt-2">The ultimate toolkit for your exam success.</p>
+                </div>
+                <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <Card className="flex flex-col bg-secondary border-white/10 text-center items-center p-6">
+                        <CardHeader className="p-2">
+                           <div className="p-3 bg-primary/20 rounded-full inline-block">
+                             <BrainCircuit className="w-8 h-8 text-primary"/>
+                           </div>
+                           <CardTitle className="mt-4">AI-Powered Practice</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                           <CardDescription>Generate unlimited, unique practice exams for any topic, tailored to your exam's syllabus and difficulty level.</CardDescription>
+                        </CardContent>
+                    </Card>
+                     <Card className="flex flex-col bg-secondary border-white/10 text-center items-center p-6">
+                        <CardHeader className="p-2">
+                          <div className="p-3 bg-primary/20 rounded-full inline-block">
+                             <PenTool className="w-8 h-8 text-primary"/>
+                           </div>
+                           <CardTitle className="mt-4">AI-Generated Notes</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                           <CardDescription>Instantly create comprehensive, downloadable PDF study notes for any syllabus topic, saving you hours of research.</CardDescription>
+                        </CardContent>
+                    </Card>
+                     <Card className="flex flex-col bg-secondary border-white/10 text-center items-center p-6">
+                        <CardHeader className="p-2">
+                           <div className="p-3 bg-primary/20 rounded-full inline-block">
+                             <BotMessageSquare className="w-8 h-8 text-primary"/>
+                           </div>
+                           <CardTitle className="mt-4">Communication Coaching</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                           <CardDescription>Improve your written and spoken English with our AI coach, providing feedback on grammar, clarity, and tone.</CardDescription>
+                        </CardContent>
+                    </Card>
+                </div>
+            </section>
+
 
             <section id="exams" className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
               <div className="text-center my-12">
@@ -206,3 +249,5 @@ export default function HomePage() {
     </AuthProvider>
   );
 }
+
+    
