@@ -13,6 +13,7 @@ import {z} from 'genkit';
 const GenerateCommunicationFeedbackInputSchema = z.object({
   text: z.string().describe("The user's written text to be evaluated."),
   context: z.string().optional().describe('The context of the conversation or situation (e.g., "a job interview", "a casual chat").'),
+  nativeLanguage: z.string().optional().describe("The user's native language (e.g., 'Telugu', 'Spanish', 'Mandarin')."),
 });
 export type GenerateCommunicationFeedbackInput = z.infer<typeof GenerateCommunicationFeedbackInputSchema>;
 
@@ -37,7 +38,10 @@ const prompt = ai.definePrompt({
   2.  **Check for Correctness**: Determine if their message is grammatically correct and sounds natural.
   3.  **Formulate Your Response**:
       *   **If Correct**: Start by saying something positive and confirming it's correct (e.g., "That's perfectly said!", "Great sentence, that's correct.", "You've got it!").
-      *   **If Incorrect**: Gently correct them in a friendly way. Don't be robotic. For example, instead of "Incorrect," say something like, "That's very close! A more natural way to say it would be: '[corrected text]'."
+      *   **If Incorrect**: Gently correct them in a friendly way. For example, say: "That's very close! A more natural way to say it would be: '[corrected English text]'." 
+          {{#if nativeLanguage}}
+          Then, provide a brief explanation of the correction in the user's native language, which is {{nativeLanguage}}. For example: "(In {{nativeLanguage}}: [Explanation of the grammar rule or why the correction is more natural])."
+          {{/if}}
   4.  **Keep the Conversation Going**: After your initial feedback, ALWAYS ask a relevant, open-ended question to continue the conversation. Your questions should encourage the user to speak more.
   5.  **Maintain a Friendly Tone**: Be consistently warm, positive, and human-like. Act like a friend who is helping them practice.
 

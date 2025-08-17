@@ -16,7 +16,7 @@ import {
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MessageCircle, LogOut, Settings, Home as HomeIcon, History, Shield, BrainCircuit, Copy, Mic, LoaderCircle, GalleryHorizontal } from 'lucide-react';
+import { MessageCircle, LogOut, Settings, Home as HomeIcon, History, Shield, BrainCircuit, Copy, Mic, LoaderCircle, GalleryHorizontal, Languages } from 'lucide-react';
 import GethubLogo from '@/components/gethub-logo';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
@@ -31,6 +31,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { markdownToHtml } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 type Message = {
@@ -42,6 +43,10 @@ type Message = {
 
 const SpeechRecognition =
   (typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition));
+  
+const nativeLanguages = [
+  'Telugu', 'Hindi', 'Tamil', 'Kannada', 'Malayalam', 'Bengali', 'Marathi', 'Gujarati', 'Punjabi', 'Spanish', 'French', 'German', 'Mandarin Chinese', 'Japanese', 'Korean', 'Russian'
+];
 
 function CommunicationPracticePage() {
   const { user, loading, logout } = useAuth();
@@ -54,6 +59,7 @@ function CommunicationPracticePage() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [audioToPlay, setAudioToPlay] = useState<string | null>(null);
   const [voice, setVoice] = useState<TextToSpeechInput['voice']>('Algenib');
+  const [nativeLanguage, setNativeLanguage] = useState<string>('Telugu');
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
@@ -119,7 +125,7 @@ function CommunicationPracticePage() {
     setMessages(prev => [...prev, userMessage, thinkingMessage]);
 
     try {
-        const feedbackResult = await generateCommunicationFeedback({ text });
+        const feedbackResult = await generateCommunicationFeedback({ text, nativeLanguage });
         const aiResponseText = feedbackResult.response;
         
         if (aiResponseText.trim()) {
@@ -139,7 +145,7 @@ function CommunicationPracticePage() {
     } finally {
         setIsGenerating(false);
     }
-  }, [isGenerating, isSpeaking, voice]);
+  }, [isGenerating, isSpeaking, voice, nativeLanguage]);
   
    useEffect(() => {
     if (!SpeechRecognition) return;
@@ -390,17 +396,32 @@ function CommunicationPracticePage() {
                 AI Language Coach
             </h1>
           </div>
-          <RadioGroup value={voice} onValueChange={(v) => setVoice(v as TextToSpeechInput['voice'])} className="flex items-center gap-4" disabled={isUIActive}>
-             <Label>Voice:</Label>
-            <div className="flex items-center space-x-2">
-                <RadioGroupItem value="Algenib" id="male-voice" />
-                <Label htmlFor="male-voice">John</Label>
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <Languages className="w-5 h-5 text-muted-foreground"/>
+              <Select value={nativeLanguage} onValueChange={setNativeLanguage} disabled={isUIActive}>
+                  <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Select Language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      {nativeLanguages.map(lang => (
+                        <SelectItem key={lang} value={lang}>{lang}</SelectItem>
+                      ))}
+                  </SelectContent>
+              </Select>
             </div>
-            <div className="flex items-center space-x-2">
-                <RadioGroupItem value="Schedar" id="female-voice" />
-                <Label htmlFor="female-voice">Emma</Label>
-            </div>
-          </RadioGroup>
+            <RadioGroup value={voice} onValueChange={(v) => setVoice(v as TextToSpeechInput['voice'])} className="flex items-center gap-4" disabled={isUIActive}>
+              <Label>Voice:</Label>
+              <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Algenib" id="male-voice" />
+                  <Label htmlFor="male-voice">John</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Schedar" id="female-voice" />
+                  <Label htmlFor="female-voice">Emma</Label>
+              </div>
+            </RadioGroup>
+          </div>
         </header>
         <main className="flex flex-col h-[calc(100vh-61px)]">
           <ScrollArea className="flex-1 p-4 md:p-6 lg:p-8" ref={scrollAreaRef}>
