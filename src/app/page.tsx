@@ -114,23 +114,23 @@ function HomePageContent() {
                         alt="Success story 1"
                         width={600}
                         height={400}
-                        className="rounded-lg shadow-lg col-span-1 row-span-1 object-cover"
+                        className="rounded-lg shadow-lg col-span-2 row-span-1 object-cover w-full h-full"
                         data-ai-hint="student studying"
                       />
                        <Image 
-                        src="https://placehold.co/400x400.png"
+                        src="https://placehold.co/300x400.png"
                         alt="Success story 2"
-                        width={400}
+                        width={300}
                         height={400}
-                        className="rounded-lg shadow-lg col-span-1 row-span-1 object-cover"
+                        className="rounded-lg shadow-lg col-span-1 row-span-1 object-cover w-full h-full"
                         data-ai-hint="happy graduate"
                       />
                        <Image 
-                        src="https://placehold.co/600x400.png"
+                        src="https://placehold.co/300x400.png"
                         alt="Success story 3"
-                        width={600}
+                        width={300}
                         height={400}
-                        className="rounded-lg shadow-lg col-span-2 row-span-1 object-cover"
+                        className="rounded-lg shadow-lg col-span-1 row-span-1 object-cover w-full h-full"
                         data-ai-hint="group celebration"
                       />
                    </div>
@@ -153,7 +153,7 @@ function HomePageContent() {
                     <p className="text-muted-foreground mt-2">The ultimate toolkit for your exam success.</p>
                 </div>
                 <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <Card className="flex flex-col bg-secondary border-white/10 text-center items-center p-6">
+                    <Card className="flex flex-col bg-secondary/50 border-white/10 text-center items-center p-6">
                         <CardHeader className="p-2">
                            <div className="p-3 bg-primary/20 rounded-full inline-block">
                              <BrainCircuit className="w-8 h-8 text-primary"/>
@@ -164,7 +164,7 @@ function HomePageContent() {
                            <CardDescription>Generate unlimited, unique practice exams for any topic, tailored to your exam's syllabus and difficulty level.</CardDescription>
                         </CardContent>
                     </Card>
-                     <Card className="flex flex-col bg-secondary border-white/10 text-center items-center p-6">
+                     <Card className="flex flex-col bg-secondary/50 border-white/10 text-center items-center p-6">
                         <CardHeader className="p-2">
                           <div className="p-3 bg-primary/20 rounded-full inline-block">
                              <PenTool className="w-8 h-8 text-primary"/>
@@ -175,7 +175,7 @@ function HomePageContent() {
                            <CardDescription>Instantly create comprehensive, downloadable PDF study notes for any syllabus topic, saving you hours of research.</CardDescription>
                         </CardContent>
                     </Card>
-                     <Card className="flex flex-col bg-secondary border-white/10 text-center items-center p-6">
+                     <Card className="flex flex-col bg-secondary/50 border-white/10 text-center items-center p-6">
                         <CardHeader className="p-2">
                            <div className="p-3 bg-primary/20 rounded-full inline-block">
                              <BotMessageSquare className="w-8 h-8 text-primary"/>
@@ -202,7 +202,7 @@ function HomePageContent() {
                         <h3 className="text-2xl font-bold tracking-tight mb-6 text-primary">{category.category}</h3>
                         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                             {category.exams.map((exam) => (
-                            <Card key={exam.examId} className="flex flex-col bg-secondary border-white/10 hover:border-primary/50 transition-all duration-300 transform hover:-translate-y-1">
+                            <Card key={exam.examId} className="flex flex-col bg-secondary/50 border-white/10 hover:border-primary/50 transition-all duration-300 transform hover:-translate-y-1">
                                 <CardHeader>
                                 <CardTitle>{exam.examName}</CardTitle>
                                 <CardDescription className="mt-2">{exam.description}</CardDescription>
@@ -249,5 +249,3 @@ export default function HomePage() {
     </AuthProvider>
   );
 }
-
-    

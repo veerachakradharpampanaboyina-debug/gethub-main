@@ -29,6 +29,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { markdownToHtml } from '@/lib/utils';
+
 
 type Message = {
   id: string;
@@ -117,10 +119,13 @@ function CommunicationPracticePage() {
 
     try {
       const feedbackResult = await generateCommunicationFeedback({ text: userInput });
+      
+      const formattedContent = `**Feedback:**\n${feedbackResult.feedback}\n\n**Corrected Text:**\n${feedbackResult.correctedText}\n\n**Suggestions:**\n${feedbackResult.suggestions.map(s => `* ${s}`).join('\n')}`;
+
       const assistantMessage: Message = {
         id: `assistant-${Date.now()}`,
         role: 'assistant',
-        content: `**Feedback:**\n${feedbackResult.feedback}\n\n**Corrected Text:**\n${feedbackResult.correctedText}\n\n**Suggestions:**\n${feedbackResult.suggestions.map(s => `- ${s}`).join('\n')}`
+        content: formattedContent,
       };
       
       setMessages(prev => prev.map(m => m.id === assistantMessagePlaceholder.id ? assistantMessage : m));
@@ -287,7 +292,7 @@ function CommunicationPracticePage() {
             <SidebarTrigger className="md:hidden" />
              <h1 className="text-xl font-semibold flex items-center gap-3">
                 <MessageCircle className="w-6 h-6"/>
-                English Communication Practice
+                AI Language Coach
             </h1>
           </div>
         </header>
@@ -296,9 +301,13 @@ function CommunicationPracticePage() {
             <div className="space-y-6">
                 {messages.length === 0 && (
                     <Card className="max-w-2xl mx-auto border-dashed">
-                        <CardHeader className="text-center">
+                        <CardHeader className="text-center items-center">
+                            <Avatar className="w-16 h-16 mb-4">
+                                <AvatarImage src="https://i.ibb.co/xqNC3WZC/logo-jpg.jpg" alt="AI Assistant" />
+                                <AvatarFallback>AI</AvatarFallback>
+                            </Avatar>
                             <CardTitle>Start a Conversation</CardTitle>
-                            <CardDescription>Type a sentence or use the microphone to practice your English. Click send to get AI feedback.</CardDescription>
+                            <CardDescription>Practice your English by typing or speaking. I'll provide feedback on your grammar, clarity, and tone.</CardDescription>
                         </CardHeader>
                     </Card>
                 )}
@@ -319,7 +328,7 @@ function CommunicationPracticePage() {
                            ) : message.role === 'audio' && message.audioDataUri ? (
                                 <audio controls src={message.audioDataUri} className="h-10">Your browser does not support the audio element.</audio>
                            ) : (
-                             <div className="prose prose-sm prose-invert max-w-none text-current" dangerouslySetInnerHTML={{ __html: message.content.replace(/\n/g, '<br />') }} />
+                             <div className="prose prose-sm prose-invert max-w-none text-current" dangerouslySetInnerHTML={{ __html: markdownToHtml(message.content) }} />
                            )}
                            {message.role === 'assistant' && !message.isGenerating && (
                             <div className="flex gap-2 mt-3 -mb-2">
@@ -334,7 +343,7 @@ function CommunicationPracticePage() {
                         </div>
                         {message.role === 'user' && (
                             <Avatar className="w-8 h-8">
-                                <AvatarImage src={user.photoURL ?? 'https://placehold.co/100x100.png'} alt="@user" />
+                                <AvatarImage src={user.photoURL ?? 'https://placehold.co/100x100.png'} alt="@user" data-ai-hint="student portrait" />
                                 <AvatarFallback>{user.email?.[0].toUpperCase()}</AvatarFallback>
                             </Avatar>
                         )}
@@ -408,5 +417,3 @@ export default function CommunicationPracticePageWrapperWithAuth() {
     </AuthProvider>
   );
 }
-
-    
