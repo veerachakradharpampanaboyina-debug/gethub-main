@@ -15,7 +15,7 @@ import {
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, Settings, Home as HomeIcon, History, BrainCircuit, Shield, MessageCircle } from 'lucide-react';
+import { LogOut, Settings, Home as HomeIcon, History, BrainCircuit, Shield, MessageCircle, GalleryHorizontal } from 'lucide-react';
 import type { ExamAttempt, Question, GradingResult, FlaggedAnswer } from '@/lib/types';
 import GethubLogo from '@/components/gethub-logo';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
@@ -108,18 +108,21 @@ function HistoryPage() {
   }, [user, loading, router]);
 
   useEffect(() => {
-    if (user) {
+    if (user && !loading) {
+      setIsLoadingAttempts(true);
       getUserExamAttempts(user.uid)
         .then(userAttempts => {
           setAttempts(userAttempts);
-          setIsLoadingAttempts(false);
         })
         .catch(err => {
           console.error("Failed to fetch exam history:", err);
+          // Optionally, set an error state here to show a message to the user
+        })
+        .finally(() => {
           setIsLoadingAttempts(false);
         });
     }
-  }, [user]);
+  }, [user, loading]);
 
   if (loading || isLoadingAttempts || !user) {
     return (
@@ -155,6 +158,14 @@ function HistoryPage() {
                   <SidebarMenuButton tooltip="Exam History" isActive>
                     <History />
                     <span>History</span>
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+               <SidebarMenuItem>
+                <Link href="/gallery">
+                  <SidebarMenuButton tooltip="Gallery">
+                    <GalleryHorizontal />
+                    <span>Gallery</span>
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
@@ -242,7 +253,7 @@ function HistoryPage() {
                         <CardTitle>No History Found</CardTitle>
                         <CardDescription>You haven't completed any exams yet. Start a practice exam to see your history!</CardDescription>
                          <Button asChild className="mt-4">
-                            <Link href="/">Take an Exam</Link>
+                            <Link href="/practice">Take a Practice Exam</Link>
                         </Button>
                     </CardHeader>
                 </Card>
@@ -360,3 +371,5 @@ export default function HistoryPageWrapper() {
     </AuthProvider>
   );
 }
+
+    
