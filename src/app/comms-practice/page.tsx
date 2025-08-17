@@ -86,6 +86,8 @@ function CommunicationPracticePage() {
             console.error("Audio playback failed:", e);
             toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
         }
+        // Ensure speaking state is reset on error
+        setIsSpeaking(false);
       });
     }
   }, [toast, isRecording]);
@@ -115,21 +117,18 @@ function CommunicationPracticePage() {
         if (aiResponseText.trim()) {
             const ttsResult = await textToSpeech({ text: aiResponseText, voice });
             
-            // This is the synchronized update.
             setMessages(prev => prev.map(m => m.id === thinkingMessage.id ? { ...m, content: aiResponseText, isGenerating: false } : m));
-            setIsGenerating(false);
             setAudioToPlay(ttsResult.audioDataUri);
-            setIsSpeaking(true);
 
         } else {
              setMessages(prev => prev.filter(m => m.id !== thinkingMessage.id));
-             setIsGenerating(false);
         }
 
     } catch (err) {
         console.error("Failed to get feedback:", err);
         const errorMessage = "I'm having a little trouble connecting right now. Let's try that again in a moment.";
         setMessages(prev => prev.map(m => m.id === thinkingMessage.id ? { ...m, content: errorMessage, isGenerating: false } : m));
+    } finally {
         setIsGenerating(false);
     }
   }, [isGenerating, voice]);
@@ -227,6 +226,7 @@ function CommunicationPracticePage() {
           }
           if (audioRef.current) {
             audioRef.current.pause();
+            audioRef.current.src = "";
           }
            if (speechTimeoutRef.current) {
                 clearTimeout(speechTimeoutRef.current);
@@ -245,6 +245,7 @@ function CommunicationPracticePage() {
     } else {
        if (audioRef.current && !audioRef.current.paused) {
          audioRef.current.pause();
+         audioRef.current.src = "";
        }
       setUserInput('');
       recognitionRef.current?.start();
