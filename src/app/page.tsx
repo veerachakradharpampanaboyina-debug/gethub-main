@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowRight, BrainCircuit, BookOpenCheck, LogOut, Settings, Library, Briefcase, History, Facebook, Twitter, Instagram, MessageSquare } from 'lucide-react';
+import { ArrowRight, BrainCircuit, BookOpenCheck, LogOut, Settings, Library, Briefcase, History, Facebook, Twitter, Instagram, MessageCircle, MessageSquare } from 'lucide-react';
 import GethubLogo from '@/components/gethub-logo';
 import { examCategories } from '@/lib/exam-categories';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
@@ -92,6 +92,11 @@ function HomePageContent() {
                      <Button asChild size="lg" variant="secondary">
                         <Link href="/practice">
                             <BrainCircuit className="mr-2"/> AI Practice
+                        </Link>
+                    </Button>
+                     <Button asChild size="lg">
+                        <Link href="/comms-practice">
+                            <MessageCircle className="mr-2"/> Communication Practice
                         </Link>
                     </Button>
                 </div>

@@ -173,6 +173,17 @@ export const examCategories: ExamCategory[] = [
         { examId: 'capf', examName: 'CAPF (Central Armed Police Forces)', description: 'Recruitment of Assistant Commandants in the Central Armed Police Forces.', stages: [] },
     ]
   },
+   {
+    category: 'Language & Communication',
+    exams: [
+      {
+        examId: 'ielts',
+        examName: 'IELTS (International English Language Testing System)',
+        description: 'Measures English language proficiency for study, migration, and work.',
+        stages: []
+      },
+    ]
+  },
   {
     category: 'Engineering & Technical',
     exams: [

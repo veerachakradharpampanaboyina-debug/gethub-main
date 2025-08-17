@@ -16,7 +16,7 @@ import {
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, Settings, Home as HomeIcon, History, BrainCircuit, Shield, Library } from 'lucide-react';
+import { LogOut, Settings, Home as HomeIcon, History, BrainCircuit, Shield, Library, MessageCircle } from 'lucide-react';
 import GethubLogo from '@/components/gethub-logo';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
@@ -142,6 +142,14 @@ function AdminPage() {
                         <SidebarMenuButton tooltip="Practice Exam">
                             <BrainCircuit />
                             <span>Practice Exam</span>
+                        </SidebarMenuButton>
+                    </Link>
+                </SidebarMenuItem>
+                 <SidebarMenuItem>
+                    <Link href="/comms-practice">
+                        <SidebarMenuButton tooltip="Communication Practice">
+                            <MessageCircle />
+                            <span>Comm. Practice</span>
                         </SidebarMenuButton>
                     </Link>
                 </SidebarMenuItem>

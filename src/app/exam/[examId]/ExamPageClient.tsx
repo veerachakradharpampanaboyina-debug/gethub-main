@@ -15,7 +15,7 @@ import {
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, Settings, Home as HomeIcon, History, BrainCircuit, Shield, BookCopy, Info, FileText, Download } from 'lucide-react';
+import { LogOut, Settings, Home as HomeIcon, History, BrainCircuit, Shield, BookCopy, Info, FileText, Download, MessageCircle } from 'lucide-react';
 import { ExamDetails, ExamPaper } from '@/lib/types';
 import GethubLogo from '@/components/gethub-logo';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
@@ -113,7 +113,6 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
         const canvasAspectRatio = canvasWidth / canvasHeight;
-        const pdfAspectRatio = pdfWidth / pdfHeight;
         
         let imgWidth = pdfWidth;
         let imgHeight = pdfWidth / canvasAspectRatio;
@@ -125,7 +124,7 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
         heightLeft -= pdfHeight;
 
         while (heightLeft > 0) {
-            position = -pdfHeight + (heightLeft > imgHeight ? 0 : (imgHeight - heightLeft));
+            position = heightLeft - imgHeight; // BUG: this was miscalculated
             pdf.addPage();
             pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
             heightLeft -= pdfHeight;
@@ -194,6 +193,14 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
                         <SidebarMenuButton tooltip="Practice Exam">
                             <BrainCircuit />
                             <span>Practice Exam</span>
+                        </SidebarMenuButton>
+                    </Link>
+                </SidebarMenuItem>
+                 <SidebarMenuItem>
+                    <Link href="/comms-practice">
+                        <SidebarMenuButton tooltip="Communication Practice">
+                            <MessageCircle />
+                            <span>Comm. Practice</span>
                         </SidebarMenuButton>
                     </Link>
                 </SidebarMenuItem>

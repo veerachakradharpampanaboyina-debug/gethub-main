@@ -15,7 +15,7 @@ import {
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, Settings, Home as HomeIcon, History, BrainCircuit, Shield, Library } from 'lucide-react';
+import { LogOut, Settings, Home as HomeIcon, History, BrainCircuit, Shield, MessageCircle } from 'lucide-react';
 import type { ExamAttempt, Question, GradingResult, FlaggedAnswer } from '@/lib/types';
 import GethubLogo from '@/components/gethub-logo';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
@@ -171,6 +171,14 @@ function HistoryPage() {
                         </SidebarMenuButton>
                     </Link>
                 </SidebarMenuItem>
+                 <SidebarMenuItem>
+                    <Link href="/comms-practice">
+                        <SidebarMenuButton tooltip="Communication Practice">
+                            <MessageCircle />
+                            <span>Comm. Practice</span>
+                        </SidebarMenuButton>
+                    </Link>
+                </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroup>
            {user && user.email === 'admin@gethub.com' && (
@@ -195,7 +203,7 @@ function HistoryPage() {
               <Link href="/settings">
                   <SidebarMenuButton tooltip="Settings">
                     <Settings />
-                    <span>Settings</span>
+                    <span className="group-data-[state=collapsed]:hidden">Settings</span>
                   </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
