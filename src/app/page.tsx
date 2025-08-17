@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowRight, BrainCircuit, BookOpenCheck, LogOut, Settings, Library, Briefcase, History, Facebook, Twitter, Instagram } from 'lucide-react';
+import { ArrowRight, BrainCircuit, BookOpenCheck, LogOut, Settings, Library, Briefcase, History, Facebook, Twitter, Instagram, MessageSquare } from 'lucide-react';
 import GethubLogo from '@/components/gethub-logo';
 import { examCategories } from '@/lib/exam-categories';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
@@ -25,7 +25,6 @@ import Image from 'next/image';
 function HomePageContent() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
-  const allExams = examCategories.flatMap(c => c.exams);
 
   if (loading) {
     return (
@@ -129,33 +128,45 @@ function HomePageContent() {
                   <p className="text-muted-foreground mt-2">Select an exam to view its syllabus and start preparing.</p>
               </div>
 
-               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {allExams.map((exam) => (
-                  <Card key={exam.examId} className="flex flex-col bg-secondary border-white/10 hover:border-primary/50 transition-all duration-300 transform hover:-translate-y-1">
-                      <CardHeader>
-                      <CardTitle>{exam.examName}</CardTitle>
-                      <CardDescription className="mt-2">{exam.description}</CardDescription>
-                      </CardHeader>
-                      <CardContent className="flex-grow flex flex-col justify-end gap-4">
-                        <Button asChild className="w-full mt-auto">
-                            <Link href={`/exam/${exam.examId}`}>
-                                <BookOpenCheck className="mr-2" /> View Syllabus
-                            </Link>
-                        </Button>
-                      </CardContent>
-                  </Card>
-                  ))}
+               <div className="space-y-12">
+                {examCategories.map((category) => (
+                    <div key={category.category}>
+                        <h3 className="text-2xl font-bold tracking-tight mb-6 text-primary">{category.category}</h3>
+                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                            {category.exams.map((exam) => (
+                            <Card key={exam.examId} className="flex flex-col bg-secondary border-white/10 hover:border-primary/50 transition-all duration-300 transform hover:-translate-y-1">
+                                <CardHeader>
+                                <CardTitle>{exam.examName}</CardTitle>
+                                <CardDescription className="mt-2">{exam.description}</CardDescription>
+                                </CardHeader>
+                                <CardContent className="flex-grow flex flex-col justify-end gap-4">
+                                <Button asChild className="w-full mt-auto">
+                                    <Link href={`/exam/${exam.examId}`}>
+                                        <BookOpenCheck className="mr-2" /> View Syllabus
+                                    </Link>
+                                </Button>
+                                </CardContent>
+                            </Card>
+                            ))}
+                        </div>
+                    </div>
+                ))}
               </div>
           </section>
         </main>
-        <footer className="p-6 border-t border-white/10">
-          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-             <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} GETHUB. All rights reserved.</p>
-             <div className="flex gap-4">
+        <footer className="p-6 border-t border-white/10 text-center">
+          <div className="max-w-7xl mx-auto grid gap-6">
+            <div>
+              <p className="font-semibold">GETHUB</p>
+              <p className="text-sm text-muted-foreground">Kakinada, Andhrapradesh-533001</p>
+            </div>
+             <div className="flex justify-center gap-4">
                 <Link href="#" className="text-muted-foreground hover:text-primary"><Facebook /></Link>
                 <Link href="#" className="text-muted-foreground hover:text-primary"><Twitter /></Link>
                 <Link href="#" className="text-muted-foreground hover:text-primary"><Instagram /></Link>
+                <Link href="#" className="text-muted-foreground hover:text-primary"><MessageSquare /></Link>
              </div>
+             <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} GETHUB. All rights reserved.</p>
           </div>
         </footer>
     </div>
