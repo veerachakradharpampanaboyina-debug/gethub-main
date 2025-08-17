@@ -16,7 +16,7 @@ import {
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, Settings, Home as HomeIcon, History, BrainCircuit, Shield, MessageCircle } from 'lucide-react';
+import { LogOut, Settings, Home as HomeIcon, History, BrainCircuit, Shield, MessageCircle, GalleryHorizontal } from 'lucide-react';
 import GethubLogo from '@/components/gethub-logo';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
@@ -31,15 +31,26 @@ import { pdfToQuizJson } from '@/ai/flows/pdf-to-quiz-json';
 import { saveScheduledExam } from '@/services/scheduled-exam-service';
 import { examCategories } from '@/lib/exam-categories';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { addGalleryItem, uploadGalleryImage } from '@/services/gallery-service';
 
 
 function AdminPage() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  
+  // State for weekly exam upload
   const [file, setFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const [isUploadingExam, setIsUploadingExam] = useState(false);
   const [selectedExamId, setSelectedExamId] = useState<string>('');
+
+  // State for gallery upload
+  const [galleryImage, setGalleryImage] = useState<File | null>(null);
+  const [studentName, setStudentName] = useState('');
+  const [achievement, setAchievement] = useState('');
+  const [isUploadingGallery, setIsUploadingGallery] = useState(false);
+
 
   useEffect(() => {
     if (!loading && !user) {
@@ -56,13 +67,19 @@ function AdminPage() {
     }
   }, [user, loading, router, toast]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleExamFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       setFile(e.target.files[0]);
     }
   };
+  
+  const handleGalleryFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setGalleryImage(e.target.files[0]);
+    }
+  };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleExamSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) {
       toast({ title: "No file selected", description: "Please select a PDF file to upload.", variant: "destructive" });
@@ -73,7 +90,7 @@ function AdminPage() {
       return;
     }
 
-    setIsUploading(true);
+    setIsUploadingExam(true);
     
     try {
       const reader = new FileReader();
@@ -112,9 +129,46 @@ function AdminPage() {
           variant: "destructive"
         });
     } finally {
-        setIsUploading(false);
+        setIsUploadingExam(false);
     }
   };
+
+  const handleGallerySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!galleryImage || !studentName || !achievement) {
+      toast({ title: "Missing Information", description: "Please fill out all fields and select an image.", variant: "destructive" });
+      return;
+    }
+
+    setIsUploadingGallery(true);
+
+    try {
+        const photoURL = await uploadGalleryImage(galleryImage);
+        await addGalleryItem({
+            studentName,
+            achievement,
+            photoURL,
+        });
+
+        toast({ title: "Success", description: "New achievement has been added to the gallery."});
+        setGalleryImage(null);
+        setStudentName('');
+        setAchievement('');
+        const fileInput = document.getElementById('gallery-upload') as HTMLInputElement;
+        if(fileInput) fileInput.value = '';
+
+    } catch (error: any) {
+        console.error("Failed to upload gallery item:", error);
+        toast({
+          title: "Upload Failed",
+          description: error.message || "An unexpected error occurred.",
+          variant: "destructive"
+        });
+    } finally {
+        setIsUploadingGallery(false);
+    }
+  };
+
 
   if (loading || !user || user.email !== 'admin@gethub.com') {
     return (
@@ -152,6 +206,14 @@ function AdminPage() {
                   <SidebarMenuButton tooltip="Exam History">
                     <History />
                     <span>History</span>
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <Link href="/gallery">
+                  <SidebarMenuButton tooltip="Gallery">
+                    <GalleryHorizontal />
+                    <span>Gallery</span>
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
@@ -230,7 +292,7 @@ function AdminPage() {
             </h1>
           </div>
         </header>
-        <main className="p-4 md:p-6 lg:p-8">
+        <main className="p-4 md:p-6 lg:p-8 space-y-8">
             <Card>
               <CardHeader>
                 <CardTitle>Upload Weekly Scheduled Exam</CardTitle>
@@ -239,7 +301,7 @@ function AdminPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleExamSubmit} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="exam-select">Competitive Exam</Label>
                      <Select value={selectedExamId} onValueChange={setSelectedExamId}>
@@ -255,11 +317,40 @@ function AdminPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="pdf-upload">Question Paper PDF</Label>
-                    <Input id="pdf-upload" type="file" accept=".pdf" onChange={handleFileChange} />
+                    <Input id="pdf-upload" type="file" accept=".pdf" onChange={handleExamFileChange} />
                   </div>
-                  <Button type="submit" disabled={isUploading}>
-                    {isUploading ? <LoaderCircle className="w-4 h-4 animate-spin mr-2" /> : null}
+                  <Button type="submit" disabled={isUploadingExam}>
+                    {isUploadingExam ? <LoaderCircle className="w-4 h-4 animate-spin mr-2" /> : null}
                     Upload & Schedule Exam
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+             <Card>
+              <CardHeader>
+                <CardTitle>Add to Student Gallery</CardTitle>
+                <CardDescription>
+                  Upload a student's photo and their achievement to showcase on the Gallery page.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleGallerySubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="student-name">Student Name</Label>
+                    <Input id="student-name" value={studentName} onChange={(e) => setStudentName(e.target.value)} placeholder="Enter student's full name" />
+                  </div>
+                   <div className="space-y-2">
+                    <Label htmlFor="achievement">Achievement / Description</Label>
+                    <Textarea id="achievement" value={achievement} onChange={(e) => setAchievement(e.target.value)} placeholder="e.g., 'Secured All India Rank 1 in UPSC CSE'" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="gallery-upload">Student Photo</Label>
+                    <Input id="gallery-upload" type="file" accept="image/*" onChange={handleGalleryFileChange} />
+                  </div>
+                  <Button type="submit" disabled={isUploadingGallery}>
+                    {isUploadingGallery ? <LoaderCircle className="w-4 h-4 animate-spin mr-2" /> : null}
+                    Add to Gallery
                   </Button>
                 </form>
               </CardContent>

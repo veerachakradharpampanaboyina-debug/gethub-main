@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowRight, BrainCircuit, BookOpenCheck, LogOut, Settings, History, Facebook, Twitter, Instagram, MessageCircle, PenTool, BotMessageSquare, MessageSquare } from 'lucide-react';
+import { ArrowRight, BrainCircuit, BookOpenCheck, LogOut, Settings, History, Facebook, Twitter, Instagram, MessageCircle, PenTool, BotMessageSquare, MessageSquare, GalleryHorizontal } from 'lucide-react';
 import GethubLogo from '@/components/gethub-logo';
 import { examCategories } from '@/lib/exam-categories';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
@@ -47,6 +47,12 @@ function HomePageContent() {
                             History
                         </Link>
                     </Button>
+                     <Button variant="ghost" asChild>
+                        <Link href="/gallery">
+                            <GalleryHorizontal className="mr-2"/>
+                            Gallery
+                        </Link>
+                    </Button>
                     <div className="h-6 w-px bg-white/10"></div>
                      <Button variant="ghost" size="icon" asChild>
                         <Link href="/settings">
@@ -65,6 +71,9 @@ function HomePageContent() {
                 </div>
             ) : (
                 <>
+                <Button variant="ghost" asChild>
+                  <Link href="/gallery">Gallery</Link>
+                </Button>
                 <Button asChild variant="ghost">
                   <Link href="/login">Login</Link>
                 </Button>

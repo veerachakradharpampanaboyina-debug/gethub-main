@@ -112,3 +112,11 @@ export interface ScheduledExam {
     questions: Question[];
     createdAt: Timestamp;
 }
+
+export interface GalleryItem {
+    id?: string;
+    studentName: string;
+    achievement: string;
+    photoURL: string;
+    createdAt: Timestamp;
+}
