@@ -87,7 +87,6 @@ function CommunicationPracticePage() {
         }
       });
     }
-    setIsGenerating(false);
   }, [toast]);
 
   useEffect(() => {
@@ -356,7 +355,7 @@ function CommunicationPracticePage() {
             </div>
             <div className="flex items-center space-x-2">
                 <RadioGroupItem value="Schedar" id="female-voice" />
-                <Label htmlFor="female-voice">Female</Label>
+                <Label htmlFor="female-voice">Emma</Label>
             </div>
           </RadioGroup>
         </header>
