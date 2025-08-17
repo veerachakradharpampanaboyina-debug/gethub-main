@@ -57,7 +57,6 @@ function CommunicationPracticePage() {
   const [isRecording, setIsRecording] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [audioToPlay, setAudioToPlay] = useState<string | null>(null);
   const [voice, setVoice] = useState<TextToSpeechInput['voice']>('Algenib');
   const [nativeLanguage, setNativeLanguage] = useState<string>('Telugu');
 
@@ -84,32 +83,28 @@ function CommunicationPracticePage() {
   const playAudio = useCallback((audioDataUri: string) => {
     const audio = audioRef.current;
     if (audio) {
+      // Stop any speech recognition in progress
       if (recognitionRef.current && isRecording) {
         recognitionRef.current.stop();
       }
+      
+      // If audio is already playing, pause and reset it before playing the new one
       if (!audio.paused) {
         audio.pause();
         audio.currentTime = 0;
       }
+
       audio.src = audioDataUri;
       audio.play().catch(e => {
         // AbortError is expected if we interrupt playback, so we can safely ignore it.
         if (e.name !== 'AbortError') {
           console.error("Audio playback failed:", e);
           toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
-          setIsSpeaking(false);
+          setIsSpeaking(false); // Ensure state is reset on error
         }
       });
     }
   }, [isRecording, toast]);
-
-
-  useEffect(() => {
-    if (audioToPlay) {
-      playAudio(audioToPlay);
-      setAudioToPlay(null);
-    }
-  }, [audioToPlay, playAudio]);
 
   const handleSendMessage = useCallback(async (text: string) => {
     if (!text.trim() || isGenerating || isSpeaking) return;
@@ -131,20 +126,22 @@ function CommunicationPracticePage() {
         const ttsResult = await textToSpeech({ text: aiResponseText, voice });
               
         setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: aiResponseText, isGenerating: false } : m));
-        setAudioToPlay(ttsResult.audioDataUri);
+        playAudio(ttsResult.audioDataUri);
   
       } else {
+        // If AI returns an empty response, just remove the "thinking" message
         setMessages(prev => prev.filter(m => m.id !== assistantMessageId));
       }
   
     } catch (err) {
       console.error("Failed to get feedback:", err);
       const errorMessage = "I'm having a little trouble connecting right now. Let's try that again in a moment.";
+      // Display the error message in the chat, but do not convert it to speech.
       setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: errorMessage, isGenerating: false } : m));
     } finally {
       setIsGenerating(false);
     }
-  }, [isGenerating, isSpeaking, voice, nativeLanguage]);
+  }, [isGenerating, isSpeaking, voice, nativeLanguage, playAudio]);
   
    useEffect(() => {
     if (!SpeechRecognition) return;
@@ -171,9 +168,9 @@ function CommunicationPracticePage() {
             }
             const transcriptToSend = finalTranscript.trim();
             if (transcriptToSend && !transcriptSent) {
-                transcriptSent = true; // Mark as sent to prevent duplicates
+                transcriptSent = true; 
                 handleSendMessage(transcriptToSend);
-                finalTranscript = ''; // Clear after sending
+                finalTranscript = ''; 
             }
         };
 
@@ -197,7 +194,7 @@ function CommunicationPracticePage() {
 
         recognition.onend = () => {
           setIsRecording(false);
-          sendFinalTranscript(); // Send any remaining transcript when recording is stopped
+          sendFinalTranscript(); 
         };
 
         recognition.onerror = (event) => {
@@ -224,13 +221,13 @@ function CommunicationPracticePage() {
         };
 
         audioRef.current.onerror = (e) => {
-            // Most errors are now caught by the play().catch() block.
-            // This is a final fallback.
             const target = e.target as HTMLAudioElement;
-            if (target.error && target.error.code !== 20) { // 20 is AbortError
+            // Error code 20 is a DOMException for abort, which is expected if we interrupt playback.
+            if (target.error && target.error.code !== 20) { 
                 console.error("Audio element error:", e);
                 toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
             }
+            // Always ensure speaking state is reset, even on error.
             setIsSpeaking(false);
         };
       }
