@@ -102,17 +102,33 @@ function HomePageContent() {
                     <h2 className="text-3xl font-bold tracking-tight">Our Success Stories</h2>
                     <p className="text-muted-foreground mt-2">See how GETHUB has helped students achieve their dreams.</p>
                 </div>
-                <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-16 items-center">
-                    <div className="aspect-video">
-                       <iframe 
-                        className="w-full h-full rounded-lg shadow-2xl"
-                        src="https://www.youtube.com/embed/dQw4w9WgXcQ" 
-                        title="YouTube video player" 
-                        frameBorder="0" 
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                        allowFullScreen>
-                       </iframe>
-                    </div>
+                <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-8 items-center">
+                   <div className="grid grid-cols-2 grid-rows-2 gap-4">
+                      <Image 
+                        src="https://placehold.co/600x400.png"
+                        alt="Success story 1"
+                        width={600}
+                        height={400}
+                        className="rounded-lg shadow-lg col-span-1 row-span-1 object-cover"
+                        data-ai-hint="student studying"
+                      />
+                       <Image 
+                        src="https://placehold.co/400x600.png"
+                        alt="Success story 2"
+                        width={400}
+                        height={600}
+                        className="rounded-lg shadow-lg col-span-1 row-span-2 object-cover"
+                        data-ai-hint="happy graduate"
+                      />
+                       <Image 
+                        src="https://placehold.co/600x400.png"
+                        alt="Success story 3"
+                        width={600}
+                        height={400}
+                        className="rounded-lg shadow-lg col-span-1 row-span-1 object-cover"
+                        data-ai-hint="group celebration"
+                      />
+                   </div>
                     <div className="prose prose-invert text-lg">
                         <h3>From Aspiration to Achievement</h3>
                         <p>Join thousands of students who have transformed their preparation with GETHUB. Our AI-powered tools, detailed syllabus breakdowns, and on-demand practice exams provide the edge you need to excel in competitive exams.</p>
