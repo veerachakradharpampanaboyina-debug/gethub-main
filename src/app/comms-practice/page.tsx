@@ -188,7 +188,7 @@ function CommunicationPracticePage() {
       
       speechTimeoutRef.current = setTimeout(() => {
          recognition.stop();
-      }, 2000); // 2-second pause
+      }, 3000); // 3-second pause
     };
 
     recognition.onend = () => {
@@ -434,14 +434,6 @@ function CommunicationPracticePage() {
                           <Mic className="w-5 h-5" />
                       </Button>
                     )}
-                     <Button 
-                        type="button" 
-                        size="icon" 
-                        onClick={() => handleSendMessage(userInput)}
-                        disabled={isGenerating || !userInput.trim()}
-                      >
-                        <Send className="w-5 h-5" />
-                      </Button>
                   </div>
              </div>
           </div>
