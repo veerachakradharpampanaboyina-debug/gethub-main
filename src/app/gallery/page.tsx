@@ -21,7 +21,7 @@ import Image from 'next/image';
 import { getGalleryItems } from '@/services/gallery-service';
 import { GalleryItem } from '@/lib/types';
 import { format } from 'date-fns';
-import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet';
+import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 function GalleryPageContent() {
   const { user, loading, logout } = useAuth();
@@ -100,6 +100,9 @@ function GalleryPageContent() {
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="right">
+                    <SheetHeader>
+                        <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+                    </SheetHeader>
                      <div className="flex flex-col gap-4 p-4">
                         {user ? (
                             <>

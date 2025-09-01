@@ -18,7 +18,7 @@ import { LoaderCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 
 function HomePageContent() {
@@ -93,10 +93,13 @@ function HomePageContent() {
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="right">
+                    <SheetHeader>
+                        <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+                    </SheetHeader>
                      <div className="flex flex-col gap-4 p-4">
                         {user ? (
                             <>
-                                <Button variant="ghost" asChild className="justify-start">
+                                 <Button variant="ghost" asChild className="justify-start">
                                     <Link href="/history">
                                         <History className="mr-2"/>
                                         History
