@@ -537,7 +537,94 @@ export const examCategories: ExamCategory[] = [
       {
           category: 'School / Junior Level',
           exams: [
-              { examId: 'ntse', examName: 'NTSE (National Talent Search Exam)', description: 'National level scholarship program for school students.', stages: [] },
+            {
+              examId: 'ntse',
+              examName: 'National Talent Search Examination (NTSE)',
+              description: 'A national level scholarship exam for Class 10 students to identify and nurture talent.',
+              stages: [
+                {
+                  stageId: 'stage-1',
+                  stageName: 'Stage 1 (State Level)',
+                  papers: [
+                    {
+                      paperId: 'mental-ability-test',
+                      paperName: 'Mental Ability Test (MAT)',
+                      type: 'Objective (MCQ)',
+                      duration: '120 minutes',
+                      totalMarks: 100,
+                      topics: [
+                        'Analogy',
+                        'Classification',
+                        'Series',
+                        'Pattern Perception',
+                        'Coding-Decoding',
+                        'Puzzle',
+                        'Logical Venn Diagrams',
+                        'Problem Solving',
+                        'Direction Sense Test',
+                        'Non-Verbal Reasoning',
+                        'Alphabet Test',
+                      ],
+                    },
+                    {
+                      paperId: 'scholastic-aptitude-test',
+                      paperName: 'Scholastic Aptitude Test (SAT)',
+                      type: 'Objective (MCQ)',
+                      duration: '120 minutes',
+                      totalMarks: 100,
+                      topics: [
+                        'Science: Physics, Chemistry, Biology (Class 9 & 10 level)',
+                        'Mathematics: Algebra, Geometry, Arithmetic (Class 9 & 10 level)',
+                        'Social Science: History, Geography, Civics, Economics (Class 9 & 10 level)',
+                      ],
+                    },
+                  ],
+                },
+                {
+                  stageId: 'stage-2',
+                  stageName: 'Stage 2 (National Level)',
+                  papers: [
+                    {
+                      paperId: 'mental-ability-test-2',
+                      paperName: 'Mental Ability Test (MAT)',
+                      type: 'Objective (MCQ)',
+                      duration: '120 minutes',
+                      totalMarks: 100,
+                      topics: [
+                        'Higher difficulty logical reasoning and problem-solving',
+                        'Advanced pattern recognition',
+                        'Complex coding-decoding',
+                        'Analytical reasoning',
+                      ],
+                    },
+                    {
+                      paperId: 'scholastic-aptitude-test-2',
+                      paperName: 'Scholastic Aptitude Test (SAT)',
+                      type: 'Objective (MCQ)',
+                      duration: '120 minutes',
+                      totalMarks: 100,
+                      topics: [
+                        'In-depth Science (Physics, Chemistry, Biology)',
+                        'Advanced Mathematics',
+                        'Comprehensive Social Science',
+                      ],
+                    },
+                    {
+                      paperId: 'language-test',
+                      paperName: 'Language Test (Qualifying)',
+                      type: 'Objective (MCQ)',
+                      duration: '45 minutes',
+                      totalMarks: 'Qualifying only',
+                      topics: [
+                        'English Language Comprehension and Grammar',
+                        'Regional Language',
+                      ],
+                    },
+                  ],
+                },
+              ],
+              totalMarks: 400,
+            },
               {
                 examId: 'nmms',
                 examName: 'National Means-cum-Merit Scholarship (NMMS) Exam',

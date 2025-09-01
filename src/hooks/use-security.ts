@@ -15,7 +15,7 @@ export function useSecurity() {
     let devtoolsCheckInterval: NodeJS.Timeout | null = null;
 
     const handleDetection = () => {
-       // Always redirect to home if devtools are detected, but only if not already there.
+       // Only redirect if devtools are detected and we are NOT on the homepage.
       if (pathname !== '/') {
         router.replace('/');
       }
