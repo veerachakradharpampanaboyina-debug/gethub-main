@@ -10,26 +10,13 @@ const DEVTOOLS_CHECK_INTERVAL = 1000; // 1 second
 export function useSecurity() {
   const router = useRouter();
   const pathname = usePathname();
-  const toastIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     let devtoolsCheckInterval: NodeJS.Timeout | null = null;
 
     const handleDetection = () => {
-      if (pathname === '/') {
-        // If on homepage, show a toast message.
-        // Use a ref to ensure we don't show the same toast multiple times.
-        if (!toastIdRef.current) {
-            const { id } = toast({
-                title: "Security Alert",
-                description: "Developer tools and debugging are disabled on this site.",
-                variant: "destructive",
-                duration: 5000,
-            });
-            toastIdRef.current = id;
-        }
-      } else {
-        // If on any other page, redirect to home.
+       // Always redirect to home if devtools are detected, but only if not already there.
+      if (pathname !== '/') {
         router.replace('/');
       }
     };
@@ -57,9 +44,6 @@ export function useSecurity() {
       
       if(isDevToolsOpen) {
          handleDetection();
-      } else {
-         // If dev tools are closed, clear the toast ref
-         toastIdRef.current = null;
       }
     };
     

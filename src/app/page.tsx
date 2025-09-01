@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowRight, BrainCircuit, BookOpenCheck, LogOut, Settings, History, Facebook, Twitter, Instagram, MessageCircle, PenTool, BotMessageSquare, MessageSquare, GalleryHorizontal, Check, Menu } from 'lucide-react';
+import { ArrowRight, BrainCircuit, BookOpenCheck, LogOut, Settings, History, Facebook, Twitter, Instagram, MessageCircle, PenTool, BotMessageSquare, MessageSquare, GalleryHorizontal, Check, Menu, ShieldCheck } from 'lucide-react';
 import GethubLogo from '@/components/gethub-logo';
 import { examCategories } from '@/lib/exam-categories';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
@@ -278,6 +278,25 @@ function HomePageContent() {
                         </div>
                     </div>
                 ))}
+              </div>
+          </section>
+
+          <section id="security" className="py-20 px-4 border-t border-white/10">
+              <div className="max-w-4xl mx-auto">
+                  <Card className="bg-secondary/50 border-white/10 p-8">
+                      <CardHeader className="p-0 text-center">
+                          <ShieldCheck className="w-12 h-12 text-primary mx-auto mb-4"/>
+                          <CardTitle className="text-2xl">Your Security is Our Priority</CardTitle>
+                          <CardDescription className="mt-2 max-w-2xl mx-auto">
+                              To maintain the integrity of our platform and protect our intellectual property, Gethub has security measures in place.
+                          </CardDescription>
+                      </CardHeader>
+                      <CardContent className="p-0 mt-6 text-center text-muted-foreground">
+                          <p>
+                              Using browser developer tools, right-clicking, or attempting to use proxy tools like Burp Suite to inspect network traffic is not permitted. Any such activity will result in an immediate redirect to the homepage to prevent tampering. We appreciate your cooperation in keeping our community secure.
+                          </p>
+                      </CardContent>
+                  </Card>
               </div>
           </section>
         </main>
