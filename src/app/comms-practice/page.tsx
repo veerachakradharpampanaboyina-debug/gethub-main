@@ -276,7 +276,7 @@ const handleSendMessage = useCallback(async (text: string) => {
         <SidebarHeader>
           <div className="flex items-center gap-2">
             <GethubLogo className="w-8 h-8 text-primary" width={32} height={32} />
-            <span className="text-lg font-semibold">GETHUB</span>
+            <span className="text-lg font-semibold">Gethub</span>
           </div>
         </SidebarHeader>
         <SidebarContent>
@@ -418,7 +418,7 @@ const handleSendMessage = useCallback(async (text: string) => {
                         <CardHeader className="text-center items-center">
                              <GethubLogo className="w-16 h-16 mb-4" width={64} height={64} />
                             <CardTitle>Start a Conversation</CardTitle>
-                            <CardDescription>Practice your English by clicking the microphone and speaking. GETHUB will reply and help you improve.</CardDescription>
+                            <CardDescription>Practice your English by clicking the microphone and speaking. Gethub will reply and help you improve.</CardDescription>
                         </CardHeader>
                     </Card>
                 )}
@@ -431,7 +431,7 @@ const handleSendMessage = useCallback(async (text: string) => {
                            {message.isGenerating ? (
                               <div className="flex items-center gap-2">
                                 <LoaderCircle className="w-4 h-4 animate-spin" />
-                                <span>GETHUB is thinking...</span>
+                                <span>Gethub is thinking...</span>
                               </div>
                            ) : (
                              <div className="prose prose-sm prose-invert max-w-none text-current" dangerouslySetInnerHTML={{ __html: markdownToHtml(message.content) }} />

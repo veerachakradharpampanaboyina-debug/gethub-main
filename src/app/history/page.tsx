@@ -138,7 +138,7 @@ function HistoryPage() {
         <SidebarHeader>
           <div className="flex items-center gap-2">
             <GethubLogo className="w-8 h-8 text-primary" width={32} height={32} />
-            <span className="text-lg font-semibold group-data-[state=collapsed]:hidden">GETHUB</span>
+            <span className="text-lg font-semibold group-data-[state=collapsed]:hidden">Gethub</span>
           </div>
         </SidebarHeader>
         <SidebarContent>
@@ -371,5 +371,3 @@ export default function HistoryPageWrapper() {
     </AuthProvider>
   );
 }
-
-    

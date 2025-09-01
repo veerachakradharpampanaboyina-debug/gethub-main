@@ -130,7 +130,7 @@ function SettingsPage() {
         <SidebarHeader>
           <div className="flex items-center gap-2">
             <GethubLogo className="w-8 h-8 text-primary" width={32} height={32} />
-            <span className="text-lg font-semibold">GETHUB</span>
+            <span className="text-lg font-semibold">Gethub</span>
           </div>
         </SidebarHeader>
         <SidebarContent>

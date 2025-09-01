@@ -45,7 +45,7 @@ function GalleryPageContent() {
      <header className="flex items-center justify-between p-4 border-b border-white/10 sticky top-0 bg-background/80 backdrop-blur-sm z-10">
         <Link href="/" className="flex items-center gap-2">
             <GethubLogo className="w-8 h-8 text-primary" width={32} height={32}/>
-            <span className="text-xl font-bold">GETHUB</span>
+            <span className="text-xl font-bold">Gethub</span>
         </Link>
         <div className="hidden md:flex items-center gap-2">
             {user ? (
@@ -193,7 +193,7 @@ function GalleryPageContent() {
         <footer className="p-6 border-t border-white/10 text-center">
           <div className="max-w-7xl mx-auto grid gap-6">
             <div>
-              <p className="font-semibold">GETHUB</p>
+              <p className="font-semibold">Gethub</p>
               <p className="text-sm text-muted-foreground">Kakinada, Andhrapradesh-533001</p>
             </div>
              <div className="flex justify-center gap-4">
@@ -202,7 +202,7 @@ function GalleryPageContent() {
                 <Link href="#" className="text-muted-foreground hover:text-primary"><Twitter /></Link>
                 <Link href="#" className="text-muted-foreground hover:text-primary"><Instagram /></Link>
              </div>
-             <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} GETHUB. All rights reserved.</p>
+             <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} Gethub. All rights reserved.</p>
           </div>
         </footer>
     </div>

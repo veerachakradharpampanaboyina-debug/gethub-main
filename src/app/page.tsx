@@ -37,7 +37,7 @@ function HomePageContent() {
      <header className="flex items-center justify-between p-4 border-b border-white/10 sticky top-0 bg-background/80 backdrop-blur-sm z-10">
         <Link href="/" className="flex items-center gap-2">
             <GethubLogo className="w-8 h-8 text-primary" width={32} height={32}/>
-            <span className="text-xl font-bold">GETHUB</span>
+            <span className="text-xl font-bold">Gethub</span>
         </Link>
         <div className="hidden md:flex items-center gap-2">
             {user ? (
@@ -144,7 +144,7 @@ function HomePageContent() {
         <PageHeader/>
         <main className="flex-1">
             <section className="text-center py-16 md:py-20 px-4 border-b border-white/10">
-                 <h1 className="text-4xl md:text-6xl font-bold tracking-tight">Welcome to GETHUB</h1>
+                 <h1 className="text-4xl md:text-6xl font-bold tracking-tight">Welcome to Gethub</h1>
                  <p className="text-muted-foreground mt-4 max-w-2xl mx-auto text-lg">
                     Your hub for competitive exam preparation. Choose an exam below to start your journey.
                  </p>
@@ -169,7 +169,7 @@ function HomePageContent() {
             
              <section id="benefits" className="py-20 px-4 border-b border-white/10">
                 <div className="text-center mb-12">
-                    <h2 className="text-3xl font-bold tracking-tight">Why Choose GETHUB?</h2>
+                    <h2 className="text-3xl font-bold tracking-tight">Why Choose Gethub?</h2>
                     <p className="text-muted-foreground mt-2">The ultimate toolkit for your exam success.</p>
                 </div>
                 <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -211,13 +211,13 @@ function HomePageContent() {
             
             <section id="future-updates" className="py-20 px-4 border-b border-white/10 bg-secondary/30">
                 <div className="text-center mb-12">
-                    <h2 className="text-3xl font-bold tracking-tight">The Future of GETHUB</h2>
+                    <h2 className="text-3xl font-bold tracking-tight">The Future of Gethub</h2>
                     <p className="text-muted-foreground mt-2 max-w-3xl mx-auto">Get ready for an even more powerful learning experience. Our upcoming membership plan will unlock exclusive, next-generation AI features.</p>
                 </div>
                 <div className="max-w-4xl mx-auto">
                     <Card className="bg-background/50 border-primary/30 p-8">
                         <CardHeader className="p-0 text-center">
-                            <CardTitle className="text-2xl text-primary">GETHUB Premium Membership</CardTitle>
+                            <CardTitle className="text-2xl text-primary">Gethub Premium Membership</CardTitle>
                             <CardDescription className="mt-2">Unlock your full potential with these upcoming benefits:</CardDescription>
                         </CardHeader>
                         <CardContent className="p-0 mt-8">
@@ -284,7 +284,7 @@ function HomePageContent() {
         <footer className="p-6 border-t border-white/10 text-center">
           <div className="max-w-7xl mx-auto grid gap-6">
             <div>
-              <p className="font-semibold">GETHUB</p>
+              <p className="font-semibold">Gethub</p>
               <p className="text-sm text-muted-foreground">Kakinada, Andhrapradesh-533001</p>
             </div>
              <div className="flex justify-center gap-4">
@@ -293,7 +293,7 @@ function HomePageContent() {
                 <Link href="#" className="text-muted-foreground hover:text-primary"><Twitter /></Link>
                 <Link href="#" className="text-muted-foreground hover:text-primary"><Instagram /></Link>
              </div>
-             <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} GETHUB. All rights reserved.</p>
+             <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} Gethub. All rights reserved.</p>
           </div>
         </footer>
     </div>
