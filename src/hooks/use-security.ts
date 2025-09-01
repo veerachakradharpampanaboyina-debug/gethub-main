@@ -1,19 +1,22 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 const DEVTOOLS_CHECK_INTERVAL = 1000; // 1 second
 
 export function useSecurity() {
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     let devtoolsCheckInterval: NodeJS.Timeout | null = null;
 
     const redirectToHome = () => {
-      // Use replace to prevent the user from navigating back to the page
-      router.replace('/');
+      // Only redirect if not already on the homepage
+      if (pathname !== '/') {
+        router.replace('/');
+      }
     };
 
     // --- DevTools Detection ---
@@ -84,5 +87,5 @@ export function useSecurity() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('contextmenu', handleContextMenu);
     };
-  }, [router]);
+  }, [router, pathname]);
 }
