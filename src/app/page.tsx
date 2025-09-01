@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowRight, BrainCircuit, BookOpenCheck, LogOut, Settings, History, Facebook, Twitter, Instagram, MessageCircle, PenTool, BotMessageSquare, MessageSquare, GalleryHorizontal, Check } from 'lucide-react';
+import { ArrowRight, BrainCircuit, BookOpenCheck, LogOut, Settings, History, Facebook, Twitter, Instagram, MessageCircle, PenTool, BotMessageSquare, MessageSquare, GalleryHorizontal, Check, Menu } from 'lucide-react';
 import GethubLogo from '@/components/gethub-logo';
 import { examCategories } from '@/lib/exam-categories';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
@@ -18,6 +18,7 @@ import { LoaderCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 
 function HomePageContent() {
@@ -34,11 +35,11 @@ function HomePageContent() {
 
   const PageHeader = () => (
      <header className="flex items-center justify-between p-4 border-b border-white/10 sticky top-0 bg-background/80 backdrop-blur-sm z-10">
-        <div className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2">
             <GethubLogo className="w-8 h-8 text-primary" width={32} height={32}/>
             <span className="text-xl font-bold">GETHUB</span>
-        </div>
-        <div className="flex items-center gap-2">
+        </Link>
+        <div className="hidden md:flex items-center gap-2">
             {user ? (
                  <div className="flex items-center gap-4">
                      <Button variant="ghost" asChild>
@@ -83,6 +84,58 @@ function HomePageContent() {
                 </>
             )}
         </div>
+         <div className="md:hidden">
+            <Sheet>
+                <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                        <Menu />
+                        <span className="sr-only">Open menu</span>
+                    </Button>
+                </SheetTrigger>
+                <SheetContent side="right">
+                     <div className="flex flex-col gap-4 p-4">
+                        {user ? (
+                            <>
+                                <Button variant="ghost" asChild className="justify-start">
+                                    <Link href="/history">
+                                        <History className="mr-2"/>
+                                        History
+                                    </Link>
+                                </Button>
+                                <Button variant="ghost" asChild className="justify-start">
+                                    <Link href="/gallery">
+                                        <GalleryHorizontal className="mr-2"/>
+                                        Gallery
+                                    </Link>
+                                </Button>
+                                <Button variant="ghost" asChild className="justify-start">
+                                    <Link href="/settings">
+                                        <Settings className="mr-2"/>
+                                        Settings
+                                    </Link>
+                                </Button>
+                                <Button variant="ghost" onClick={logout} className="justify-start">
+                                    <LogOut className="mr-2" />
+                                    <span>Logout</span>
+                                </Button>
+                            </>
+                        ) : (
+                            <>
+                                <Button variant="ghost" asChild className="justify-start">
+                                    <Link href="/gallery">Gallery</Link>
+                                </Button>
+                                <Button variant="ghost" asChild className="justify-start">
+                                    <Link href="/login">Login</Link>
+                                </Button>
+                                <Button asChild className="w-full">
+                                    <Link href="/register">Get Started</Link>
+                                </Button>
+                            </>
+                        )}
+                    </div>
+                </SheetContent>
+            </Sheet>
+        </div>
     </header>
   );
 
@@ -90,12 +143,12 @@ function HomePageContent() {
     <div className="flex flex-col min-h-screen bg-background">
         <PageHeader/>
         <main className="flex-1">
-            <section className="text-center py-20 px-4 border-b border-white/10">
-                 <h1 className="text-4xl md:text-5xl font-bold tracking-tight">Welcome to GETHUB</h1>
+            <section className="text-center py-16 md:py-20 px-4 border-b border-white/10">
+                 <h1 className="text-4xl md:text-6xl font-bold tracking-tight">Welcome to GETHUB</h1>
                  <p className="text-muted-foreground mt-4 max-w-2xl mx-auto text-lg">
                     Your hub for competitive exam preparation. Choose an exam below to start your journey.
                  </p>
-                 <div className="mt-8 flex justify-center gap-4">
+                 <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
                      <Button asChild size="lg" variant="secondary">
                         <Link href="/practice">
                             <BrainCircuit className="mr-2"/> AI Practice
@@ -115,9 +168,9 @@ function HomePageContent() {
                     <p className="text-muted-foreground mt-2">See how GETHUB has helped students achieve their dreams.</p>
                 </div>
                 <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-8 items-center">
-                   <div className="grid grid-cols-2 grid-rows-2 gap-4">
+                   <div className="grid grid-cols-2 grid-rows-2 gap-4 h-[450px] md:h-[600px]">
                       <Image 
-                        src="https://placehold.co/600x400.png"
+                        src="https://picsum.photos/600/400"
                         alt="Success story 1"
                         width={600}
                         height={400}
@@ -125,7 +178,7 @@ function HomePageContent() {
                         data-ai-hint="student studying"
                       />
                        <Image 
-                        src="https://placehold.co/300x400.png"
+                        src="https://picsum.photos/300/400"
                         alt="Success story 2"
                         width={300}
                         height={400}
@@ -133,7 +186,7 @@ function HomePageContent() {
                         data-ai-hint="happy graduate"
                       />
                        <Image 
-                        src="https://placehold.co/300x400.png"
+                        src="https://picsum.photos/300/400"
                         alt="Success story 3"
                         width={300}
                         height={400}
@@ -236,7 +289,7 @@ function HomePageContent() {
             </section>
 
 
-            <section id="exams" className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
+            <section id="exams" className="py-20 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto">
               <div className="text-center my-12">
                   <h2 className="text-3xl font-bold tracking-tight">Choose Your Exam</h2>
                   <p className="text-muted-foreground mt-2">Select an exam to view its syllabus and start preparing.</p>

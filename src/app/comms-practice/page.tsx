@@ -86,55 +86,56 @@ function CommunicationPracticePage() {
     }
     const audio = audioRef.current;
     if (audio) {
-      if (!audio.paused) {
-        audio.pause();
-        audio.currentTime = 0;
-      }
-      audio.src = audioDataUri;
-      audio.play().catch(e => {
-        if (e.name !== 'AbortError') {
-          console.error("Audio playback failed:", e);
-          toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
+        if (!audio.paused) {
+            audio.pause();
+            audio.currentTime = 0;
         }
-        setIsSpeaking(false);
-      });
+        audio.src = audioDataUri;
+        audio.play().catch(e => {
+            if (e.name !== 'AbortError') {
+                console.error("Audio playback failed:", e);
+                toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
+            }
+            setIsSpeaking(false);
+        });
     }
-  }, [isRecording, toast]);
+}, [isRecording, toast]);
 
-  const handleSendMessage = useCallback(async (text: string) => {
+
+const handleSendMessage = useCallback(async (text: string) => {
     if (!text.trim() || isGenerating || isSpeaking) return;
-  
+
     setUserInput('');
     setIsGenerating(true);
       
     const userMessage: Message = { id: `user-${Date.now()}`, role: 'user', content: text };
     const assistantMessageId = `assistant-${Date.now()}`;
     const thinkingMessage: Message = { id: assistantMessageId, role: 'assistant', content: '', isGenerating: true };
-  
+
     setMessages(prev => [...prev, userMessage, thinkingMessage]);
-  
+
     try {
-      const feedbackResult = await generateCommunicationFeedback({ text, nativeLanguage });
-      const aiResponseText = feedbackResult.response;
+        const feedbackResult = await generateCommunicationFeedback({ text, nativeLanguage });
+        const aiResponseText = feedbackResult.response;
           
-      if (aiResponseText.trim()) {
-        const ttsResult = await textToSpeech({ text: aiResponseText, voice });
-              
-        setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: aiResponseText, isGenerating: false } : m));
-        playAudio(ttsResult.audioDataUri);
-  
-      } else {
-        setMessages(prev => prev.filter(m => m.id !== assistantMessageId));
-      }
-  
-    } catch (err) {
-      console.error("Failed to get feedback:", err);
-      const errorMessage = "I'm having a little trouble connecting right now. Let's try that again in a moment.";
-      setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: errorMessage, isGenerating: false } : m));
+        if (aiResponseText.trim()) {
+            const ttsResult = await textToSpeech({ text: aiResponseText, voice });
+            setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: aiResponseText, isGenerating: false } : m));
+            playAudio(ttsResult.audioDataUri);
+        } else {
+            setMessages(prev => prev.filter(m => m.id !== assistantMessageId));
+        }
+
+    } catch (err: any) {
+        console.error("Failed to get feedback:", err);
+        const errorMessage = err.message?.includes('429') 
+            ? "I'm experiencing high demand right now. Let's try that again in a moment."
+            : "I'm having a little trouble connecting right now. Let's try that again in a moment.";
+        setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: errorMessage, isGenerating: false } : m));
     } finally {
-      setIsGenerating(false);
+        setIsGenerating(false);
     }
-  }, [isGenerating, isSpeaking, voice, nativeLanguage, playAudio]);
+}, [isGenerating, isSpeaking, voice, nativeLanguage, playAudio]);
   
    useEffect(() => {
     if (!SpeechRecognition) return;
@@ -202,9 +203,9 @@ function CommunicationPracticePage() {
   }, [toast, handleSendMessage]);
 
   useEffect(() => {
-      if (!audioRef.current) {
+    if (!audioRef.current) {
         audioRef.current = new Audio();
-        
+
         audioRef.current.onplay = () => {
             setIsSpeaking(true);
         };
@@ -215,29 +216,27 @@ function CommunicationPracticePage() {
 
         audioRef.current.onerror = (e) => {
             const target = e.target as HTMLAudioElement;
-            // Error code 20 is a DOMException for abort, which is expected if we interrupt playback.
             if (target.error && target.error.code !== 20) { 
                 console.error("Audio element error:", e);
                 toast({ title: "Audio Error", description: "Could not play the audio response.", variant: "destructive" });
             }
-            // Always ensure speaking state is reset, even on error.
             setIsSpeaking(false);
         };
-      }
+    }
 
-      return () => {
-          if (recognitionRef.current) {
+    return () => {
+        if (recognitionRef.current) {
             recognitionRef.current.abort();
-          }
-          if (audioRef.current) {
+        }
+        if (audioRef.current) {
             audioRef.current.pause();
             audioRef.current = null;
-          }
-           if (speechTimeoutRef.current) {
-                clearTimeout(speechTimeoutRef.current);
-           }
-      };
-  }, [toast]);
+        }
+        if (speechTimeoutRef.current) {
+            clearTimeout(speechTimeoutRef.current);
+        }
+    };
+}, [toast]);
 
 
   const handleToggleRecording = () => {
@@ -376,19 +375,19 @@ function CommunicationPracticePage() {
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
-        <header className="flex items-center justify-between p-4 border-b">
-          <div className="flex items-center gap-2">
+        <header className="flex flex-col md:flex-row items-center justify-between p-4 border-b gap-4">
+          <div className="flex items-center gap-2 self-start md:self-center">
             <SidebarTrigger className="md:hidden" />
              <h1 className="text-xl font-semibold flex items-center gap-3">
                 <MessageCircle className="w-6 h-6"/>
                 AI Language Coach
             </h1>
           </div>
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <Languages className="w-5 h-5 text-muted-foreground"/>
+          <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+            <div className="flex items-center gap-2 w-full">
+              <Label htmlFor="lang-select" className="shrink-0"><Languages className="w-5 h-5 text-muted-foreground"/></Label>
               <Select value={nativeLanguage} onValueChange={setNativeLanguage} disabled={isUIActive}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger id="lang-select" className="w-full">
                       <SelectValue placeholder="Select Language" />
                   </SelectTrigger>
                   <SelectContent>
@@ -411,7 +410,7 @@ function CommunicationPracticePage() {
             </RadioGroup>
           </div>
         </header>
-        <main className="flex flex-col h-[calc(100vh-61px)]">
+        <main className="flex flex-col h-[calc(100vh-130px)] md:h-[calc(100vh-81px)]">
           <ScrollArea className="flex-1 p-4 md:p-6 lg:p-8" ref={scrollAreaRef}>
             <div className="space-y-6">
                 {messages.length === 0 && !isUIActive && (
@@ -426,7 +425,7 @@ function CommunicationPracticePage() {
                 {messages.map((message) => (
                     <div key={message.id} className={`flex items-start gap-4 ${message.role === 'user' ? 'justify-end' : ''}`}>
                          {message.role === 'assistant' && (
-                           <GethubLogo className="w-8 h-8" width={32} height={32} />
+                           <GethubLogo className="w-8 h-8 shrink-0" width={32} height={32} />
                         )}
                         <div className={`max-w-xl rounded-lg p-4 ${message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-secondary'}`}>
                            {message.isGenerating ? (
@@ -446,7 +445,7 @@ function CommunicationPracticePage() {
                            )}
                         </div>
                         {message.role === 'user' && (
-                            <Avatar className="w-8 h-8">
+                            <Avatar className="w-8 h-8 shrink-0">
                                 <AvatarImage src={user.photoURL ?? 'https://placehold.co/100x100.png'} alt="@user" data-ai-hint="student portrait" />
                                 <AvatarFallback>{user.email?.[0].toUpperCase()}</AvatarFallback>
                             </Avatar>
@@ -513,5 +512,3 @@ export default function CommunicationPracticePageWrapperWithAuth() {
     </AuthProvider>
   );
 }
-
-    
