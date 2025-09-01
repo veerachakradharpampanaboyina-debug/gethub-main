@@ -159,54 +159,14 @@ function HomePageContent() {
                             <MessageCircle className="mr-2"/> Communication Practice
                         </Link>
                     </Button>
+                    <Button asChild size="lg" variant="outline">
+                        <Link href="#exams">
+                            Explore Exams <ArrowRight className="ml-2"/>
+                        </Link>
+                    </Button>
                 </div>
             </section>
             
-            <section id="gallery" className="py-20 px-4 border-b border-white/10 bg-secondary/30">
-                <div className="text-center mb-12">
-                    <h2 className="text-3xl font-bold tracking-tight">Our Success Stories</h2>
-                    <p className="text-muted-foreground mt-2">See how GETHUB has helped students achieve their dreams.</p>
-                </div>
-                <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-8 items-center">
-                   <div className="grid grid-cols-2 grid-rows-2 gap-4 h-[450px] md:h-[600px]">
-                      <Image 
-                        src="https://picsum.photos/600/400"
-                        alt="Success story 1"
-                        width={600}
-                        height={400}
-                        className="rounded-lg shadow-lg col-span-2 row-span-1 object-cover w-full h-full"
-                        data-ai-hint="student studying"
-                      />
-                       <Image 
-                        src="https://picsum.photos/300/400"
-                        alt="Success story 2"
-                        width={300}
-                        height={400}
-                        className="rounded-lg shadow-lg col-span-1 row-span-1 object-cover w-full h-full"
-                        data-ai-hint="happy graduate"
-                      />
-                       <Image 
-                        src="https://picsum.photos/300/400"
-                        alt="Success story 3"
-                        width={300}
-                        height={400}
-                        className="rounded-lg shadow-lg col-span-1 row-span-1 object-cover w-full h-full"
-                        data-ai-hint="group celebration"
-                      />
-                   </div>
-                    <div className="prose prose-invert text-lg">
-                        <h3>From Aspiration to Achievement</h3>
-                        <p>Join thousands of students who have transformed their preparation with GETHUB. Our AI-powered tools, detailed syllabus breakdowns, and on-demand practice exams provide the edge you need to excel in competitive exams.</p>
-                        <p>Whether you're aiming for civil services, engineering, or medical school, our platform is designed to guide you at every step of your journey. Start today and unlock your potential.</p>
-                         <Button asChild size="lg">
-                            <Link href="#exams">
-                                Explore Exams <ArrowRight className="ml-2"/>
-                            </Link>
-                        </Button>
-                    </div>
-                </div>
-            </section>
-
              <section id="benefits" className="py-20 px-4 border-b border-white/10">
                 <div className="text-center mb-12">
                     <h2 className="text-3xl font-bold tracking-tight">Why Choose GETHUB?</h2>
