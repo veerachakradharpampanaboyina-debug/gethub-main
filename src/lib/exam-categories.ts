@@ -538,6 +538,7 @@ export const examCategories: ExamCategory[] = [
           category: 'School / Junior Level',
           exams: [
               { examId: 'ntse', examName: 'NTSE (National Talent Search Exam)', description: 'National level scholarship program for school students.', stages: [] },
+              { examId: 'nmms', examName: 'NMMS (National Means-cum-Merit Scholarship)', description: 'A scholarship exam for meritorious students of economically weaker sections.', stages: [] },
               { examId: 'kvpy', examName: 'KVPY (Now merged with INSPIRE)', description: 'Scholarship program to encourage students to take up research careers.', stages: [] },
               { examId: 'olympiads', examName: 'Olympiads (NSO, IMO, IEO, etc.)', description: 'Various national and international Olympiads for school students.', stages: [] },
               { examId: 'rmo-inmo', examName: 'RMO / INMO (Math Olympiad)', description: 'Mathematical Olympiad program in India.', stages: [] },
@@ -755,4 +756,5 @@ export const examCategories: ExamCategory[] = [
         stages: exam.stages || [], 
       }))
     }));
+    
     
