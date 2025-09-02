@@ -51,7 +51,6 @@ import { generateSyllabusNotes } from '@/ai/flows/generate-syllabus-notes';
 import jsPDF from 'jspdf';
 import { Separator } from '@/components/ui/separator';
 import { markdownToHtml } from '@/lib/utils';
-import { getLatestScheduledExam } from '@/services/scheduled-exam-service';
 import { useToast } from '@/hooks/use-toast';
 
 function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
@@ -63,7 +62,6 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
   const [generatedNotes, setGeneratedNotes] = useState('');
   const [notesError, setNotesError] = useState<string | null>(null);
   const [currentTopic, setCurrentTopic] = useState('');
-  const [hasWeeklyExam, setHasWeeklyExam] = useState<boolean | null>(null);
   const notesContentRef = useRef<HTMLDivElement>(null);
 
 
@@ -73,12 +71,6 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
     }
   }, [user, loading, router, exam.examId]);
 
-  useEffect(() => {
-      getLatestScheduledExam(exam.examId).then((result) => {
-          setHasWeeklyExam(!!result);
-      });
-  }, [exam.examId]);
-  
   const handleGenerateNotes = async (topic: string) => {
     setCurrentTopic(topic);
     setIsNotesDialogOpen(true);
@@ -143,7 +135,7 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
     });
   };
 
-  if (loading || !user || hasWeeklyExam === null) {
+  if (loading || !user) {
     return (
       <div className="flex h-screen items-center justify-center">
         <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
@@ -286,27 +278,6 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
                     </CardDescription>
                 </CardHeader>
             </Card>
-
-             {hasWeeklyExam && (
-                <Card className="border-primary/50 bg-primary/10">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-3 text-primary">
-                            <CalendarClock /> Weekly Scheduled Exam
-                        </CardTitle>
-                        <CardDescription className="text-primary/80">
-                           A new question paper is available for this exam. Test your knowledge with the latest questions.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardFooter>
-                         <Button asChild>
-                            <Link href={`/scheduled-exam/${exam.examId}`}>
-                                Start Weekly Exam
-                            </Link>
-                        </Button>
-                    </CardFooter>
-                </Card>
-             )}
-
 
             {exam.stages && exam.stages.length > 0 ? (
                  <Accordion type="multiple" className="w-full space-y-4">

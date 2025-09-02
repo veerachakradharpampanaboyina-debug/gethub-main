@@ -108,7 +108,6 @@ export interface ScheduledExam {
     id?: string;
     examId: string; // Corresponds to ExamDetails.examId
     examName: string;
-    weekId: string; // e.g., "2024-W30"
     questions: Question[];
     createdAt: Timestamp;
 }

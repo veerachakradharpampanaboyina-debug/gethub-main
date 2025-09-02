@@ -11,13 +11,9 @@ export async function saveScheduledExam(examData: {
     questions: Question[]
 }): Promise<string> {
 
-    const weekNumber = Math.ceil((new Date().getDate() + new Date(new Date().getFullYear(), new Date().getMonth(), 1).getDay() - 1) / 7);
-    const weekId = `${new Date().getFullYear()}-W${weekNumber}-${new Date().getMonth() + 1}`;
-
     const scheduledExam: Omit<ScheduledExam, 'id'> = {
         examId: examData.examId,
         examName: examData.examName,
-        weekId: weekId,
         questions: examData.questions,
         createdAt: Timestamp.now(),
     };

@@ -27,10 +27,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { LoaderCircle } from 'lucide-react';
-import { pdfToQuizJson } from '@/ai/flows/pdf-to-quiz-json';
-import { saveScheduledExam } from '@/services/scheduled-exam-service';
-import { examCategories } from '@/lib/exam-categories';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { addGalleryItem, uploadGalleryImage } from '@/services/gallery-service';
 
@@ -40,11 +36,6 @@ function AdminPage() {
   const router = useRouter();
   const { toast } = useToast();
   
-  // State for weekly exam upload
-  const [file, setFile] = useState<File | null>(null);
-  const [isUploadingExam, setIsUploadingExam] = useState(false);
-  const [selectedExamId, setSelectedExamId] = useState<string>('');
-
   // State for gallery upload
   const [galleryImage, setGalleryImage] = useState<File | null>(null);
   const [studentName, setStudentName] = useState('');
@@ -67,69 +58,9 @@ function AdminPage() {
     }
   }, [user, loading, router, toast]);
 
-  const handleExamFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFile(e.target.files[0]);
-    }
-  };
-  
   const handleGalleryFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       setGalleryImage(e.target.files[0]);
-    }
-  };
-
-  const handleExamSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!file) {
-      toast({ title: "No file selected", description: "Please select a PDF file to upload.", variant: "destructive" });
-      return;
-    }
-     if (!selectedExamId) {
-      toast({ title: "No exam selected", description: "Please select an exam to associate with the PDF.", variant: "destructive" });
-      return;
-    }
-
-    setIsUploadingExam(true);
-    
-    try {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = async (event) => {
-          const pdfDataUri = event.target?.result as string;
-          
-          toast({ title: "Processing PDF", description: "The AI is converting the PDF to a quiz. This may take a moment..." });
-
-          const quizData = await pdfToQuizJson({ pdfDataUri });
-
-          if (!quizData.questions || quizData.questions.length === 0) {
-              throw new Error("The AI could not extract any questions from the PDF.");
-          }
-          
-          const selectedExam = examCategories.flatMap(c => c.exams).find(e => e.examId === selectedExamId);
-
-          await saveScheduledExam({
-              examId: selectedExamId,
-              examName: selectedExam?.examName || 'Scheduled Exam',
-              questions: quizData.questions.map(q => ({...q, studentAnswer: ''})),
-          });
-
-          toast({ title: "Upload Successful", description: "The weekly scheduled exam has been created." });
-          setFile(null);
-          setSelectedExamId('');
-          // Reset file input
-          const fileInput = document.getElementById('pdf-upload') as HTMLInputElement;
-          if(fileInput) fileInput.value = '';
-      };
-    } catch (error: any) {
-        console.error("Failed to process and save exam:", error);
-        toast({
-          title: "Upload Failed",
-          description: error.message || "An unexpected error occurred.",
-          variant: "destructive"
-        });
-    } finally {
-        setIsUploadingExam(false);
     }
   };
 
@@ -178,8 +109,6 @@ function AdminPage() {
     );
   }
   
-  const allExams = examCategories.flatMap(category => category.exams);
-
   return (
     <SidebarProvider>
       <Sidebar>
@@ -293,40 +222,6 @@ function AdminPage() {
           </div>
         </header>
         <main className="p-4 md:p-6 lg:p-8 space-y-8">
-            <Card>
-              <CardHeader>
-                <CardTitle>Upload Weekly Scheduled Exam</CardTitle>
-                <CardDescription>
-                  Select an exam and upload a PDF question paper. The AI will convert it to a quiz and schedule it.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleExamSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="exam-select">Competitive Exam</Label>
-                     <Select value={selectedExamId} onValueChange={setSelectedExamId}>
-                        <SelectTrigger id="exam-select">
-                            <SelectValue placeholder="Select an exam" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {allExams.map((exam) => (
-                                <SelectItem key={exam.examId} value={exam.examId}>{exam.examName}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="pdf-upload">Question Paper PDF</Label>
-                    <Input id="pdf-upload" type="file" accept=".pdf" onChange={handleExamFileChange} />
-                  </div>
-                  <Button type="submit" disabled={isUploadingExam}>
-                    {isUploadingExam ? <LoaderCircle className="w-4 h-4 animate-spin mr-2" /> : null}
-                    Upload & Schedule Exam
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-
              <Card>
               <CardHeader>
                 <CardTitle>Add to Student Gallery</CardTitle>
