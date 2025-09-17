@@ -57,7 +57,9 @@ function HomePageContent() {
                 description: `You can now track your progress for ${examName}.`,
             });
             // Redirect to the dashboard page to see the tracked exam
-            router.push('/dashboard');
+            setTimeout(() => {
+              router.push('/dashboard');
+            }, 2000);
         } catch (error) {
             console.error("Failed to enroll:", error);
             toast({
@@ -377,3 +379,5 @@ export default function HomePage() {
     </AuthProvider>
   );
 }
+
+    
