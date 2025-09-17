@@ -51,6 +51,7 @@ export interface ExamPaper {
   qualifyingMarks?: string;
   notes?: string;
   topics?: string[];
+  sections?: { sectionName: string; questions?: number; marks?: number; time?: string; topics?: string[] }[];
 }
 
 export interface PersonalityTest {
@@ -71,6 +72,7 @@ export interface ExamDetails {
   description: string;
   stages: ExamStage[];
   totalMarks?: number;
+  totalStages?: number;
 }
 
 export interface Exam {
@@ -118,4 +120,10 @@ export interface GalleryItem {
     achievement: string;
     photoURL: string;
     createdAt: Timestamp;
+}
+
+export type TopicStatus = 'Pending' | 'Completed' | 'Revision';
+
+export interface SyllabusProgress {
+    topicStatus: { [topicId: string]: TopicStatus };
 }

@@ -15,12 +15,12 @@ import {
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, Settings, Home as HomeIcon, History, BrainCircuit, Shield, BookCopy, Info, FileText, Download, MessageCircle, CalendarClock, GalleryHorizontal } from 'lucide-react';
-import { ExamDetails, ExamPaper } from '@/lib/types';
+import { LogOut, Settings, Home as HomeIcon, History, BrainCircuit, Shield, BookCopy, Info, FileText, Download, MessageCircle, GalleryHorizontal, Check, RefreshCw, Clock } from 'lucide-react';
+import { ExamDetails, ExamPaper, SyllabusProgress, TopicStatus } from '@/lib/types';
 import GethubLogo from '@/components/gethub-logo';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { LoaderCircle } from 'lucide-react';
@@ -47,11 +47,20 @@ import {
   DialogDescription,
   DialogFooter
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { generateSyllabusNotes } from '@/ai/flows/generate-syllabus-notes';
 import jsPDF from 'jspdf';
 import { Separator } from '@/components/ui/separator';
 import { markdownToHtml } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { getSyllabusProgress, updateSyllabusProgress } from '@/services/syllabus-service';
+import { Progress } from '@/components/ui/progress';
+
 
 function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
   const { user, loading, logout } = useAuth();
@@ -62,14 +71,58 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
   const [generatedNotes, setGeneratedNotes] = useState('');
   const [notesError, setNotesError] = useState<string | null>(null);
   const [currentTopic, setCurrentTopic] = useState('');
+  const [syllabusProgress, setSyllabusProgress] = useState<SyllabusProgress | null>(null);
+  const [isLoadingProgress, setIsLoadingProgress] = useState(true);
   const notesContentRef = useRef<HTMLDivElement>(null);
 
 
   useEffect(() => {
     if (!loading && !user) {
       router.push(`/login?redirect=/exam/${exam.examId}`);
+    } else if (!loading && user) {
+        setIsLoadingProgress(true);
+        getSyllabusProgress(user.uid, exam.examId)
+            .then(progress => {
+                setSyllabusProgress(progress || { topicStatus: {} });
+            })
+            .catch(err => {
+                console.error("Failed to load syllabus progress:", err);
+                toast({ title: "Error", description: "Could not load your progress.", variant: "destructive" });
+            })
+            .finally(() => setIsLoadingProgress(false));
     }
-  }, [user, loading, router, exam.examId]);
+  }, [user, loading, router, exam.examId, toast]);
+
+  const handleStatusChange = async (topicId: string, status: TopicStatus) => {
+    if (!user) return;
+    
+    const newProgress = {
+        ...syllabusProgress,
+        topicStatus: {
+            ...syllabusProgress?.topicStatus,
+            [topicId]: status,
+        }
+    };
+    setSyllabusProgress(newProgress as SyllabusProgress);
+    try {
+        await updateSyllabusProgress(user.uid, exam.examId, newProgress as SyllabusProgress);
+    } catch (error) {
+        toast({ title: "Error", description: "Failed to save progress.", variant: "destructive" });
+        // Optionally revert state
+    }
+};
+
+  const { totalTopics, completedTopics } = useMemo(() => {
+    const allTopics = exam.stages.flatMap(stage => stage.papers.flatMap(paper => paper.topics?.map(topic => `${paper.paperId}-${topic}`) || []));
+    const total = allTopics.length;
+    if (!syllabusProgress) return { totalTopics: total, completedTopics: 0 };
+
+    const completed = allTopics.filter(topicId => syllabusProgress.topicStatus[topicId] === 'Completed').length;
+    return { totalTopics: total, completedTopics: completed };
+  }, [exam, syllabusProgress]);
+
+  const progressPercentage = totalTopics > 0 ? (completedTopics / totalTopics) * 100 : 0;
+
 
   const handleGenerateNotes = async (topic: string) => {
     setCurrentTopic(topic);
@@ -135,7 +188,7 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
     });
   };
 
-  if (loading || !user) {
+  if (loading || !user || isLoadingProgress) {
     return (
       <div className="flex h-screen items-center justify-center">
         <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
@@ -154,6 +207,17 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
       {paper.notes && <p className="text-xs pt-2 border-t mt-2">{paper.notes}</p>}
     </div>
   );
+  
+  const TopicStatusBadge = ({ status }: { status: TopicStatus }) => {
+    switch (status) {
+        case 'Completed':
+            return <Badge variant="secondary" className="bg-green-500/20 text-green-300 border-green-500/30"><Check className="mr-1 h-3 w-3"/>Completed</Badge>;
+        case 'Revision':
+            return <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-300 border-yellow-500/30"><RefreshCw className="mr-1 h-3 w-3"/>Revision</Badge>;
+        default:
+            return <Badge variant="outline"><Clock className="mr-1 h-3 w-3"/>Pending</Badge>;
+    }
+};
 
   return (
     <SidebarProvider>
@@ -274,9 +338,21 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
                 <CardHeader>
                     <CardTitle>Syllabus & Preparation</CardTitle>
                     <CardDescription>
-                        Explore the detailed syllabus for the {exam.examName}. Generate practice tests or notes for any topic.
+                        Explore the detailed syllabus for the {exam.examName}. Track your progress, generate practice tests, or get AI-generated notes for any topic.
                     </CardDescription>
                 </CardHeader>
+                 {totalTopics > 0 && (
+                    <CardContent>
+                        <div className="space-y-2">
+                             <div className="flex justify-between items-center mb-1">
+                                <Label htmlFor="progress">Syllabus Progress</Label>
+                                <span className="text-sm font-medium text-primary">{progressPercentage.toFixed(0)}%</span>
+                            </div>
+                            <Progress value={progressPercentage} id="progress" />
+                            <p className="text-xs text-muted-foreground">{completedTopics} of {totalTopics} topics completed.</p>
+                        </div>
+                    </CardContent>
+                )}
             </Card>
 
             {exam.stages && exam.stages.length > 0 ? (
@@ -307,9 +383,32 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
                                                   <CardTitle className="flex items-center gap-2 text-base"><BrainCircuit /> Practice Topics</CardTitle>
                                                 </CardHeader>
                                                 <CardContent className="space-y-4">
-                                                  {paper.topics && paper.topics.length > 0 ? paper.topics.map((topic, index) => (
+                                                  {paper.topics && paper.topics.length > 0 ? paper.topics.map((topic, index) => {
+                                                     const topicId = `${paper.paperId}-${topic}`;
+                                                     const currentStatus = syllabusProgress?.topicStatus[topicId] || 'Pending';
+                                                     return (
                                                       <div key={index} className="p-3 rounded-lg bg-secondary/30 space-y-3">
-                                                         <p className="font-medium text-sm">{topic}</p>
+                                                         <div className="flex justify-between items-start">
+                                                            <p className="font-medium text-sm flex-1 pr-4">{topic}</p>
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger asChild>
+                                                                    <Button variant="ghost" size="sm" className="h-auto px-2 py-1">
+                                                                        <TopicStatusBadge status={currentStatus} />
+                                                                    </Button>
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent>
+                                                                    <DropdownMenuItem onClick={() => handleStatusChange(topicId, 'Pending')}>
+                                                                        <Clock className="mr-2 h-4 w-4"/> Pending
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuItem onClick={() => handleStatusChange(topicId, 'Completed')}>
+                                                                        <Check className="mr-2 h-4 w-4"/> Completed
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuItem onClick={() => handleStatusChange(topicId, 'Revision')}>
+                                                                        <RefreshCw className="mr-2 h-4 w-4"/> Revision
+                                                                    </DropdownMenuItem>
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
+                                                         </div>
                                                           <div className="flex flex-col sm:flex-row gap-2">
                                                             <Button asChild variant="outline" size="sm" className="w-full">
                                                                 <Link href={`/practice?topic=${encodeURIComponent(`${exam.examName} - ${paper.paperName} - ${topic}`)}`}>
@@ -323,7 +422,7 @@ function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
                                                             </Button>
                                                           </div>
                                                       </div>
-                                                  )) : (
+                                                  )}) : (
                                                     <div className="text-sm text-center text-muted-foreground py-4">
                                                       No specific topics listed. You can generate a general practice test for this paper.
                                                     </div>

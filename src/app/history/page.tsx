@@ -15,12 +15,12 @@ import {
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, Settings, Home as HomeIcon, History, BrainCircuit, Shield, MessageCircle, GalleryHorizontal } from 'lucide-react';
+import { LogOut, Settings, Home as HomeIcon, History, BrainCircuit, Shield, MessageCircle, GalleryHorizontal, TrendingUp, RefreshCcw } from 'lucide-react';
 import type { ExamAttempt, Question, GradingResult, FlaggedAnswer } from '@/lib/types';
 import GethubLogo from '@/components/gethub-logo';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { getUserExamAttempts } from '@/services/exam-service';
@@ -41,7 +41,16 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from "@/components/ui/chart"
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts"
 
+
+const chartConfig = {
+  score: {
+    label: "Score (%)",
+    color: "hsl(var(--primary))",
+  },
+} satisfies ChartConfig
 
 const QuestionResultBadge = ({
   question,
@@ -123,6 +132,21 @@ function HistoryPage() {
         });
     }
   }, [user, loading]);
+  
+  const chartData = useMemo(() => {
+    return attempts
+        .filter(attempt => attempt.examId.startsWith('practice-')) // only show practice exams in chart
+        .map(attempt => {
+            const scorePercentage = attempt.aiGradingState.totalPointsPossible > 0 ? (attempt.aiGradingState.totalPointsAwarded / attempt.aiGradingState.totalPointsPossible) * 100 : 0;
+            return {
+                date: format(attempt.createdAt.toDate(), "MMM d"),
+                name: attempt.examName,
+                score: parseFloat(scorePercentage.toFixed(0)),
+            };
+        })
+        .reverse(); // Show oldest first
+  }, [attempts]);
+
 
   if (loading || isLoadingAttempts || !user) {
     return (
@@ -132,6 +156,8 @@ function HistoryPage() {
     );
   }
   
+  const practiceAttempts = attempts.filter(a => a.examId.startsWith('practice-'));
+
   return (
     <SidebarProvider>
       <Sidebar>
@@ -246,7 +272,7 @@ function HistoryPage() {
             </h1>
           </div>
         </header>
-        <main className="p-4 md:p-6 lg:p-8">
+        <main className="p-4 md:p-6 lg:p-8 space-y-8">
             {attempts.length === 0 ? (
                  <Card className="border-dashed">
                     <CardHeader className="items-center text-center">
@@ -258,9 +284,43 @@ function HistoryPage() {
                     </CardHeader>
                 </Card>
             ) : (
+             <>
+                 {practiceAttempts.length > 1 && (
+                     <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <TrendingUp />
+                                Performance Trends
+                            </CardTitle>
+                            <CardDescription>
+                                Your practice exam scores over time.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                             <div className="w-full h-64">
+                                <ChartContainer config={chartConfig} className="w-full h-full">
+                                  <LineChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                    <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />
+                                    <YAxis tickLine={false} axisLine={false} tickMargin={8} unit="%" />
+                                    <Tooltip
+                                        cursor={false}
+                                        content={<ChartTooltipContent indicator="dot" />}
+                                        />
+                                    <Line dataKey="score" type="monotone" stroke="hsl(var(--primary))" strokeWidth={2} dot={true} />
+                                  </LineChart>
+                                </ChartContainer>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+                
                 <Accordion type="single" collapsible className="w-full space-y-4">
                     {attempts.map((attempt) => {
                         const scorePercentage = attempt.aiGradingState.totalPointsPossible > 0 ? (attempt.aiGradingState.totalPointsAwarded / attempt.aiGradingState.totalPointsPossible) * 100 : 0;
+                        const isPracticeExam = attempt.examId.startsWith('practice-');
+                        const examTopic = isPracticeExam ? attempt.examName.replace('Practice Exam: ', '') : '';
+                        
                         return (
                             <AccordionItem value={attempt.id!} key={attempt.id!} className="border rounded-lg bg-secondary/50">
                                 <AccordionTrigger className="p-4 hover:no-underline">
@@ -279,7 +339,17 @@ function HistoryPage() {
                                      <div className="grid gap-6 mt-4">
                                         <Card>
                                             <CardHeader>
-                                                <CardTitle className="flex items-center gap-2"><ClipboardCheck /> AI-Generated Feedback</CardTitle>
+                                                <CardTitle className="flex items-center justify-between">
+                                                    <span className="flex items-center gap-2"><ClipboardCheck /> AI-Generated Feedback</span>
+                                                     {isPracticeExam && (
+                                                        <Button asChild variant="outline" size="sm">
+                                                            <Link href={`/practice?topic=${encodeURIComponent(examTopic)}`}>
+                                                                <RefreshCcw className="mr-2 h-4 w-4"/>
+                                                                Retake Exam
+                                                            </Link>
+                                                        </Button>
+                                                     )}
+                                                </CardTitle>
                                             </CardHeader>
                                             <CardContent>
                                                 <p className="text-sm text-muted-foreground">{attempt.aiGradingState.summary}</p>
@@ -350,6 +420,7 @@ function HistoryPage() {
                         );
                     })}
                 </Accordion>
+            </>
             )}
         </main>
       </SidebarInset>
