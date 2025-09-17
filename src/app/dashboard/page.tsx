@@ -319,9 +319,17 @@ function DashboardPage() {
 
             <div className="grid gap-8 lg:grid-cols-3">
                  <Card className="lg:col-span-2">
-                    <CardHeader>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                      <div>
                         <CardTitle>Your Tracked Exams</CardTitle>
                         <CardDescription>Your completion status for each exam you're tracking.</CardDescription>
+                      </div>
+                       <Button asChild variant="outline">
+                          <Link href="/#exams">
+                              <PlusCircle className="mr-2"/>
+                              Add Another Exam
+                          </Link>
+                      </Button>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {Object.keys(syllabusProgress).length > 0 ? Object.entries(syllabusProgress).map(([examId, progress]) => {
