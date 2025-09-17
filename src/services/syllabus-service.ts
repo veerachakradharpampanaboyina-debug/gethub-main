@@ -1,7 +1,7 @@
 
 import { db } from '@/lib/firebase';
 import { SyllabusProgress } from '@/lib/types';
-import { doc, getDoc, setDoc, getDocs, collectionGroup } from 'firebase/firestore';
+import { doc, getDoc, setDoc, getDocs, collection } from 'firebase/firestore';
 
 const getSyllabusProgressDocRef = (userId: string, examId: string) => {
     return doc(db, 'users', userId, 'syllabusProgress', examId);
