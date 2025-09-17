@@ -60,6 +60,7 @@ import { markdownToHtml } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { getSyllabusProgress, updateSyllabusProgress } from '@/services/syllabus-service';
 import { Progress } from '@/components/ui/progress';
+import { Label } from '@/components/ui/label';
 
 
 function ExamSyllabusPageComponent({ exam }: { exam: ExamDetails }) {
