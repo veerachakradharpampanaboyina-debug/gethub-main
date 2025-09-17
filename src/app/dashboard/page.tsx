@@ -344,7 +344,7 @@ function DashboardPage() {
                 </Card>
                 <Card>
                     <CardHeader>
-                        <CardTitle>Syllabus Progress Overview</CardTitle>
+                        <CardTitle>Your Tracked Exams</CardTitle>
                         <CardDescription>Your completion status for each exam you're tracking.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">

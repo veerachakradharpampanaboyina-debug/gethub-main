@@ -27,7 +27,7 @@ function RegisterPage() {
 
   useEffect(() => {
     if (!loading && user) {
-      router.push('/');
+      router.push('/dashboard');
     }
   }, [user, loading, router]);
 
@@ -36,7 +36,7 @@ function RegisterPage() {
     setError(null);
     try {
       await registerWithEmail(email, password);
-      router.push('/');
+      router.push('/dashboard');
     } catch (err: any) {
       setError(err.message);
     }

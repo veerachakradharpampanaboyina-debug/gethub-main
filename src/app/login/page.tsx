@@ -31,7 +31,7 @@ function LoginPage() {
   } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectPath = searchParams.get('redirect') || '/';
+  const redirectPath = searchParams.get('redirect') || '/dashboard';
 
 
   useEffect(() => {
