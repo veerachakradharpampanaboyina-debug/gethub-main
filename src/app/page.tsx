@@ -19,13 +19,20 @@ import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { useEffect } from 'react';
 
 
 function HomePageContent() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
 
-  if (loading) {
+  useEffect(() => {
+    if (!loading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, loading, router]);
+  
+  if (loading || user) {
     return (
       <div className="flex h-screen items-center justify-center">
         <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
