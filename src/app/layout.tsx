@@ -1,10 +1,9 @@
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
-import SecurityProvider from '@/components/security-provider';
 
 export const metadata: Metadata = {
-  title: 'GETHUB',
+  title: 'Gethub',
   description: 'Your hub for competitive exam preparation.',
 };
 
@@ -21,9 +20,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        <SecurityProvider>
-            {children}
-        </SecurityProvider>
+        {children}
         <Toaster />
       </body>
     </html>
