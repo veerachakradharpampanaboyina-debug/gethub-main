@@ -40,17 +40,23 @@ function HomePageContent() {
   
     const handleEnroll = async (examId: string, examName: string) => {
         if (!user) {
-            router.push('/login');
+            router.push('/login?redirect=/#exams');
             return;
         }
         setIsEnrolling(examId);
         try {
-            await updateSyllabusProgress(user.uid, examId, { topicStatus: {} });
-            setSyllabusProgress(prev => ({ ...prev, [examId]: { topicStatus: {} } }));
+            // Create a new empty progress object
+            const newProgress = { topicStatus: {} };
+            await updateSyllabusProgress(user.uid, examId, newProgress);
+
+            // Update local state to immediately reflect the change
+            setSyllabusProgress(prev => ({ ...prev, [examId]: newProgress }));
+
             toast({
                 title: "Successfully Enrolled!",
                 description: `You can now track your progress for ${examName}.`,
             });
+            // Redirect to the exam page to start preparation
             router.push(`/exam/${examId}`);
         } catch (error) {
             console.error("Failed to enroll:", error);
@@ -144,7 +150,7 @@ function HomePageContent() {
                                         <History className="mr-2"/>
                                         History
                                     </Link>
-                                </Button>
+                                 </Button>
                                 <Button variant="ghost" asChild className="justify-start">
                                     <Link href="/gallery">
                                         <GalleryHorizontal className="mr-2"/>
@@ -292,17 +298,17 @@ function HomePageContent() {
             </section>
 
 
-            <section id="exams" className="py-20 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto">
+            <section id="exams" className="py-20 px-4 md:px-6 lg:px-8">
               <div className="text-center my-12">
                   <h2 className="text-3xl font-bold tracking-tight">Choose Your Exam</h2>
                   <p className="text-muted-foreground mt-2">Select an exam to view its syllabus and start preparing.</p>
               </div>
 
-               <div className="space-y-12">
+               <div className="space-y-12 max-w-7xl mx-auto">
                 {examCategories.map((category) => (
                     <div key={category.category}>
                         <h3 className="text-2xl font-bold tracking-tight mb-6 text-primary">{category.category}</h3>
-                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                             {category.exams.map((exam) => {
                                 const isEnrolled = Object.keys(syllabusProgress).includes(exam.examId);
                                 const isThisEnrolling = isEnrolling === exam.examId;
@@ -371,5 +377,3 @@ export default function HomePage() {
     </AuthProvider>
   );
 }
-
-    

@@ -333,22 +333,22 @@ function DashboardPage() {
                              const completionPercentage = examTopicsCount > 0 ? (completedCount / examTopicsCount) * 100 : 0;
                             return (
                                 <Card key={examId} className="bg-secondary/30">
-                                    <CardContent className="p-4 flex items-center justify-between">
-                                        <div>
+                                    <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                        <div className="flex-1">
                                             <Link href={`/exam/${examId}`} className="font-semibold hover:underline">{examDetails.examName}</Link>
                                             <div className="flex items-center gap-2 mt-2">
-                                                <Progress value={completionPercentage} className="h-2 w-32" />
+                                                <Progress value={completionPercentage} className="h-2 w-full max-w-xs" />
                                                 <span className="text-xs text-muted-foreground">{completionPercentage.toFixed(0)}% Complete</span>
                                             </div>
                                         </div>
-                                        <Button asChild>
+                                        <Button asChild className="w-full sm:w-auto">
                                              <Link href={`/exam/${examId}`}>Prepare</Link>
                                         </Button>
                                     </CardContent>
                                 </Card>
                             )
                         }) : (
-                             <div className="text-center text-muted-foreground py-8">
+                             <div className="text-center text-muted-foreground py-8 border-2 border-dashed rounded-lg">
                                 <BookCheck className="mx-auto w-12 h-12 text-gray-500 mb-4"/>
                                 <p className="font-semibold">No syllabus progress tracked yet.</p>
                                 <p className="text-sm">You can start by enrolling in an exam from the homepage.</p>
@@ -413,7 +413,7 @@ function DashboardPage() {
                         </div>
                     )})}
                      {attempts.length === 0 && (
-                          <div className="text-center text-muted-foreground py-8">
+                          <div className="text-center text-muted-foreground py-8 border-2 border-dashed rounded-lg">
                             <History className="mx-auto w-12 h-12 text-gray-500 mb-4"/>
                             <p className="font-semibold">No recent activity.</p>
                             <p className="text-sm">Take a practice exam to get started!</p>
@@ -457,5 +457,3 @@ export default function DashboardPageWithAuth() {
     </AuthProvider>
   );
 }
-
-    
