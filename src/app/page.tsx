@@ -131,7 +131,7 @@ function HomePageContent() {
                 </SheetTrigger>
                 <SheetContent side="right">
                     <SheetHeader>
-                        <SheetTitle>Navigation Menu</SheetTitle>
+                        <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                     </SheetHeader>
                      <div className="flex flex-col gap-4 p-4">
                         {user ? (
