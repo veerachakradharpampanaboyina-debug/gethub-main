@@ -6,13 +6,12 @@ import { getStorage } from 'firebase/storage';
 
 
 const firebaseConfig = {
-  "projectId": "gradeal-9jnsz",
-  "appId": "1:60815705674:web:ad4f748e1687eb1f1848b3",
-  "storageBucket": "gradeal-9jnsz.appspot.com",
-  "apiKey": "AIzaSyAGPGn89XExnW0kvtgsup4VErQ0Zxl07ao",
-  "authDomain": "gradeal-9jnsz.firebaseapp.com",
-  "measurementId": "",
-  "messagingSenderId": "60815705674"
+  projectId: process.env.NEXT_PUBLIC_PROJECT_ID,
+  appId: process.env.NEXT_PUBLIC_APP_ID,
+  storageBucket: process.env.NEXT_PUBLIC_STORAGE_BUCKET,
+  apiKey: process.env.NEXT_PUBLIC_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_AUTH_DOMAIN,
+  messagingSenderId: process.env.NEXT_PUBLIC_MESSAGING_SENDER_ID,
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();

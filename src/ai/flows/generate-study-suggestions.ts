@@ -13,8 +13,8 @@ import {z} from 'genkit';
 import handlebars from 'handlebars';
 
 // Helper to join array elements in Handlebars templates.
-handlebars.registerHelper('join', function(arr: string[], separator: string) {
-    if (arr && Array.isArray(arr)) {
+handlebars.registerHelper('join', function(arr: string[] | undefined, separator: string) {
+    if (arr && Array.isArray(arr) && arr.length > 0) {
       return arr.join(separator);
     }
     return '';

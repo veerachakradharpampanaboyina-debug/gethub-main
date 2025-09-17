@@ -164,7 +164,7 @@ function HistoryPage() {
         <SidebarHeader>
           <div className="flex items-center gap-2">
             <GethubLogo className="w-8 h-8 text-primary" width={32} height={32} />
-            <span className="text-lg font-semibold group-data-[state=collapsed]:hidden">Gethub</span>
+            <span className="text-lg font-semibold">Gethub</span>
           </div>
         </SidebarHeader>
         <SidebarContent>
@@ -248,23 +248,23 @@ function HistoryPage() {
               <Link href="/settings">
                   <SidebarMenuButton tooltip="Settings">
                     <Settings />
-                    <span className="group-data-[state=collapsed]:hidden">Settings</span>
+                    <span>Settings</span>
                   </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton tooltip="Profile">
-                <Avatar className="w-8 h-8">
+                <Avatar className="w-7 h-7">
                   <AvatarImage src={user.photoURL ?? 'https://placehold.co/100x100.png'} alt="@teacher" data-ai-hint="teacher portrait"/>
                   <AvatarFallback>{user.email?.[0].toUpperCase()}</AvatarFallback>
                 </Avatar>
-                <span className="text-sm group-data-[state=collapsed]:hidden">{user.displayName || user.email}</span>
+                <span className="text-sm">{user.displayName || user.email}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
              <SidebarMenuItem>
               <SidebarMenuButton tooltip="Logout" onClick={logout}>
                 <LogOut />
-                <span className="group-data-[state=collapsed]:hidden">Logout</span>
+                <span>Logout</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
