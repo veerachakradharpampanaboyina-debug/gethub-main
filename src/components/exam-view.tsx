@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import type {
   Exam,
   Question,
@@ -39,6 +39,7 @@ import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Textarea } from './ui/textarea';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
+import { examCategories } from '@/lib/exam-categories';
 
 
 interface ExamViewProps {
@@ -195,6 +196,7 @@ export function ExamView({ exam: initialExam }: ExamViewProps) {
   const [aiResults, setAiResults] = useState<AIGradingState | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
+  const topOfViewRef = useRef<HTMLDivElement>(null);
 
   const handleAnswerChange = (questionId: string, answer: string) => {
     setExam(prevExam => ({
@@ -217,6 +219,7 @@ export function ExamView({ exam: initialExam }: ExamViewProps) {
     }
     setIsLoading(true);
     setAiResults(null);
+    topOfViewRef.current?.scrollIntoView({ behavior: 'smooth' });
 
     try {
       // 1. Grade objective questions
@@ -254,6 +257,21 @@ export function ExamView({ exam: initialExam }: ExamViewProps) {
       
       totalPointsPossible += freeTextQuestions.reduce((sum, q) => sum + q.pointsPossible, 0);
 
+      const allExams = examCategories.flatMap(c => c.exams);
+      const examDetails = allExams.find(e => exam.examName.includes(e.examName));
+      
+      const incorrectTopics: string[] = [];
+      exam.questions.forEach(q => {
+        const isCorrect = objectiveResults.find(r => r.questionId === q.questionId)?.isCorrect;
+        if (isCorrect === false) {
+          const questionTopic = exam.examName.replace('Practice Exam: ', '');
+          if(questionTopic && !incorrectTopics.includes(questionTopic)) {
+            incorrectTopics.push(questionTopic);
+          }
+        }
+      });
+
+
       // 3. Generate summary
       const summaryResponse = await generateExamSummary({
         studentName: exam.student.name,
@@ -282,8 +300,6 @@ export function ExamView({ exam: initialExam }: ExamViewProps) {
         totalPointsPossible,
       };
 
-      setAiResults(results);
-
       // 4. Save attempt to Firestore
       await saveExamAttempt({
         userId: user.uid,
@@ -291,12 +307,14 @@ export function ExamView({ exam: initialExam }: ExamViewProps) {
         examName: exam.examName,
         questions: exam.questions,
         aiGradingState: results,
+        incorrectlyAnsweredTopics: incorrectTopics
       });
 
        toast({
         title: "Analysis Complete",
         description: "Your exam results have been saved to your history.",
       });
+      setAiResults(results);
 
     } catch (error) {
       console.error('Error grading exam:', error);
@@ -317,7 +335,7 @@ export function ExamView({ exam: initialExam }: ExamViewProps) {
   const isSubmitted = aiResults !== null;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" ref={topOfViewRef}>
       <Card className="bg-secondary/50">
         <CardHeader>
           <CardTitle>{exam.examName}</CardTitle>

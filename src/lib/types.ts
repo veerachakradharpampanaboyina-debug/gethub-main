@@ -104,6 +104,7 @@ export interface ExamAttempt {
     questions: Question[];
     aiGradingState: AIGradingState;
     createdAt: Timestamp;
+    incorrectlyAnsweredTopics?: string[];
 }
 
 export interface ScheduledExam {

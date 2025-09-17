@@ -10,6 +10,15 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import handlebars from 'handlebars';
+
+// Helper to join array elements in Handlebars templates.
+handlebars.registerHelper('join', function(arr: string[], separator: string) {
+    if (arr && Array.isArray(arr)) {
+      return arr.join(separator);
+    }
+    return '';
+});
 
 const GenerateStudySuggestionsInputSchema = z.object({
   recentExams: z.array(
@@ -50,7 +59,7 @@ Analyze the following data:
 **Recent Exam Performance:**
 {{#each recentExams}}
 - **{{examName}}**: Scored {{scorePercentage}}%.
-  {{#if incorrectlyAnsweredTopics}}
+  {{#if incorrectlyAnsweredTopics.length}}
   - Topics with incorrect answers: {{#join incorrectlyAnsweredTopics ", "}}{{/join}}
   {{/if}}
 {{/each}}
@@ -58,7 +67,7 @@ Analyze the following data:
 **Syllabus Progress:**
 {{#each syllabusProgress}}
 - **{{examName}}**: {{completionPercentage}}% completed.
-  {{#if revisionTopics}}
+  {{#if revisionTopics.length}}
   - Topics marked for revision: {{#join revisionTopics ", "}}{{/join}}
   {{/if}}
 {{/each}}
@@ -79,13 +88,8 @@ const generateStudySuggestionsFlow = ai.defineFlow(
     outputSchema: GenerateStudySuggestionsOutputSchema,
   },
   async input => {
-    // Handlebars does not have complex logic, so we create a helper here.
-    const handlebars = await import('handlebars');
-    handlebars.registerHelper('join', function(arr: string[], separator: string) {
-        return arr.join(separator);
-    });
-
     const {output} = await prompt(input);
     return output!;
   }
 );
+

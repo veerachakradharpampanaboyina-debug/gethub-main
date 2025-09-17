@@ -111,7 +111,7 @@ function DashboardPage() {
         const recentExamsInput = attempts.slice(0, 5).map(a => ({
             examName: a.examName,
             scorePercentage: a.aiGradingState.totalPointsPossible > 0 ? (a.aiGradingState.totalPointsAwarded / a.aiGradingState.totalPointsPossible) * 100 : 0,
-            incorrectlyAnsweredTopics: [], // Simplified for now
+            incorrectlyAnsweredTopics: a.incorrectlyAnsweredTopics || [],
         }));
         
         const allExams = examCategories.flatMap(c => c.exams);
@@ -316,33 +316,9 @@ function DashboardPage() {
                     </CardContent>
                 </Card>
             </div>
-            
-            <div className="grid gap-8 md:grid-cols-2">
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center justify-between">
-                            <span className="flex items-center gap-2"><Sparkles/>AI Study Suggestions</span>
-                            <Button size="sm" variant="ghost" onClick={handleGenerateSuggestions} disabled={isGeneratingSuggestions}>
-                                {isGeneratingSuggestions ? <LoaderCircle className="w-4 h-4 animate-spin"/> : "Generate"}
-                            </Button>
-                        </CardTitle>
-                        <CardDescription>Personalized recommendations based on your performance.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                         {isGeneratingSuggestions ? (
-                            <div className="flex items-center justify-center h-24">
-                                <LoaderCircle className="w-8 h-8 animate-spin text-primary" />
-                            </div>
-                         ) : aiSuggestions ? (
-                             <div className="prose prose-sm prose-invert max-w-none text-current" dangerouslySetInnerHTML={{ __html: markdownToHtml(aiSuggestions) }} />
-                         ) : (
-                             <div className="text-center text-muted-foreground py-4">
-                                <p>Click "Generate" to get your personalized study plan.</p>
-                             </div>
-                         )}
-                    </CardContent>
-                </Card>
-                <Card>
+
+            <div className="grid gap-8 lg:grid-cols-3">
+                 <Card className="lg:col-span-2">
                     <CardHeader>
                         <CardTitle>Your Tracked Exams</CardTitle>
                         <CardDescription>Your completion status for each exam you're tracking.</CardDescription>
@@ -356,20 +332,56 @@ function DashboardPage() {
                              const completedCount = Object.values(progress.topicStatus).filter(s => s === 'Completed').length;
                              const completionPercentage = examTopicsCount > 0 ? (completedCount / examTopicsCount) * 100 : 0;
                             return (
-                                <div key={examId}>
-                                    <div className="flex justify-between items-center mb-1">
-                                        <Link href={`/exam/${examId}`} className="text-sm font-medium hover:underline">{examDetails.examName}</Link>
-                                        <span className="text-sm font-medium text-primary">{completionPercentage.toFixed(0)}%</span>
-                                    </div>
-                                    <Progress value={completionPercentage} />
-                                </div>
+                                <Card key={examId} className="bg-secondary/30">
+                                    <CardContent className="p-4 flex items-center justify-between">
+                                        <div>
+                                            <Link href={`/exam/${examId}`} className="font-semibold hover:underline">{examDetails.examName}</Link>
+                                            <div className="flex items-center gap-2 mt-2">
+                                                <Progress value={completionPercentage} className="h-2 w-32" />
+                                                <span className="text-xs text-muted-foreground">{completionPercentage.toFixed(0)}% Complete</span>
+                                            </div>
+                                        </div>
+                                        <Button asChild>
+                                             <Link href={`/exam/${examId}`}>Prepare</Link>
+                                        </Button>
+                                    </CardContent>
+                                </Card>
                             )
                         }) : (
-                             <div className="text-center text-muted-foreground py-4">
-                                <p>No syllabus progress tracked yet.</p>
-                                <Button asChild variant="link"><Link href="/">Explore exams to start</Link></Button>
+                             <div className="text-center text-muted-foreground py-8">
+                                <BookCheck className="mx-auto w-12 h-12 text-gray-500 mb-4"/>
+                                <p className="font-semibold">No syllabus progress tracked yet.</p>
+                                <p className="text-sm">You can start by exploring and enrolling in an exam.</p>
+                                <Button asChild variant="link" className="mt-2"><Link href="/">Explore Exams to Start</Link></Button>
                              </div>
                         )}
+                    </CardContent>
+                </Card>
+                
+                <Card className="lg:col-span-1">
+                    <CardHeader>
+                        <CardTitle className="flex items-center justify-between">
+                            <span className="flex items-center gap-2"><Sparkles/>AI Study Suggestions</span>
+                            <Button size="sm" variant="ghost" onClick={handleGenerateSuggestions} disabled={isGeneratingSuggestions}>
+                                {isGeneratingSuggestions ? <LoaderCircle className="w-4 h-4 animate-spin"/> : "Generate"}
+                            </Button>
+                        </CardTitle>
+                        <CardDescription>Personalized recommendations based on your performance.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                         {isGeneratingSuggestions ? (
+                            <div className="flex items-center justify-center h-48">
+                                <LoaderCircle className="w-8 h-8 animate-spin text-primary" />
+                            </div>
+                         ) : aiSuggestions ? (
+                             <div className="prose prose-sm prose-invert max-w-none text-current" dangerouslySetInnerHTML={{ __html: markdownToHtml(aiSuggestions) }} />
+                         ) : (
+                             <div className="text-center text-muted-foreground py-8">
+                                <Sparkles className="mx-auto w-12 h-12 text-gray-500 mb-4"/>
+                                <p className="font-semibold">Get Your Study Plan</p>
+                                <p className="text-sm">Click "Generate" to get a personalized study plan from our AI tutor.</p>
+                             </div>
+                         )}
                     </CardContent>
                 </Card>
             </div>
@@ -396,9 +408,11 @@ function DashboardPage() {
                         </div>
                     )})}
                      {attempts.length === 0 && (
-                          <div className="text-center text-muted-foreground py-4">
-                            <p>No recent activity. Take a practice exam to get started!</p>
-                            <Button asChild variant="link"><Link href="/practice">Take a Practice Exam</Link></Button>
+                          <div className="text-center text-muted-foreground py-8">
+                            <History className="mx-auto w-12 h-12 text-gray-500 mb-4"/>
+                            <p className="font-semibold">No recent activity.</p>
+                            <p className="text-sm">Take a practice exam to get started!</p>
+                            <Button asChild variant="link" className="mt-2"><Link href="/practice">Take a Practice Exam</Link></Button>
                          </div>
                      )}
                     </div>
