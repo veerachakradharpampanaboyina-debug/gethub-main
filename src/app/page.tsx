@@ -338,7 +338,7 @@ function HomePageContent() {
                                                 ) : (
                                                     <PlusCircle className="mr-2" />
                                                 )}
-                                                {isThisEnrolling ? 'Enrolling...' : isEnrolled ? 'Enrolled' : 'Enroll & Track'}
+                                                {isThisEnrolling ? 'Enrolling...' : isEnrolled ? 'Already Enrolled' : 'Enroll & Track'}
                                             </Button>
                                         )}
                                     </CardContent>
