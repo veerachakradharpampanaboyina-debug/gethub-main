@@ -16,7 +16,7 @@ import {
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, Settings, Home as HomeIcon, History, BrainCircuit, Shield, MessageCircle, GalleryHorizontal, LayoutDashboard, TrendingUp, Sparkles, BookCheck } from 'lucide-react';
+import { LogOut, Settings, Home as HomeIcon, History, BrainCircuit, Shield, MessageCircle, GalleryHorizontal, LayoutDashboard, TrendingUp, Sparkles, BookCheck, PlusCircle } from 'lucide-react';
 import GethubLogo from '@/components/gethub-logo';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
@@ -351,8 +351,13 @@ function DashboardPage() {
                              <div className="text-center text-muted-foreground py-8">
                                 <BookCheck className="mx-auto w-12 h-12 text-gray-500 mb-4"/>
                                 <p className="font-semibold">No syllabus progress tracked yet.</p>
-                                <p className="text-sm">You can start by exploring and enrolling in an exam.</p>
-                                <Button asChild variant="link" className="mt-2"><Link href="/">Explore Exams to Start</Link></Button>
+                                <p className="text-sm">You can start by enrolling in an exam from the homepage.</p>
+                                <Button asChild variant="default" className="mt-4">
+                                    <Link href="/#exams">
+                                        <PlusCircle className="mr-2"/>
+                                        Enroll in an Exam
+                                    </Link>
+                                </Button>
                              </div>
                         )}
                     </CardContent>
@@ -452,3 +457,5 @@ export default function DashboardPageWithAuth() {
     </AuthProvider>
   );
 }
+
+    

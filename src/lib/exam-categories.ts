@@ -885,9 +885,11 @@ export const examCategories: ExamCategory[] = [
       ...category,
       exams: category.exams.map(exam => ({
         ...exam,
-        // Ensure all exams have a stages array, even if it's empty, for consistency.
+        description: exam.description || 'No description available.',
         stages: exam.stages || [], 
       }))
     }));
     
+    
+
     

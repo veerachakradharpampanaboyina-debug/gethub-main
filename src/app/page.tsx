@@ -10,35 +10,60 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowRight, BrainCircuit, BookOpenCheck, LogOut, Settings, History, Facebook, Twitter, Instagram, MessageCircle, PenTool, BotMessageSquare, MessageSquare, GalleryHorizontal, Check, Menu, ShieldCheck } from 'lucide-react';
+import { ArrowRight, BrainCircuit, BookOpenCheck, LogOut, Settings, History, Facebook, Twitter, Instagram, MessageCircle, PenTool, BotMessageSquare, MessageSquare, GalleryHorizontal, Check, Menu, PlusCircle } from 'lucide-react';
 import GethubLogo from '@/components/gethub-logo';
 import { examCategories } from '@/lib/exam-categories';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
 import { LoaderCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import Image from 'next/image';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { getAllSyllabusProgress, updateSyllabusProgress } from '@/services/syllabus-service';
+import { SyllabusProgress } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
 
 
 function HomePageContent() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
+  const [syllabusProgress, setSyllabusProgress] = useState<Record<string, SyllabusProgress>>({});
+   const [isEnrolling, setIsEnrolling] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (!loading && user) {
-      router.push('/dashboard');
+        getAllSyllabusProgress(user.uid).then(setSyllabusProgress);
     }
-  }, [user, loading, router]);
+  }, [user, loading]);
   
-  if (loading || user) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
-      </div>
-    );
-  }
+    const handleEnroll = async (examId: string, examName: string) => {
+        if (!user) {
+            router.push('/login');
+            return;
+        }
+        setIsEnrolling(examId);
+        try {
+            await updateSyllabusProgress(user.uid, examId, { topicStatus: {} });
+            setSyllabusProgress(prev => ({ ...prev, [examId]: { topicStatus: {} } }));
+            toast({
+                title: "Successfully Enrolled!",
+                description: `You can now track your progress for ${examName}.`,
+            });
+            router.push(`/exam/${examId}`);
+        } catch (error) {
+            console.error("Failed to enroll:", error);
+            toast({
+                title: "Enrollment Failed",
+                description: "Could not enroll in the exam. Please try again.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsEnrolling(null);
+        }
+    };
+
 
   const PageHeader = () => (
      <header className="flex items-center justify-between p-4 border-b border-white/10 sticky top-0 bg-background/80 backdrop-blur-sm z-10">
@@ -49,6 +74,11 @@ function HomePageContent() {
         <div className="hidden md:flex items-center gap-2">
             {user ? (
                  <div className="flex items-center gap-4">
+                     <Button variant="ghost" asChild>
+                        <Link href="/dashboard">
+                            Dashboard
+                        </Link>
+                    </Button>
                      <Button variant="ghost" asChild>
                         <Link href="/history">
                             <History className="mr-2"/>
@@ -101,11 +131,14 @@ function HomePageContent() {
                 </SheetTrigger>
                 <SheetContent side="right">
                     <SheetHeader>
-                        <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+                        <SheetTitle>Navigation Menu</SheetTitle>
                     </SheetHeader>
                      <div className="flex flex-col gap-4 p-4">
                         {user ? (
                             <>
+                                 <Button variant="ghost" asChild className="justify-start">
+                                    <Link href="/dashboard">Dashboard</Link>
+                                 </Button>
                                  <Button variant="ghost" asChild className="justify-start">
                                     <Link href="/history">
                                         <History className="mr-2"/>
@@ -270,21 +303,41 @@ function HomePageContent() {
                     <div key={category.category}>
                         <h3 className="text-2xl font-bold tracking-tight mb-6 text-primary">{category.category}</h3>
                         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                            {category.exams.map((exam) => (
-                            <Card key={exam.examId} className="flex flex-col bg-secondary/50 border-white/10 hover:border-primary/50 transition-all duration-300 transform hover:-translate-y-1">
-                                <CardHeader>
-                                <CardTitle>{exam.examName}</CardTitle>
-                                <CardDescription className="mt-2">{exam.description}</CardDescription>
-                                </CardHeader>
-                                <CardContent className="flex-grow flex flex-col justify-end gap-4">
-                                <Button asChild className="w-full mt-auto">
-                                    <Link href={`/exam/${exam.examId}`}>
-                                        <BookOpenCheck className="mr-2" /> View Syllabus
-                                    </Link>
-                                </Button>
-                                </CardContent>
-                            </Card>
-                            ))}
+                            {category.exams.map((exam) => {
+                                const isEnrolled = Object.keys(syllabusProgress).includes(exam.examId);
+                                const isThisEnrolling = isEnrolling === exam.examId;
+                                return (
+                                <Card key={exam.examId} className="flex flex-col bg-secondary/50 border-white/10 hover:border-primary/50 transition-all duration-300 transform hover:-translate-y-1">
+                                    <CardHeader>
+                                    <CardTitle>{exam.examName}</CardTitle>
+                                    <CardDescription className="mt-2 h-20 overflow-hidden">{exam.description}</CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="flex-grow flex flex-col justify-end gap-2">
+                                        <Button asChild className="w-full">
+                                            <Link href={`/exam/${exam.examId}`}>
+                                                <BookOpenCheck className="mr-2" /> View Syllabus
+                                            </Link>
+                                        </Button>
+                                        {user && (
+                                            <Button
+                                                variant={isEnrolled ? "secondary" : "outline"}
+                                                className="w-full"
+                                                disabled={isEnrolled || isThisEnrolling}
+                                                onClick={() => handleEnroll(exam.examId, exam.examName)}
+                                                >
+                                                {isThisEnrolling ? (
+                                                    <LoaderCircle className="mr-2 animate-spin" />
+                                                ) : isEnrolled ? (
+                                                    <Check className="mr-2" />
+                                                ) : (
+                                                    <PlusCircle className="mr-2" />
+                                                )}
+                                                {isThisEnrolling ? 'Enrolling...' : isEnrolled ? 'Enrolled' : 'Enroll & Track'}
+                                            </Button>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            )})}
                         </div>
                     </div>
                 ))}
@@ -318,3 +371,5 @@ export default function HomePage() {
     </AuthProvider>
   );
 }
+
+    
