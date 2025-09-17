@@ -56,8 +56,8 @@ function HomePageContent() {
                 title: "Successfully Enrolled!",
                 description: `You can now track your progress for ${examName}.`,
             });
-            // Redirect to the exam page to start preparation
-            router.push(`/exam/${examId}`);
+            // Redirect to the dashboard page to see the tracked exam
+            router.push('/dashboard');
         } catch (error) {
             console.error("Failed to enroll:", error);
             toast({
